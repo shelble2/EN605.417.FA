@@ -1,1 +1,1 @@
-This is the very latest version of the README file for the basic Introduction To GPU Programming Course.
+This version of the README file has been edited by shelble2 for Module 00.
