@@ -16,7 +16,7 @@ char cpu_key[ARRAY_SIZE];
  
 __global__
  
-void encrypt(char *text, char *text)
+void encrypt(char *text, char *key)
 {
  		/* Calculate the current index */
  		const unsigned int thread_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -30,6 +30,15 @@ void encrypt(char *text, char *text)
  
 void main_sub()
 {
+ 		printf("Encrypting text: \n");
+ 		for(int i = 0; i < ARRAY_SIZE; i++) {
+        		printf("%c", cpu_text[i]);
+        }
+                                      
+ 		printf("With Key: \n");	
+ 		for(int i = 0; i < ARRAY_SIZE; i++) {
+ 				printf("%c", cpu_key[i]);
+        }
  
  		/* Declare and allocate pointers for GPU based parameters */
  		char *gpu_text;
@@ -48,10 +57,35 @@ void main_sub()
  
  		/* Execute the encryption kernel */
  		encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key);
+ 
+ 		/* Copy the GPU memory back to the CPU */
+ 		cudaMemcpy( cpu_text, gpu_text, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
+ 		cudaMemcpy( cpu_key, gpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
+ 
+ 		/* Free the GPU memory */
+ 		cudaFree(gpu_text);
+ 		cudaFree(gpu_key);
+ 
+ 		/* Print the final result */
+ 		                                               
+        printf("Results in ciphertext: \n");
+        for (int i = 0; i < ARRAY_SIZE; i++) {
+ 				printf("%c", cpu_text[i]);
+ 		}
+                                      
  }
  
  int main()
  {
+ 		/* TODO: get input file, array size and num blocks from command line */
+ 
+ 		/* From "Through the Looking Glass" - Carroll */
+ 		/* TODO: Change this to read from file */
+        FILE *input_fp = fopen("input_text.txt", "r");
+        for(int i = 0; i < ARRAY_SIZE; i++) {
+ 				cpu_text[i] = (char) fgetc(input_fp);
+ 				cpu_key[i] = 'a';  // TODO: Make key random
+ 		}
  
  		main_sub();
  	
