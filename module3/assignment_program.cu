@@ -10,6 +10,9 @@
  
 #define ARRAY_SIZE 256
 #define ARRAY_SIZE_IN_BYTES (sizeof(unsigned int) * (ARRAY_SIZE))
+#define MIN_ALPHA 32;
+#define MAX_ALPHA 126;
+ 
  
 char cpu_text[ARRAY_SIZE]; 
 char cpu_key[ARRAY_SIZE];
@@ -22,8 +25,13 @@ void encrypt(char *text, char *key)
  		const unsigned int thread_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
  
  		/* Create the cipherchar (addition of plaintext char and key char */
- 		char cipherchar = text[thread_idx] + key[thread_idx];
-
+ 		char cipherchar = ( text[thread_idx] + key[thread_idx] );
+ 
+ 		/* Make sure you're within the set of printable characters */
+		if(cipherchar > MAX_ALPHA) { 
+ 			cipherchar = (cipherchar - MAX_ALPHA) + ( MIN_ALPHA - 1 );
+ 		}
+ 	
  		/* Save back in text array */
  		text[thread_idx] = cipherchar; 
 }
@@ -79,12 +87,11 @@ void main_sub()
  {
  		/* TODO: get input file, array size and num blocks from command line */
  
- 		/* From "Through the Looking Glass" - Carroll */
  		/* TODO: Change this to read from file */
         FILE *input_fp = fopen("input_text.txt", "r");
         for(int i = 0; i < ARRAY_SIZE; i++) {
- 				cpu_text[i] = (char) fgetc(input_fp);
- 				cpu_key[i] = 'a';  // TODO: Make key random
+ 				cpu_text[i] = (char) toupper(fgetc(input_fp));
+ 				cpu_key[i] = 'A';  // TODO: Make key random
  		}
  
  		main_sub();
