@@ -5,7 +5,7 @@
  *
  * Usage ./out <total_num_threads> <threads_per_block> <input_file> <key_file>
  *
- * Creates two arrays of <total_num_threads> length, and reads <total_num_threads> 
+ * Creates two arrays of <total_num_threads> length, and reads <total_num_threads>
  * characters from <input_file> and <key_file> to fill them.
  * Adds the character values together to create a cipher text (caesar cipher with
  * keyword)
@@ -48,6 +48,38 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
 }
 
 /**
+ * One fuction to handle the printing of all results.
+ * @text is the plaintext array
+ * @key is the key used to encrypt
+ * @result is the resulting ciphertext
+ * @blocks is the array holding the block number for each calculation
+ * @threads is the array holding the thread number fo each calculation
+ */
+void print_all_results(unsigned int *text, unsigned int *key, unsigned int *result, unsigned int *blocks, unsigned int *threads, int array_size)
+{
+  int i;
+
+  /* Print the calculations */
+  for(i = 0; i < array_size; i++) {
+    printf("Block %2u - Thread %2u Calculated: %c + %c = %c\n", blocks[i], threads[i], text[i], key[i], result[i]);
+  }
+
+  /* Print the plain text, key, and result */
+  printf("Summary:\n\nEncrypted text: \n");
+  for(i = 0; i < array_size; i++) {
+    printf("%c", text[i]);
+  }
+  printf("\n With Key: \n");
+  for(i = 0; i < array_size; i++) {
+    printf("%c", key[i]);
+  }
+  printf("Results in ciphertext: \n");
+  for(i = 0; i < array_size; i++) {
+    printf("%c", key[i]);
+  }
+}
+
+/**
  * Function that sets up everything for the kernel function encrypt()
  *
  * @array_size size of array (total number of threads)
@@ -78,16 +110,6 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
   /* Close the file pointers */
   fclose(input_fp);
   fclose(key_fp);
-
-  /* Print the plain text and the key */
-  printf("Encrypting text: \n");
-  for(i = 0; i < array_size; i++) {
-    printf("%c", cpu_text[i]);
-  }
-  printf("\n With Key: \n");
-  for(i = 0; i < array_size; i++) {
-    printf("%c", cpu_key[i]);
-  }
 
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *gpu_text;
@@ -124,11 +146,7 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
   cudaFree(gpu_threads);
   cudaFree(gpu_blocks);
 
-  /* Print the resulting ciphertext */
-  printf("\nResults in ciphertext: \n");
-  for(i = 0; i < array_size; i++) {
-    printf("Block %2u - Thread %2u Calculated: %c\n", cpu_blocks[i], cpu_threads[i], (int)cpu_result[i]);
-  }
+  print_all_results(cpu_text, cpu_key, cpu_result, cpu_blocks, cpu_threads, array_size);
 }
 
 int main(int argc, char *argv[])
