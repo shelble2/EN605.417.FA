@@ -2,6 +2,7 @@ Helble Assignment 03
 ====================
 
 ceasar_cipher.cu
+
 ./out <num_threads> <threads_per_block> <input_file> <key_file>
 
 Performs a ceasar cipher for the first <num_threads> characters of <input_file>, using the first <num_threads> 
