@@ -1,9 +1,9 @@
 /**
- * Assignment 03 Program 
+ * Assignment 03 Program - ceasar_cipher.cu
  * Sarah Helble
  * 9/17/17
  *
- * Command line args <total_num_threads> <threads_per_block> <input_file> <key_file>
+ * Usage ./out <total_num_threads> <threads_per_block> <input_file> <key_file>
  *
  * Creates two arrays of <total_num_threads> length, and reads <total_num_threads> 
  * characters from <input_file> and <key_file> to fill them.
@@ -86,7 +86,7 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
  	/* Declare and allocate pointers for GPU based parameters */
  	unsigned int *gpu_text;
  	unsigned int *gpu_key;
- 	unsigned int *gpu_result
+ 	unsigned int *gpu_result;
  	cudaMalloc((void **)&gpu_text, array_size_in_bytes);
  	cudaMalloc((void **)&gpu_key, array_size_in_bytes);
 	cudaMalloc((void **)&gpu_result, array_size_in_bytes);
