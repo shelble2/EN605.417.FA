@@ -10,6 +10,7 @@
  
 #define ARRAY_SIZE 256
 #define ARRAY_SIZE_IN_BYTES (sizeof(unsigned int) * (ARRAY_SIZE))
+#define NUM_ALPHA 127
  
 unsigned int cpu_text[ARRAY_SIZE]; 
 unsigned int cpu_key[ARRAY_SIZE];
@@ -21,9 +22,9 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
  		const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
  
  		/* Create the cipherchar (addition of plaintext char and key char */
- 		result[idx] = (unsigned int) ( key[idx] + text[idx] );
- 
-		/*TODO: need to wrap around here in order to have printable ciphertext. For now, just use decimal value */
+ 		result[idx] = (unsigned int) ( ( key[idx] + text[idx] ) % NUM_ALPHA );
+
+ 		/* TODO: Some of these values are unprintable. Make wrap more advanced */
 }
  
 void main_sub()
@@ -75,7 +76,7 @@ void main_sub()
         printf("\nResults in ciphertext: \n");
         for(i = 0; i < ARRAY_SIZE; i++) 
         {
- 			printf("%u ", cpu_result[i]);	
+ 			printf("%c ", (int)cpu_result[i]);	
  		}
  		printf("\n");                                     
  }
@@ -85,7 +86,7 @@ void main_sub()
  	/* TODO: get input file, key file, array size and num blocks from command line */
  
         FILE *input_fp = fopen("input_text.txt", "r");
-        FILE *key_fp = fopen("input_text.txt", "r");
+        FILE *key_fp = fopen("key.txt", "r");
         for(int i = 0; i < ARRAY_SIZE; i++) {
  		cpu_text[i] = fgetc(input_fp);
  		cpu_key[i] = fgetc(key_fp);  
