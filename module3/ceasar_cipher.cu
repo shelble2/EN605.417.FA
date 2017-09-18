@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Number of characters in the alphabet */
+/* Number of characters in the alphabet. Used for wrapping back to beginning of alphabet*/
 #define NUM_ALPHA 127
 
 /**
@@ -29,7 +29,7 @@
  * @key key values
  * @result ciphertext
  *
- * TODO: some of the values in the resultant ciphertext are unprintable.
+ * TODO: some of the values in the resultant ciphertext will be unprintable.
  * Make wrap around more advanced to deal with this.
  */
 __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result, unsigned int *thread, unsigned int *block)
@@ -43,8 +43,6 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
   /* Calculating these extras so that we can see which blocks/threads do what */
   thread[idx] = threadIdx.x;
   block[idx] = blockIdx.x;
-
-  /* TODO: Some of these values are unprintable. Make wrap more advanced */
 }
 
 /**
@@ -57,7 +55,7 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
  */
 void print_all_results(unsigned int *text, unsigned int *key, unsigned int *result, unsigned int *blocks, unsigned int *threads, int array_size)
 {
-  int i;
+  int i = 0;
 
   /* Print the calculations */
   for(i = 0; i < array_size; i++) {
@@ -77,6 +75,7 @@ void print_all_results(unsigned int *text, unsigned int *key, unsigned int *resu
   for(i = 0; i < array_size; i++) {
     printf("%c", result[i]);
   }
+  printf("\n\n");
 }
 
 /**
@@ -117,6 +116,7 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
   unsigned int *gpu_result;
   unsigned int *gpu_threads;
   unsigned int *gpu_blocks;
+
   cudaMalloc((void **)&gpu_text, array_size_in_bytes);
   cudaMalloc((void **)&gpu_key, array_size_in_bytes);
   cudaMalloc((void **)&gpu_result, array_size_in_bytes);
@@ -134,7 +134,7 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
   /* Execute the encryption kernel */
   encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result, gpu_threads, gpu_blocks);
 
-  /* Copy the GPU memory back to the CPU */
+  /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
   cudaMemcpy( cpu_threads, gpu_threads, array_size_in_bytes, cudaMemcpyDeviceToHost);
   cudaMemcpy( cpu_blocks, gpu_blocks, array_size_in_bytes, cudaMemcpyDeviceToHost);
@@ -149,16 +149,44 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
   print_all_results(cpu_text, cpu_key, cpu_result, cpu_blocks, cpu_threads, array_size);
 }
 
+/**
+ * Prints the correct usage of this file
+ * @name is the name of the executable (argv[0])
+ */
+void print_usage(char *name)
+{
+  printf("Usage: %s <total_num_threads> <threads_per_block> <input_file> <key_file>\n", name);
+}
+
+/**
+ * Entry point for excution. Checks command line arguments and
+ * opens input files, then passes execution to subordinate main_sub()
+ */
 int main(int argc, char *argv[])
 {
   /* Check the number of arguments, print usage if wrong */
   if(argc != 5) {
-    printf("Error, usage: %s <total_num_threads> <threads_per_block> <input_file> <key_file>\n", argv[0]);
+    printf("Error: Incorrect number of command line arguments\n");
+    print_usage(argv[0]);
     exit(-1);
   }
 
+  /* Check the values for num_threads and threads_per_block */
   int num_threads = atoi(argv[1]);
   int threads_per_block = atoi(argv[2]);
+  if(num_threads <= 0 || threads_per_block <= 0) {
+    printf("Error: num_threads and threads_per_block must be integer > 0");
+    print_usage(argv[0]);
+    exit(-1);
+  }
+
+  /*  Sanity check */
+  if(threads_per_block > num_threads) {
+      printf("Error: threads per block is greater than number of threads\n");
+      print_usage();
+      exit(-1);
+  }
+
   char *input_filename = argv[3];
   char *key_filename = argv[4];
 
