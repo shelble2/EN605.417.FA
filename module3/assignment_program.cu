@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
  
 #define ARRAY_SIZE 256
 #define ARRAY_SIZE_IN_BYTES (sizeof(unsigned int) * (ARRAY_SIZE))
@@ -27,21 +28,21 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
  		/* TODO: Some of these values are unprintable. Make wrap more advanced */
 }
  
-void main_sub()
+void main_sub(int num_t, int t_per_b)
 {
  		int i = 0;
  
  		printf("Encrypting text: \n");
  		for(i = 0; i < ARRAY_SIZE; i++)
-        	{
-        		printf("%c", cpu_text[i]);
-        	}
+        {
+        	printf("%c", cpu_text[i]);
+        }
                                       
  		printf("\n With Key: \n");    
  		for(i = 0; i < ARRAY_SIZE; i++) 
  		{
  			printf("%c", cpu_key[i]);
-        	}
+        }
  
  
  		/* Declare and allocate pointers for GPU based parameters */
@@ -81,19 +82,38 @@ void main_sub()
  		printf("\n");                                     
  }
  
- int main()
+ int main(int argc, char *argv[])
  {
- 	/* TODO: get input file, key file, array size and num blocks from command line */
+ 		/* TODO: get input file, key file, array size and num blocks from command line */
  
-        FILE *input_fp = fopen("input_text.txt", "r");
-        FILE *key_fp = fopen("key.txt", "r");
+        if(argc != 5) {
+        	printf("Error, usage: %s <num_threads> <threads_per_block> <input_file> <key_file>\n", argv[0]);
+            exit(-1);
+        }
+                                  
+        FILE *input_fp = fopen(argv[3], "r");
+        if(!input_fp) {
+            printf("Error: failed to open input file %s\n", argv[3]);
+        	exit(-1);
+        }
+                                  
+        FILE *key_fp = fopen(argv[4], "r");
+        if(!key_fp){
+            printf("Error: failed to open key file %s\n", argv[4]);
+            fclose(input_fp);
+            exit(-1);
+        }
+                                  
         for(int i = 0; i < ARRAY_SIZE; i++) {
- 		cpu_text[i] = fgetc(input_fp);
- 		cpu_key[i] = fgetc(key_fp);  
-	}
+ 			cpu_text[i] = fgetc(input_fp);
+ 			cpu_key[i] = fgetc(key_fp);  
+		}
  
- 	main_sub();
- 	
- 	return EXIT_SUCCESS;
+ 		fclose(input_fp);
+ 		fclose(key_fp);
+ 
+ 		main_sub(atoi(argv[1]), atoi(argv[2]));
+ 			
+ 		return EXIT_SUCCESS;
  }
  
