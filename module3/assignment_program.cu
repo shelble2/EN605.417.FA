@@ -9,13 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
  
-#define ARRAY_SIZE 256
-#define ARRAY_SIZE_IN_BYTES (sizeof(unsigned int) * (ARRAY_SIZE))
 #define NUM_ALPHA 127
- 
-unsigned int cpu_text[ARRAY_SIZE]; 
-unsigned int cpu_key[ARRAY_SIZE];
-unsigned int cpu_result[ARRAY_SIZE];
+
  
 __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result)
 {
@@ -28,45 +23,56 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
  		/* TODO: Some of these values are unprintable. Make wrap more advanced */
 }
  
-void main_sub(int num_t, int t_per_b)
+void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
 {
+ 		int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
  		int i = 0;
  
+ 		unsigned int cpu_text[array_size]; 
+		unsigned int cpu_key[array_size];
+		unsigned int cpu_result[array_size];
+                                                                   
+        for(i = 0; i < array_size; i++) {
+ 			cpu_text[i] = fgetc(input_fp);
+ 			cpu_key[i] = fgetc(key_fp);  
+		}
+        fclose(input_fp);
+        fclose(key_fp);
+ 
  		printf("Encrypting text: \n");
- 		for(i = 0; i < ARRAY_SIZE; i++)
+ 		for(i = 0; i < array_size; i++)
         {
         	printf("%c", cpu_text[i]);
         }
                                       
  		printf("\n With Key: \n");    
- 		for(i = 0; i < ARRAY_SIZE; i++) 
+ 		for(i = 0; i < array_size; i++) 
  		{
  			printf("%c", cpu_key[i]);
         }
- 
  
  		/* Declare and allocate pointers for GPU based parameters */
  		unsigned int *gpu_text;
  		unsigned int *gpu_key;
  		unsigned int *gpu_result;
 	
- 		cudaMalloc((void **)&gpu_text, ARRAY_SIZE_IN_BYTES);
- 		cudaMalloc((void **)&gpu_key, ARRAY_SIZE_IN_BYTES);
-		cudaMalloc((void **)&gpu_result, ARRAY_SIZE_IN_BYTES);
+ 		cudaMalloc((void **)&gpu_text, array_size_in_bytes);
+ 		cudaMalloc((void **)&gpu_key, array_size_in_bytes);
+		cudaMalloc((void **)&gpu_result, array_size_in_bytes);
  		
  		/* Copy the CPU memory to the GPU memory */
- 		cudaMemcpy( gpu_text, cpu_text, ARRAY_SIZE_IN_BYTES, cudaMemcpyHostToDevice);
- 		cudaMemcpy( gpu_key, cpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyHostToDevice);
+ 		cudaMemcpy( gpu_text, cpu_text, array_size_in_bytes, cudaMemcpyHostToDevice);
+ 		cudaMemcpy( gpu_key, cpu_key, array_size_in_bytes, cudaMemcpyHostToDevice);
 	
  		/* Designate the number of blocks and threads */
- 		const unsigned int num_blocks = ARRAY_SIZE/16;
- 		const unsigned int num_threads = ARRAY_SIZE/num_blocks;
+ 		const unsigned int num_blocks = array_size/threads_per_block;
+ 		const unsigned int num_threads = array_size/num_blocks;
  
  		/* Execute the encryption kernel */
  		encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
  
  		/* Copy the GPU memory back to the CPU */
-		cudaMemcpy( cpu_result, gpu_result, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
+		cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
  
  		/* Free the GPU memory */
  		cudaFree(gpu_text);
@@ -75,7 +81,7 @@ void main_sub(int num_t, int t_per_b)
  
  		/* Print the final result */
         printf("\nResults in ciphertext: \n");
-        for(i = 0; i < ARRAY_SIZE; i++) 
+        for(i = 0; i < array_size; i++) 
         {
  			printf("%c ", (int)cpu_result[i]);	
  		}
@@ -84,36 +90,32 @@ void main_sub(int num_t, int t_per_b)
  
  int main(int argc, char *argv[])
  {
- 		/* TODO: get input file, key file, array size and num blocks from command line */
- 
         if(argc != 5) {
-        	printf("Error, usage: %s <num_threads> <threads_per_block> <input_file> <key_file>\n", argv[0]);
+        	printf("Error, usage: %s <total_num_threads> <threads_per_block> <input_file> <key_file>\n", argv[0]);
             exit(-1);
         }
-                                  
-        FILE *input_fp = fopen(argv[3], "r");
+        
+        int num_threads = atoi(argv[1]);
+        int threads_per_block = atoi(argv[2]);
+        char *input_filename = argv[3];       
+        char *key_filename = argv[4];
+             
+        FILE *input_fp = fopen(input_filename, "r");
         if(!input_fp) {
             printf("Error: failed to open input file %s\n", argv[3]);
         	exit(-1);
         }
                                   
-        FILE *key_fp = fopen(argv[4], "r");
+        FILE *key_fp = fopen(key_filename, "r");
         if(!key_fp){
             printf("Error: failed to open key file %s\n", argv[4]);
             fclose(input_fp);
             exit(-1);
         }
-                                  
-        for(int i = 0; i < ARRAY_SIZE; i++) {
- 			cpu_text[i] = fgetc(input_fp);
- 			cpu_key[i] = fgetc(key_fp);  
-		}
+		
  
- 		fclose(input_fp);
- 		fclose(key_fp);
- 
- 		main_sub(atoi(argv[1]), atoi(argv[2]));
- 			
- 		return EXIT_SUCCESS;
+ 		main_sub(num_threads, threads_per_block, input_fp, key_fp);
+ 		
+        return EXIT_SUCCESS;
  }
  
