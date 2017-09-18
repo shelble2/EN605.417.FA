@@ -32,13 +32,17 @@ void encrypt(char *text, char *key)
  
 void main_sub()
 {
+ 		int i = 0;
+ 
  		printf("Encrypting text: \n");
- 		for(int i = 0; i < ARRAY_SIZE; i++) {
+ 		for(i = 0; i < ARRAY_SIZE; i++)
+        {
         		printf("%c", cpu_text[i]);
         }
                                       
- 		printf("With Key: \n");	
- 		for(int i = 0; i < ARRAY_SIZE; i++) {
+ 		printf("\n With Key: \n");    
+ 		for(i = 0; i < ARRAY_SIZE; i++) 
+ 		{
  				printf("%c", cpu_key[i]);
         }
  
@@ -60,31 +64,32 @@ void main_sub()
  		/* Execute the encryption kernel */
  		encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key);
  
- 		/* Copy the GPU memory back to the CPU */
+ 		/* Copy the GPU memory back to the CPU 
  		cudaMemcpy( cpu_text, gpu_text, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
- 		cudaMemcpy( cpu_key, gpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
- 
+ 		cudaMemcpy( cpu_key, gpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);*/
+
  		/* Free the GPU memory */
  		cudaFree(gpu_text);
  		cudaFree(gpu_key);
  
  		/* Print the final result */
-        printf("Results in ciphertext: \n");
-        for (int i = 0; i < ARRAY_SIZE; i++) {
+        printf("\nResults in ciphertext: \n");
+        for (i = 0; i < ARRAY_SIZE; i++) 
+        {
  				printf("%d", cpu_text[i]);	
  		}
-                                      
+ 		printf("\n");                                     
  }
  
  int main()
  {
- 		/* TODO: get input file, array size and num blocks from command line */
+ 		/* TODO: get input file, key file, array size and num blocks from command line */
  
- 		/* TODO: Change this to read from file */
         FILE *input_fp = fopen("input_text.txt", "r");
+        FILE *key_fp = fopen("input_text.txt", "r");
         for(int i = 0; i < ARRAY_SIZE; i++) {
  				cpu_text[i] = (char) fgetc(input_fp);
- 				cpu_key[i] = 'A';  // TODO: Make key random
+ 				cpu_key[i] = (char) fgetc(key_fp);  
  		}
  
  		main_sub();
