@@ -9,7 +9,7 @@
 #include <stdio.h>
  
 #define ARRAY_SIZE 256
-#define ARRAY_SIZE_IN_BYTES (sizeof(unsigned int) * (ARRAY_SIZE))
+#define ARRAY_SIZE_IN_BYTES (sizeof(char) * (ARRAY_SIZE))
  
 char cpu_text[ARRAY_SIZE]; 
 char cpu_key[ARRAY_SIZE];
@@ -23,7 +23,8 @@ void encrypt(char *text, char *key, char *result)
  		const unsigned int thread_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
  
  		/* Create the cipherchar (addition of plaintext char and key char */
- 		char cipherchar = ( text[thread_idx] + key[thread_idx] );
+ 		char cipherchar = text[thread_idx];
+ // + key[thread_idx] );
  
 		//TODO: need to wrap around here in order to have printable ciphertext. Can just use decimal value though
  	
@@ -68,21 +69,21 @@ void main_sub()
  		/* Execute the encryption kernel */
  		encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
  
- 		/* Copy the GPU memory back to the CPU 
+ 		/* Copy the GPU memory back to the CPU */
  		cudaMemcpy( cpu_text, gpu_text, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
- 		cudaMemcpy( cpu_key, gpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);*/
+ 		cudaMemcpy( cpu_key, gpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
 		cudaMemcpy( cpu_result, gpu_result, ARRAY_SIZE_IN_BYTES, cudaMemcpyDeviceToHost);
-	
+ 
  		/* Free the GPU memory */
  		cudaFree(gpu_text);
  		cudaFree(gpu_key);
 		cudaFree(gpu_result);
  
  		/* Print the final result */
-        	printf("\nResults in ciphertext: \n");
-        	for (i = 0; i < ARRAY_SIZE; i++) 
-        	{
- 			printf("%d", cpu_result[i]);	
+        printf("\nResults in ciphertext: \n");
+        for (i = 0; i < ARRAY_SIZE; i++) 
+        {
+ 			printf("%c", cpu_result[i]);	
  		}
  		printf("\n");                                     
  }
