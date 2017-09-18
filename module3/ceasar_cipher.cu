@@ -65,17 +65,17 @@ void print_all_results(unsigned int *text, unsigned int *key, unsigned int *resu
   }
 
   /* Print the plain text, key, and result */
-  printf("Summary:\n\nEncrypted text: \n");
+  printf("\nSummary:\n\nEncrypted text: ");
   for(i = 0; i < array_size; i++) {
     printf("%c", text[i]);
   }
-  printf("\n With Key: \n");
+  printf("\n\nWith Key: ");
   for(i = 0; i < array_size; i++) {
     printf("%c", key[i]);
   }
-  printf("Results in ciphertext: \n");
+  printf("\n\nResults in ciphertext: ");
   for(i = 0; i < array_size; i++) {
-    printf("%c", key[i]);
+    printf("%c", result[i]);
   }
 }
 
