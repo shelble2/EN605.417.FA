@@ -15,16 +15,13 @@ unsigned int cpu_text[ARRAY_SIZE];
 unsigned int cpu_key[ARRAY_SIZE];
 unsigned int cpu_result[ARRAY_SIZE];
  
-__global__
- 
-void encrypt(unsigned int *text, unsigned int *key, unsigned int *result)
+__global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result)
 {
  		/* Calculate the current index */
  		const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
  
  		/* Create the cipherchar (addition of plaintext char and key char */
- 		result[idx] = (unsigned int) key[idx];
- 		/* + text[idx] );*/
+ 		result[idx] = (unsigned int) ( key[idx] + text[idx] );
  
 		/*TODO: need to wrap around here in order to have printable ciphertext. For now, just use decimal value */
 }
@@ -45,6 +42,7 @@ void main_sub()
  			printf("%c", cpu_key[i]);
         	}
  
+ 
  		/* Declare and allocate pointers for GPU based parameters */
  		unsigned int *gpu_text;
  		unsigned int *gpu_key;
@@ -55,8 +53,8 @@ void main_sub()
 		cudaMalloc((void **)&gpu_result, ARRAY_SIZE_IN_BYTES);
  		
  		/* Copy the CPU memory to the GPU memory */
- 		cudaMemcpy( cpu_text, gpu_text, ARRAY_SIZE_IN_BYTES, cudaMemcpyHostToDevice);
- 		cudaMemcpy( cpu_key, gpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyHostToDevice);
+ 		cudaMemcpy( gpu_text, cpu_text, ARRAY_SIZE_IN_BYTES, cudaMemcpyHostToDevice);
+ 		cudaMemcpy( gpu_key, cpu_key, ARRAY_SIZE_IN_BYTES, cudaMemcpyHostToDevice);
 	
  		/* Designate the number of blocks and threads */
  		const unsigned int num_blocks = ARRAY_SIZE/16;
@@ -77,7 +75,7 @@ void main_sub()
         printf("\nResults in ciphertext: \n");
         for(i = 0; i < ARRAY_SIZE; i++) 
         {
- 			printf("%u", cpu_result[i]);	
+ 			printf("%u ", cpu_result[i]);	
  		}
  		printf("\n");                                     
  }
