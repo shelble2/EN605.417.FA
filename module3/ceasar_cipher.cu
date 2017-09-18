@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
   /*  Sanity check */
   if(threads_per_block > num_threads) {
       printf("Error: threads per block is greater than number of threads\n");
-      print_usage();
+      print_usage(argv[0]);
       exit(-1);
   }
 
