@@ -19,7 +19,8 @@
 #include <stdlib.h>
 
 /* Number of characters in the alphabet. Used for wrapping back to beginning of alphabet*/
-#define NUM_ALPHA 127
+#define MAX_PRINTABLE 126
+#define MIN_PRINTABLE 32
 
 /**
  * Kernel function that creates a ciphertext by adding the values
@@ -37,8 +38,12 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
+  char adjusted_text = text[idx] - MIN_PRINTABLE;
+  char adjusted_key = key[idx] - MIN_PRINTABLE;
+
   /* Create the cipherchar (addition of plaintext char and key char */
-  result[idx] = (unsigned int) ( ( key[idx] + text[idx] ) % NUM_ALPHA );
+  //result[idx] = (unsigned int) ( ( key[idx] + text[idx] ) % NUM_ALPHA );
+  result[idx] = (unsigned int) ( ( (adjusted_text + adjusted_key) % (MAX_PRINTABLE - MIN_PRINTABLE) ) + MIN_PRINTABLE )
 
   /* Calculating these extras so that we can see which blocks/threads do what */
   thread[idx] = threadIdx.x;
