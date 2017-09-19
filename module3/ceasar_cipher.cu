@@ -13,14 +13,22 @@
  * Uses <total_num_threads> as total number of threads for the execution.
  * Creates blocks with <threads_per_block> each.
  * This results in # blocks = <total_num_threads> / <threads_per_block>
+ *
+ * Assumes that all values in input_file and key_file are printable (within the
+ * range of 32-126 ASCII decimal values)
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Number of characters in the alphabet. Used for wrapping back to beginning of alphabet*/
+/*
+ * The maximum and minimum integer values of the range of printable characters
+ * in the ASCII alphabet. Used by encrypt kernel to wrap adjust values to that
+ * ciphertext is always printable.
+ */
 #define MAX_PRINTABLE 126
 #define MIN_PRINTABLE 32
+#define NUM_ALPHA MAX_PRINTABLE - MIN_PRINTABLE
 
 /**
  * Kernel function that creates a ciphertext by adding the values
@@ -38,12 +46,18 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
+  /*
+   * Adjust value of text and key to be based at 0
+   * Printable ASCII starts at MIN_PRINTABLE, but 0 start is easier to work with
+   */
   char adjusted_text = text[idx] - MIN_PRINTABLE;
   char adjusted_key = key[idx] - MIN_PRINTABLE;
 
-  /* Create the cipherchar (addition of plaintext char and key char */
-  //result[idx] = (unsigned int) ( ( key[idx] + text[idx] ) % NUM_ALPHA );
-  result[idx] = (unsigned int) ( ( (adjusted_text + adjusted_key) % (MAX_PRINTABLE - MIN_PRINTABLE) ) + MIN_PRINTABLE )
+  /* The cipher character is the text char added to the key char modulo the number of chars in the alphabet*/
+  char cipherchar = (adjusted_text + adjusted_key) % NUM_ALPHA;
+
+  /* adjust back to normal ascii (starting at MIN_PRINTABLE) and save to result */
+  result[idx] = (unsigned int) cipherchar + MIN_PRINTABLE ;
 
   /* Calculating these extras so that we can see which blocks/threads do what */
   thread[idx] = threadIdx.x;
