@@ -54,7 +54,7 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
   char adjusted_key = key[idx] - MIN_PRINTABLE;
 
   /* The cipher character is the text char added to the key char modulo the number of chars in the alphabet*/
-  char cipherchar = (adjusted_text + adjusted_key) % NUM_ALPHA;
+  char cipherchar = (adjusted_text + adjusted_key) % (NUM_ALPHA);
 
   /* adjust back to normal ascii (starting at MIN_PRINTABLE) and save to result */
   result[idx] = (unsigned int) cipherchar + MIN_PRINTABLE ;
@@ -72,7 +72,8 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
  * @blocks is the array holding the block number for each calculation
  * @threads is the array holding the thread number fo each calculation
  */
-void print_all_results(unsigned int *text, unsigned int *key, unsigned int *result, unsigned int *blocks, unsigned int *threads, int array_size)
+void print_all_results(unsigned int *text, unsigned int *key, unsigned int *result,
+                        unsigned int *blocks, unsigned int *threads, int array_size)
 {
   int i = 0;
 
@@ -82,15 +83,15 @@ void print_all_results(unsigned int *text, unsigned int *key, unsigned int *resu
   }
 
   /* Print the plain text, key, and result */
-  printf("\nSummary:\n\nEncrypted text: ");
+  printf("\nSummary:\n\nEncrypted text:\n");
   for(i = 0; i < array_size; i++) {
     printf("%c", text[i]);
   }
-  printf("\n\nWith Key: ");
+  printf("\n\nWith Key:\n");
   for(i = 0; i < array_size; i++) {
     printf("%c", key[i]);
   }
-  printf("\n\nResults in ciphertext: ");
+  printf("\n\nResults in ciphertext:\n");
   for(i = 0; i < array_size; i++) {
     printf("%c", result[i]);
   }
