@@ -59,10 +59,6 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
 
   /* adjust back to normal ascii (starting at MIN_PRINTABLE) and save to result */
   result[idx] = (unsigned int) cipherchar + MIN_PRINTABLE ;
-
-  /* Calculating these extras so that we can see which blocks/threads do what */
-  thread[idx] = threadIdx.x;
-  block[idx] = blockIdx.x;
 }
 
 /**
@@ -110,8 +106,6 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   unsigned int cpu_text[array_size];
   unsigned int cpu_key[array_size];
   unsigned int cpu_result[array_size];
-  unsigned int cpu_threads[array_size];
-  unsigned int cpu_blocks[array_size];
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
@@ -123,8 +117,6 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   unsigned int *gpu_text;
   unsigned int *gpu_key;
   unsigned int *gpu_result;
-  unsigned int *gpu_threads;
-  unsigned int *gpu_blocks;
 
   cudaMalloc((void **)&gpu_text, array_size_in_bytes);
   cudaMalloc((void **)&gpu_key, array_size_in_bytes);
@@ -171,8 +163,6 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   unsigned int cpu_text[array_size];
   unsigned int cpu_key[array_size];
   unsigned int cpu_result[array_size];
-  unsigned int cpu_threads[array_size];
-  unsigned int cpu_blocks[array_size];
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
@@ -184,8 +174,6 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   unsigned int *gpu_text;
   unsigned int *gpu_key;
   unsigned int *gpu_result;
-  unsigned int *gpu_threads;
-  unsigned int *gpu_blocks;
 
   cudaMalloc((void **)&gpu_text, array_size_in_bytes);
   cudaMalloc((void **)&gpu_key, array_size_in_bytes);
