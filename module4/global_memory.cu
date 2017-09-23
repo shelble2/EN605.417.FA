@@ -16,7 +16,8 @@ static const int WORK_SIZE = 256;  // Number of threads in a block
 #define NUM_ELEMENTS 4096 // Run 1
 //#define NUM_ELEMENTS 5120 // Run 2
 //#define NUM_ELEMENTS 2560 // Run 3
-
+//#define NUM_ELEMENTS 6400 // Run 4
+ 
 /**
  * Interleaved is a NUM_ELEMENTS-length array of INTERLEAVED_T, which is a
  * struct of 4 unsigned ints. Pieces defined below.
@@ -449,11 +450,22 @@ __global__ void bitreverse(void *data) {
 void execute_host_functions()
 {
     float duration;
+                                     
 	INTERLEAVED_T host_dest_ptr[NUM_ELEMENTS];
 	INTERLEAVED_T host_src_ptr[NUM_ELEMENTS];
+ 	for (int i = 0; i < NUM_ELEMENTS; i++) {
+         host_src_ptr[i].a = 0;
+         host_src_ptr[i].b = 0;
+         host_src_ptr[i].c = 0;
+         host_src_ptr[i].d = 0;
+         host_dest_ptr[i].a = 0;
+         host_dest_ptr[i].b = 0;
+         host_dest_ptr[i].c = 0;
+         host_dest_ptr[i].d = 0;           
+    }
 	duration = add_test_interleaved_cpu(host_dest_ptr, host_src_ptr, 4,NUM_ELEMENTS);
 	printf("Interleaved duration: %fmsn\n",duration);
-/*
+
 	NON_INTERLEAVED_T host_dest_ptr_b;
 	NON_INTERLEAVED_T host_src_ptr_b;
     for (int i = 0; i < NUM_ELEMENTS; i++) {
@@ -468,7 +480,7 @@ void execute_host_functions()
     }
     duration = add_test_non_interleaved_cpu(host_dest_ptr_b, host_src_ptr_b, 4, NUM_ELEMENTS);
 	printf("Non-Interleaved duration: %fmsn\n",duration);
-*/
+
 }
 /**
  * Sets up the arrays and memory neccessary to execute the bitreverse kernel,
