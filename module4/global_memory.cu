@@ -13,8 +13,19 @@
 
 static const int WORK_SIZE = 256;
 
-#define NUM_ELEMENTS 4096
+#define NUM_ELEMENTS 4096 // Run 1
+//#define NUM_ELEMENTS 5120 // Run 2
+//#define NUM_ELEMENTS 2560 // Run 3
 
+/**
+ * Interleaved is a NUM_ELEMENTS-length array of INTERLEAVED_T, which is a
+ * struct of 4 unsigned ints. Pieces defined below.
+ * [ struct { | struct { | ... |...NUM_ELEMENTS ]
+ *      uint  |    uint  |     |
+ *      uint  |    uint  |     |
+ *      uint  |    uint  |     |
+ *      uint} |    uint} |     |
+ */
 typedef struct {
 	unsigned int a;
 	unsigned int b;
@@ -24,6 +35,15 @@ typedef struct {
 
 typedef INTERLEAVED_T INTERLEAVED_ARRAY_T[NUM_ELEMENTS];
 
+/**
+ * Non-interleaved is a struct made up of 4 elements, each a NUM_ELEMENTS-length
+ * array of unsigned ints. Pieces defined below.
+ * struct {
+ *     [ uint | uint | uint | uint | ... | NUM_ELEMENTS ]
+ *     [ uint | uint | uint | uint | ... | NUM_ELEMENTS ]
+ *     [ uint | uint | uint | uint | ... | NUM_ELEMENTS ]
+ *     [ uint | uint | uint | uint | ... | NUM_ELEMENTS ] }
+ */
 typedef unsigned int ARRAY_MEMBER_T[NUM_ELEMENTS];
 
 typedef struct {
@@ -33,6 +53,9 @@ typedef struct {
 	ARRAY_MEMBER_T d;
 } NON_INTERLEAVED_T;
 
+/**
+ * Returns the current time
+ */
 __host__ cudaEvent_t get_time(void)
 {
 	cudaEvent_t time;
@@ -40,7 +63,7 @@ __host__ cudaEvent_t get_time(void)
 	cudaEventRecord(time);
 	return time;
 }
-
+/*
 __host__ float add_test_non_interleaved_cpu(
 		NON_INTERLEAVED_T host_dest_ptr,
 		NON_INTERLEAVED_T const host_src_ptr, const unsigned int iter,
@@ -64,12 +87,23 @@ __host__ float add_test_non_interleaved_cpu(
 	cudaEventElapsedTime(&delta, start_time, end_time);
 
 	return delta;
-}
+}*/
 
+/**
+ * Host function that adds the elements in one array to themselves a number of
+ * times and puts the output in a destination array. Returns the time taken
+ * to perform the additions.
+ * @host_dest_ptr is where the output will go
+ * @host_src_ptr is the array of elements to add
+ * @iter is the number of times to perform the addition on each element
+ * @num_elements is the number of elements in the array
+ */
 __host__ float add_test_interleaved_cpu(INTERLEAVED_T * const host_dest_ptr,
 		const INTERLEAVED_T * const host_src_ptr, const unsigned int iter,
 		const unsigned int num_elements) {
+
 	cudaEvent_t start_time = get_time();
+
 	for (unsigned int tid = 0; tid < num_elements; tid++) {
 		printf("tid: %u ", tid);
 		for (unsigned int i = 0; i < iter; i++) {
@@ -89,7 +123,7 @@ __host__ float add_test_interleaved_cpu(INTERLEAVED_T * const host_dest_ptr,
 
 	return delta;
 }
-
+/*
 __global__ void add_kernel_interleaved(INTERLEAVED_T * const dest_ptr,
 		const INTERLEAVED_T * const src_ptr, const unsigned int iter,
 		const unsigned int num_elements) {
@@ -373,7 +407,13 @@ __host__ float calc_bin_idx_cpu(const unsigned int num_samples,
 	cudaEventElapsedTime(&delta, start_time, end_time);
 	return delta;
 }
+*/
 
+/**
+ * Function that actually performs the bitreverse on the passed number.
+ * @number is value to bitreverse
+ * Returns result as unsigned int.
+ */
 __host__ __device__ unsigned int bitreverse(unsigned int number) {
 	number = ((0xf0f0f0f0 & number) >> 4) | ((0x0f0f0f0f & number) << 4);
 	number = ((0xcccccccc & number) >> 2) | ((0x33333333 & number) << 2);
@@ -383,21 +423,29 @@ __host__ __device__ unsigned int bitreverse(unsigned int number) {
 
 /**
  * CUDA kernel function that reverses the order of bits in each element of the array.
+ * Calls bitreverse function on each element.
  */
 __global__ void bitreverse(void *data) {
 	unsigned int *idata = (unsigned int*) data;
 	idata[threadIdx.x] = bitreverse(idata[threadIdx.x]);
 }
 
+/**
+ * Creates two arrays and prints the time required to complete
+ * called function.
+ */
 void execute_host_functions()
 {
 	INTERLEAVED_T host_dest_ptr[NUM_ELEMENTS];
 	INTERLEAVED_T host_src_ptr[NUM_ELEMENTS];
 	float duration = add_test_interleaved_cpu(host_dest_ptr, host_src_ptr, 4,NUM_ELEMENTS);
-	printf("duration: %fmsn",duration);
+	printf("duration: %fmsn\n",duration);
 
 }
-
+/**
+ * Sets up the arrays and memory neccessary to execute the bitreverse kernel,
+ * and executes the bitreverse kernel function. Prints result to stdout.
+ */
 void execute_gpu_functions()
 {
 	void *d = NULL;
@@ -407,7 +455,7 @@ void execute_gpu_functions()
 		idata[i] = (unsigned int) i;
 
 	cudaMalloc((void** ) &d, sizeof(int) * WORK_SIZE);
-	
+
 			cudaMemcpy(d, idata, sizeof(int) * WORK_SIZE,
 					cudaMemcpyHostToDevice);
 
@@ -415,7 +463,7 @@ void execute_gpu_functions()
 
 	cudaThreadSynchronize();	// Wait for the GPU launched work to complete
 	cudaGetLastError();
-	
+
 			cudaMemcpy(odata, d, sizeof(int) * WORK_SIZE,
 					cudaMemcpyDeviceToHost);
 
@@ -428,7 +476,7 @@ void execute_gpu_functions()
 }
 
 /**
- * Host function that prepares data array and passes it to the CUDA kernel.
+ * Main entry point to this program.
  */
 int main(void) {
 	execute_host_functions();
