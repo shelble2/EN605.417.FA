@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-static const int WORK_SIZE = 256;
+static const int WORK_SIZE = 256;  // Number of threads in a block
 
 #define NUM_ELEMENTS 4096 // Run 1
 //#define NUM_ELEMENTS 5120 // Run 2
@@ -63,7 +63,16 @@ __host__ cudaEvent_t get_time(void)
 	cudaEventRecord(time);
 	return time;
 }
-/*
+
+/**
+ * Host function that adds the elements in one array to themselves a number of
+ * times and puts the output in a destination array. Returns the time taken
+ * to perform the additions.
+ * @host_dest_ptr is where the output will go
+ * @host_src_ptr is the array of elements to add
+ * @iter is the number of times to perform the addition on each element
+ * @num_elements is the number of elements in the array
+ */
 __host__ float add_test_non_interleaved_cpu(
 		NON_INTERLEAVED_T host_dest_ptr,
 		NON_INTERLEAVED_T const host_src_ptr, const unsigned int iter,
@@ -90,7 +99,7 @@ __host__ float add_test_non_interleaved_cpu(
 	cudaEventElapsedTime(&delta, start_time, end_time);
 
 	return delta;
-}*/
+}
 
 /**
  * Host function that adds the elements in one array to themselves a number of
@@ -443,7 +452,12 @@ void execute_host_functions()
 	INTERLEAVED_T host_dest_ptr[NUM_ELEMENTS];
 	INTERLEAVED_T host_src_ptr[NUM_ELEMENTS];
 	float duration = add_test_interleaved_cpu(host_dest_ptr, host_src_ptr, 4,NUM_ELEMENTS);
-	printf("duration: %fmsn\n",duration);
+	printf("Interleaved duration: %fmsn\n",duration);
+
+	NON_INTERLEAVED_T host_dest_ptr_b[NUM_ELEMENTS];
+	NON_INTERLEAVED_T host_src_ptr_b[NUM_ELEMENTS];
+	float duration = add_test_non_interleaved_cpu(host_dest_ptr_b, host_src_ptr_b, 4, NUM_ELEMENTS);
+	printf("Non-Interleaved duration: %fmsn\n",duration);
 
 }
 /**
