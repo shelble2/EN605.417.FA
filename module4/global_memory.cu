@@ -52,6 +52,7 @@ typedef struct {
 	ARRAY_MEMBER_T c;
 	ARRAY_MEMBER_T d;
 } NON_INTERLEAVED_T;
+ 
 
 /**
  * Returns the current time
@@ -113,7 +114,6 @@ __host__ float add_test_non_interleaved_cpu(
 __host__ float add_test_interleaved_cpu(INTERLEAVED_T * const host_dest_ptr,
 		const INTERLEAVED_T * const host_src_ptr, const unsigned int iter,
 		const unsigned int num_elements) {
-
 	cudaEvent_t start_time = get_time();
 
 	for (unsigned int tid = 0; tid < num_elements; tid++) {
@@ -127,7 +127,6 @@ __host__ float add_test_interleaved_cpu(INTERLEAVED_T * const host_dest_ptr,
 		}
  		printf("\n");
 	}
-
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
 
@@ -449,16 +448,27 @@ __global__ void bitreverse(void *data) {
  */
 void execute_host_functions()
 {
+    float duration;
 	INTERLEAVED_T host_dest_ptr[NUM_ELEMENTS];
 	INTERLEAVED_T host_src_ptr[NUM_ELEMENTS];
-	float duration = add_test_interleaved_cpu(host_dest_ptr, host_src_ptr, 4,NUM_ELEMENTS);
+	duration = add_test_interleaved_cpu(host_dest_ptr, host_src_ptr, 4,NUM_ELEMENTS);
 	printf("Interleaved duration: %fmsn\n",duration);
-
+/*
 	NON_INTERLEAVED_T host_dest_ptr_b;
 	NON_INTERLEAVED_T host_src_ptr_b;
-	float duration = add_test_non_interleaved_cpu(host_dest_ptr_b, host_src_ptr_b, 4, NUM_ELEMENTS);
+    for (int i = 0; i < NUM_ELEMENTS; i++) {
+         host_src_ptr_b.a[i] = 0;
+         host_src_ptr_b.b[i] = 0;
+         host_src_ptr_b.c[i] = 0;
+         host_src_ptr_b.d[i] = 0;
+         host_dest_ptr_b.a[i] = 0;
+         host_dest_ptr_b.b[i] = 0;
+         host_dest_ptr_b.c[i] = 0;
+         host_dest_ptr_b.d[i] = 0;           
+    }
+    duration = add_test_non_interleaved_cpu(host_dest_ptr_b, host_src_ptr_b, 4, NUM_ELEMENTS);
 	printf("Non-Interleaved duration: %fmsn\n",duration);
-
+*/
 }
 /**
  * Sets up the arrays and memory neccessary to execute the bitreverse kernel,
@@ -498,7 +508,7 @@ void execute_gpu_functions()
  */
 int main(void) {
 	execute_host_functions();
-	execute_gpu_functions();
+	//execute_gpu_functions();
 
 	return 0;
 }
