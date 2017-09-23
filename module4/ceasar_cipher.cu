@@ -42,7 +42,7 @@
  * TODO: some of the values in the resultant ciphertext will be unprintable.
  * Make wrap around more advanced to deal with this.
  */
-__global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *resultblock)
+__global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result)
 {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -70,18 +70,10 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
  * @text is the plaintext array
  * @key is the key used to encrypt
  * @result is the resulting ciphertext
- * @blocks is the array holding the block number for each calculation
- * @threads is the array holding the thread number fo each calculation
  */
-void print_all_results(unsigned int *text, unsigned int *key, unsigned int *result,
-                        unsigned int *blocks, unsigned int *threads, int array_size)
+void print_all_results(unsigned int *text, unsigned int *key, unsigned int *result, int array_size)
 {
   int i = 0;
-
-  /* Print the calculations */
-  for(i = 0; i < array_size; i++) {
-    printf("Block %2u - Thread %2u Calculated: %c + %c = %c\n", blocks[i], threads[i], text[i], key[i], result[i]);
-  }
 
   /* Print the plain text, key, and result */
   printf("\nSummary:\n\nEncrypted text:\n");
@@ -109,7 +101,7 @@ void print_all_results(unsigned int *text, unsigned int *key, unsigned int *resu
  *
  * Closes the file pointers @input_fp and @key_fp
  */
-void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
+void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
@@ -127,9 +119,66 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
     cpu_key[i] = fgetc(key_fp);
   }
 
-  /* Close the file pointers */
-  fclose(input_fp);
-  fclose(key_fp);
+  /* Declare and allocate pointers for GPU based parameters */
+  unsigned int *gpu_text;
+  unsigned int *gpu_key;
+  unsigned int *gpu_result;
+  unsigned int *gpu_threads;
+  unsigned int *gpu_blocks;
+
+  cudaMalloc((void **)&gpu_text, array_size_in_bytes);
+  cudaMalloc((void **)&gpu_key, array_size_in_bytes);
+  cudaMalloc((void **)&gpu_result, array_size_in_bytes);
+
+  /* Copy the CPU memory to the GPU memory */
+  cudaMemcpy( gpu_text, cpu_text, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy( gpu_key, cpu_key, array_size_in_bytes, cudaMemcpyHostToDevice);
+
+  /* Designate the number of blocks and threads */
+  const unsigned int num_blocks = array_size/threads_per_block;
+  const unsigned int num_threads = array_size/num_blocks;
+
+  /* Execute the encryption kernel */
+  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
+
+  /* Copy the changed GPU memory back to the CPU */
+  cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+
+  /* Free the GPU memory */
+  cudaFree(gpu_text);
+  cudaFree(gpu_key);
+  cudaFree(gpu_result);
+
+  print_all_results(cpu_text, cpu_key, cpu_result, array_size);
+}
+
+/**
+ * Function that sets up everything for the kernel function encrypt()
+ *
+ * @array_size size of array (total number of threads)
+ * @threads_per_block number of threads to put in each block
+ * @input_fp file pointer to the input file text
+ * @key_fp file pointer to the key file
+ *
+ * Closes the file pointers @input_fp and @key_fp
+ */
+void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
+{
+  /* Calculate the size of the array */
+  int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
+  int i = 0;
+
+  unsigned int cpu_text[array_size];
+  unsigned int cpu_key[array_size];
+  unsigned int cpu_result[array_size];
+  unsigned int cpu_threads[array_size];
+  unsigned int cpu_blocks[array_size];
+
+  /* Read characters from the input and key files into the text and key arrays respectively */
+  for(i = 0; i < array_size; i++) {
+    cpu_text[i] = fgetc(input_fp);
+    cpu_key[i] = fgetc(key_fp);
+  }
 
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *gpu_text;
@@ -141,8 +190,6 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
   cudaMalloc((void **)&gpu_text, array_size_in_bytes);
   cudaMalloc((void **)&gpu_key, array_size_in_bytes);
   cudaMalloc((void **)&gpu_result, array_size_in_bytes);
-  cudaMalloc((void **)&gpu_threads, array_size_in_bytes);
-  cudaMalloc((void **)&gpu_blocks, array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
   cudaMemcpy( gpu_text, cpu_text, array_size_in_bytes, cudaMemcpyHostToDevice);
@@ -153,21 +200,17 @@ void main_sub(int array_size, int threads_per_block, FILE *input_fp, FILE *key_f
   const unsigned int num_threads = array_size/num_blocks;
 
   /* Execute the encryption kernel */
-  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result, gpu_threads, gpu_blocks);
+  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
 
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
-  cudaMemcpy( cpu_threads, gpu_threads, array_size_in_bytes, cudaMemcpyDeviceToHost);
-  cudaMemcpy( cpu_blocks, gpu_blocks, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
   cudaFree(gpu_key);
   cudaFree(gpu_result);
-  cudaFree(gpu_threads);
-  cudaFree(gpu_blocks);
 
-  print_all_results(cpu_text, cpu_key, cpu_result, cpu_blocks, cpu_threads, array_size);
+  print_all_results(cpu_text, cpu_key, cpu_result, array_size);
 }
 
 /**
@@ -225,7 +268,10 @@ int main(int argc, char *argv[])
   }
 
   /* Pass all arguments to the subordinate main function */
-  main_sub(num_threads, threads_per_block, input_fp, key_fp);
+  pageable_transfer(num_threads, threads_per_block, input_fp, key_fp);
+  pinned_transfer(num_threads, threads_per_block, input_fp, key_fp);
 
+  fclose(input_fp);
+  fclose(key_fp);
   return EXIT_SUCCESS;
 }
