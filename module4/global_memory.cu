@@ -82,15 +82,15 @@ __host__ float add_test_non_interleaved_cpu(
 	cudaEvent_t start_time = get_time();
 
 	for (unsigned int tid = 0; tid < num_elements; tid++) {
-		printf("tid: %u ", tid);
+		if( ( tid % 10 ) == 0) { printf("tid: %u ", tid); }
         for (unsigned int i = 0; i < iter; i++) {
- 			printf("iteration: %u ", i);
+ 			if( ( tid % 10 ) == 0) { printf("iteration: %u ", i); }
 			host_dest_ptr.a[tid] += host_src_ptr.a[tid];
 			host_dest_ptr.b[tid] += host_src_ptr.b[tid];
 			host_dest_ptr.c[tid] += host_src_ptr.c[tid];
 			host_dest_ptr.d[tid] += host_src_ptr.d[tid];
 		}
- 		printf("\n");
+ 		if ( (tid % 10 ) == 0 ) { printf("\n"); }
 	}
 
 	cudaEvent_t end_time = get_time();
@@ -117,15 +117,15 @@ __host__ float add_test_interleaved_cpu(INTERLEAVED_T * const host_dest_ptr,
 	cudaEvent_t start_time = get_time();
 
 	for (unsigned int tid = 0; tid < num_elements; tid++) {
-		printf("tid: %u ", tid);
+		if ( (tid % 10 ) == 0 ) { printf("tid: %u ", tid); }
 		for (unsigned int i = 0; i < iter; i++) {
-			printf("iteration: %u ", i);
+			if ( (tid % 10 ) == 0 ) { printf("tid: %u ", tid); }
 			host_dest_ptr[tid].a += host_src_ptr[tid].a;
 			host_dest_ptr[tid].b += host_src_ptr[tid].b;
 			host_dest_ptr[tid].c += host_src_ptr[tid].c;
 			host_dest_ptr[tid].d += host_src_ptr[tid].d;
 		}
- 		printf("\n");
+ 		if ( (tid % 10 ) == 0 ) { printf("\n"); }
 	}
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
