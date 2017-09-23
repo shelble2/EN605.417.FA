@@ -454,8 +454,8 @@ void execute_host_functions()
 	float duration = add_test_interleaved_cpu(host_dest_ptr, host_src_ptr, 4,NUM_ELEMENTS);
 	printf("Interleaved duration: %fmsn\n",duration);
 
-	NON_INTERLEAVED_T host_dest_ptr_b[NUM_ELEMENTS];
-	NON_INTERLEAVED_T host_src_ptr_b[NUM_ELEMENTS];
+	NON_INTERLEAVED_T host_dest_ptr_b;
+	NON_INTERLEAVED_T host_src_ptr_b;
 	float duration = add_test_non_interleaved_cpu(host_dest_ptr_b, host_src_ptr_b, 4, NUM_ELEMENTS);
 	printf("Non-Interleaved duration: %fmsn\n",duration);
 
