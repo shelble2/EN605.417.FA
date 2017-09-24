@@ -103,9 +103,9 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
-  unsigned int cpu_text[array_size];
-  unsigned int cpu_key[array_size];
-  unsigned int cpu_result[array_size];
+  unsigned int cpu_text = malloc(array_size_in_bytes);
+  unsigned int cpu_key = malloc(array_size_in_bytes);
+  unsigned int cpu_result = malloc(array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
