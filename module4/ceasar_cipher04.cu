@@ -103,9 +103,9 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
-  unsigned int *cpu_text = malloc(array_size_in_bytes);
-  unsigned int *cpu_key = malloc(array_size_in_bytes);
-  unsigned int *cpu_result = malloc(array_size_in_bytes);
+  unsigned int *cpu_text = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *cpu_key = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *cpu_result = (unsigned int *) malloc(array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
@@ -169,9 +169,9 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   // Something to mention in discussion as well
 
   //host pageable
-  unsigned int *cpu_text_pageable = malloc(array_size_in_bytes);
-  unsigned int *cpu_key_pageable = malloc(array_size_in_bytes);
-  unsigned int *cpu_result_pageable = malloc(array_size_in_bytes);
+  unsigned int *cpu_text_pageable = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *cpu_key_pageable = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *cpu_result_pageable = (unsigned int *) malloc(array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
@@ -217,6 +217,8 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
+  print_all_results(cpu_text_pageable, cpu_key_pageable, cpu_result_pageable, array_size);
+  
   /* Free the GPU memory */
   cudaFree(gpu_text);
   cudaFree(gpu_key);
@@ -232,7 +234,6 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   free(cpu_key_pageable);
   free(cpu_result_pageable);
 
-  print_all_results(cpu_text, cpu_key, cpu_result, array_size);
 }
 
 /**
