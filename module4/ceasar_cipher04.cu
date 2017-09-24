@@ -120,6 +120,10 @@ void pageable_transfer_execution(int array_size, int threads_per_block, FILE *in
   for(i = 0; i < array_size; i++) {
     cpu_text[i] = fgetc(input_fp);
     cpu_key[i] = fgetc(key_fp);
+    if(feof(input_fp) || feof(key_fp)) {
+        rewind(input_fp);
+        rewind(key_fp);
+    }
   }
 
   /* Declare and allocate pointers for GPU based parameters */
@@ -191,6 +195,10 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   for(i = 0; i < array_size; i++) {
     cpu_text_pageable[i] = fgetc(input_fp);
     cpu_key_pageable[i] = fgetc(key_fp);
+    if(feof(input_fp) || feof(key_fp)) {
+        rewind(input_fp);
+        rewind(key_fp);
+    }
   }
 
   //host pinned
