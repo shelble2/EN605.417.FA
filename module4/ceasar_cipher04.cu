@@ -1,5 +1,5 @@
 /**
- * Assignment 04 Program - ceasar_cipher.cu expanded to try both pageable and
+ * Assignment 04 Program - ceasar_cipher.cu, expanded to try both pageable and
  * pinned memory
  * Sarah Helble
  * 9/23/17
@@ -49,9 +49,6 @@ __host__ cudaEvent_t get_time(void)
  * @text plaintext values
  * @key key values
  * @result ciphertext
- *
- * TODO: some of the values in the resultant ciphertext will be unprintable.
- * Make wrap around more advanced to deal with this.
  */
 __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result)
 {
@@ -73,12 +70,12 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
 }
 
 /**
- * One fuction to handle the printing of all results.
+ * One fuction to handle the printing of encryption results.
  * @text is the plaintext array
  * @key is the key used to encrypt
  * @result is the resulting ciphertext
  */
-void print_all_results(unsigned int *text, unsigned int *key, unsigned int *result, int array_size)
+void print_encryption_results(unsigned int *text, unsigned int *key, unsigned int *result, int array_size)
 {
   int i = 0;
 
@@ -100,6 +97,7 @@ void print_all_results(unsigned int *text, unsigned int *key, unsigned int *resu
 
 /**
  * Function that sets up everything for the kernel function encrypt()
+ * with simple pageable host memory
  *
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
@@ -155,7 +153,7 @@ void pageable_transfer_execution(int array_size, int threads_per_block, FILE *in
   cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("Pageable Transfer- Duration: %fmsn\n", duration);
-  print_all_results(cpu_text, cpu_key, cpu_result, array_size);
+  print_encryption_results(cpu_text, cpu_key, cpu_result, array_size);
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
@@ -183,9 +181,6 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
-
-  //TODO: do I need the pageable? or could just do everything from pinned?
-  // Something to mention in discussion as well
 
   /*host pageable */
   unsigned int *cpu_text_pageable = (unsigned int *) malloc(array_size_in_bytes);
@@ -244,8 +239,7 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("Pinned Transfer- Duration: %fmsn\n", duration);
-  print_all_results(cpu_text_pinned, cpu_key_pinned, cpu_result_pinned, array_size);
-
+  print_encryption_results(cpu_text_pinned, cpu_key_pinned, cpu_result_pinned, array_size);
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
@@ -274,7 +268,7 @@ void print_usage(char *name)
 }
 
 /**
- * Performs setup functions before calling the pageable_transfer_execution()
+ * Performs simple setup functions before calling the pageable_transfer_execution()
  * function.
  * Makes sure the files are valid, handles opening and closing of file pointers.
  */
@@ -359,7 +353,7 @@ int main(int argc, char *argv[])
   /* Perform the pageable transfer */
   pageable_transfer(num_threads, threads_per_block, argv[3], argv[4]);
 
-  printf("-----------------------------------------------------\n");
+  printf("-----------------------------------------------------------------\n");
 
   /* Perform the pinned transfer */
   pinned_transfer(num_threads, threads_per_block, argv[3], argv[4]);
