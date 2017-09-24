@@ -253,14 +253,14 @@ void print_usage(char *name)
 void pageable_transfer(int num_threads, int threads_per_block, char *input_file, char *key_file)
 {
   /* Make sure the input text file and the key file are openable */
-  FILE *input_fp = fopen(input_filename, "r");
+  FILE *input_fp = fopen(input_file, "r");
   if(!input_fp) {
-    printf("Error: failed to open input file %s\n", argv[3]);
+    printf("Error: failed to open input file %s\n", input_file);
     exit(-1);
   }
-  FILE *key_fp = fopen(key_filename, "r");
+  FILE *key_fp = fopen(key_file, "r");
   if(!key_fp){
-    printf("Error: failed to open key file %s\n", argv[4]);
+    printf("Error: failed to open key file %s\n", key_file);
     fclose(input_fp);
     exit(-1);
   }
@@ -280,14 +280,14 @@ void pageable_transfer(int num_threads, int threads_per_block, char *input_file,
 void pinned_transfer(int num_threads, int threads_per_block, char *input_file, char *key_file)
 {
   /* Make sure the input text file and the key file are openable */
-  FILE *input_fp = fopen(input_filename, "r");
+  FILE *input_fp = fopen(input_file, "r");
   if(!input_fp) {
-    printf("Error: failed to open input file %s\n", argv[3]);
+    printf("Error: failed to open input file %s\n", input_file;
     exit(-1);
   }
-  FILE *key_fp = fopen(key_filename, "r");
+  FILE *key_fp = fopen(key_file, "r");
   if(!key_fp){
-    printf("Error: failed to open key file %s\n", argv[4]);
+    printf("Error: failed to open key file %s\n", key_file);
     fclose(input_fp);
     exit(-1);
   }
