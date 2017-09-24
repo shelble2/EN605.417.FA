@@ -97,7 +97,7 @@ void print_all_results(unsigned int *text, unsigned int *key, unsigned int *resu
  *
  * Closes the file pointers @input_fp and @key_fp
  */
-void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
+void pageable_transfer_execution(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
@@ -136,6 +136,8 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
+  print_all_results(cpu_text, cpu_key, cpu_result, array_size);
+
   /* Free the GPU memory */
   cudaFree(gpu_text);
   cudaFree(gpu_key);
@@ -145,8 +147,6 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   free(cpu_text);
   free(cpu_key);
   free(cpu_result);
-
-  print_all_results(cpu_text, cpu_key, cpu_result, array_size);
 }
 
 /**
@@ -159,7 +159,7 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
  *
  * Closes the file pointers @input_fp and @key_fp
  */
-void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
+void pinned_transfer_execution(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
@@ -218,7 +218,7 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   print_all_results(cpu_text_pageable, cpu_key_pageable, cpu_result_pageable, array_size);
-  
+
   /* Free the GPU memory */
   cudaFree(gpu_text);
   cudaFree(gpu_key);
@@ -246,6 +246,60 @@ void print_usage(char *name)
 }
 
 /**
+ * Performs setup functions before calling the pageable_transfer_execution()
+ * function.
+ * Makes sure the files are valid, handles opening and closing of file pointers.
+ */
+void pageable_transfer(int num_threads, int threads_per_block, char *input_file, char *key_file)
+{
+  /* Make sure the input text file and the key file are openable */
+  FILE *input_fp = fopen(input_filename, "r");
+  if(!input_fp) {
+    printf("Error: failed to open input file %s\n", argv[3]);
+    exit(-1);
+  }
+  FILE *key_fp = fopen(key_filename, "r");
+  if(!key_fp){
+    printf("Error: failed to open key file %s\n", argv[4]);
+    fclose(input_fp);
+    exit(-1);
+  }
+
+  /* Perform the pageable transfer */
+  pageable_transfer_execution(num_threads, threads_per_block, input_fp, key_fp);
+
+  fclose(input_fp);
+  fclose(key_fp);
+}
+
+/**
+ * Performs setup functions before calling the pageable_transfer_execution()
+ * function.
+ * Makes sure the files are valid, handles opening and closing of file pointers.
+ */
+void pinned_transfer(int num_threads, int threads_per_block, char *input_file, char *key_file)
+{
+  /* Make sure the input text file and the key file are openable */
+  FILE *input_fp = fopen(input_filename, "r");
+  if(!input_fp) {
+    printf("Error: failed to open input file %s\n", argv[3]);
+    exit(-1);
+  }
+  FILE *key_fp = fopen(key_filename, "r");
+  if(!key_fp){
+    printf("Error: failed to open key file %s\n", argv[4]);
+    fclose(input_fp);
+    exit(-1);
+  }
+
+  /* Perform the pageable transfer */
+  pinned_transfer_execution(num_threads, threads_per_block, input_fp, key_fp);
+
+  fclose(input_fp);
+  fclose(key_fp);
+}
+
+/**
  * Entry point for excution. Checks command line arguments and
  * opens input files, then passes execution to subordinate main_sub()
  */
@@ -267,34 +321,17 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  /*  Sanity check */
   if(threads_per_block > num_threads) {
       printf("Error: threads per block is greater than number of threads\n");
       print_usage(argv[0]);
       exit(-1);
   }
 
-  char *input_filename = argv[3];
-  char *key_filename = argv[4];
+  /* Perform the pageable transfer */
+  pageable_transfer(num_threads, threads_per_block, argv[3], argv[4]);
 
-  /* Make sure the input text file and the key file are openable */
-  FILE *input_fp = fopen(input_filename, "r");
-  if(!input_fp) {
-    printf("Error: failed to open input file %s\n", argv[3]);
-    exit(-1);
-  }
-  FILE *key_fp = fopen(key_filename, "r");
-  if(!key_fp){
-    printf("Error: failed to open key file %s\n", argv[4]);
-    fclose(input_fp);
-    exit(-1);
-  }
+  /* Perform the pinned transfer */
+  pinned_transfer(num_threads, threads_per_block, argv[3], argv[4]);
 
-  /* Pass all arguments to the subordinate main function */
-  pageable_transfer(num_threads, threads_per_block, input_fp, key_fp);
-  pinned_transfer(num_threads, threads_per_block, input_fp, key_fp);
-
-  fclose(input_fp);
-  fclose(key_fp);
   return EXIT_SUCCESS;
 }
