@@ -168,7 +168,7 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   //TODO: do I need the pageable? or could just do everything from pinned?
   // Something to mention in discussion as well
 
-  //host pageable
+  /*host pageable */
   unsigned int *cpu_text_pageable = (unsigned int *) malloc(array_size_in_bytes);
   unsigned int *cpu_key_pageable = (unsigned int *) malloc(array_size_in_bytes);
   unsigned int *cpu_result_pageable = (unsigned int *) malloc(array_size_in_bytes);
@@ -189,7 +189,7 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   cudaMallocHost((void **)&cpu_key_pinned, array_size_in_bytes);
   cudaMallocHost((void **)&cpu_result_pinned, array_size_in_bytes);
 
-  // Copy the memory over
+  /* Copy the memory over */
   memcpy(cpu_text_pinned, cpu_text_pageable, array_size_in_bytes);
   memcpy(cpu_key_pinned, cpu_key_pageable, array_size_in_bytes);
   memcpy(cpu_result_pinned, cpu_result_pageable, array_size_in_bytes);
@@ -217,7 +217,7 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  print_all_results(cpu_text_pageable, cpu_key_pageable, cpu_result_pageable, array_size);
+  print_all_results(cpu_text_pinned, cpu_key_pinned, cpu_result_pinned, array_size);
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
@@ -282,7 +282,7 @@ void pinned_transfer(int num_threads, int threads_per_block, char *input_file, c
   /* Make sure the input text file and the key file are openable */
   FILE *input_fp = fopen(input_file, "r");
   if(!input_fp) {
-    printf("Error: failed to open input file %s\n", input_file;
+    printf("Error: failed to open input file %s\n", input_file);
     exit(-1);
   }
   FILE *key_fp = fopen(key_file, "r");
