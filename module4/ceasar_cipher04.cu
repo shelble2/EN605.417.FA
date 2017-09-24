@@ -32,6 +32,17 @@
 #define NUM_ALPHA MAX_PRINTABLE - MIN_PRINTABLE
 
 /**
+ * Returns the current time
+ */
+__host__ cudaEvent_t get_time(void)
+{
+	cudaEvent_t time;
+	cudaEventCreate(&time);
+	cudaEventRecord(time);
+	return time;
+}
+
+/**
  * Kernel function that creates a ciphertext by adding the values
  * in @text to the values in @key. As in a caesar cipher with keyword.
  *
@@ -130,12 +141,20 @@ void pageable_transfer_execution(int array_size, int threads_per_block, FILE *in
   const unsigned int num_blocks = array_size/threads_per_block;
   const unsigned int num_threads = array_size/num_blocks;
 
-  /* Execute the encryption kernel */
+  /* Execute the encryption kernel and keep track of start and end time for duration */
+  float duration = 0;
+  cudaEvent_t start_time = get_time();
+
   encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
+
+  cudaEvent_t end_time = get_time();
+  cudaEventSynchronize(end_time);
+	cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
+  printf("Pageable Transfer- Duration: %fmsn\n", duration);
   print_all_results(cpu_text, cpu_key, cpu_result, array_size);
 
   /* Free the GPU memory */
@@ -211,13 +230,22 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   const unsigned int num_blocks = array_size/threads_per_block;
   const unsigned int num_threads = array_size/num_blocks;
 
-  /* Execute the encryption kernel */
+  /* Execute the encryption kernel and keep track of start and end time for duration */
+  float duration = 0;
+  cudaEvent_t start_time = get_time();
+
   encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
+
+  cudaEvent_t end_time = get_time();
+  cudaEventSynchronize(end_time);
+	cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
+  printf("Pinned Transfer- Duration: %fmsn\n", duration);
   print_all_results(cpu_text_pinned, cpu_key_pinned, cpu_result_pinned, array_size);
+
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
