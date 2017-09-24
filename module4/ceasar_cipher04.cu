@@ -103,9 +103,9 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
-  unsigned int cpu_text = malloc(array_size_in_bytes);
-  unsigned int cpu_key = malloc(array_size_in_bytes);
-  unsigned int cpu_result = malloc(array_size_in_bytes);
+  unsigned int *cpu_text = malloc(array_size_in_bytes);
+  unsigned int *cpu_key = malloc(array_size_in_bytes);
+  unsigned int *cpu_result = malloc(array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
@@ -140,6 +140,11 @@ void pageable_transfer(int array_size, int threads_per_block, FILE *input_fp, FI
   cudaFree(gpu_text);
   cudaFree(gpu_key);
   cudaFree(gpu_result);
+
+  /* Free the CPU memory */
+  free(cpu_text);
+  free(cpu_key);
+  free(cpu_result);
 
   print_all_results(cpu_text, cpu_key, cpu_result, array_size);
 }
@@ -160,15 +165,34 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
-  unsigned int cpu_text[array_size];
-  unsigned int cpu_key[array_size];
-  unsigned int cpu_result[array_size];
+  //TODO: do I need the pageable? or could just do everything from pinned?
+  // Something to mention in discussion as well
+
+  //host pageable
+  unsigned int *cpu_text_pageable = malloc(array_size_in_bytes);
+  unsigned int *cpu_key_pageable = malloc(array_size_in_bytes);
+  unsigned int *cpu_result_pageable = malloc(array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
-    cpu_text[i] = fgetc(input_fp);
-    cpu_key[i] = fgetc(key_fp);
+    cpu_text_pageable[i] = fgetc(input_fp);
+    cpu_key_pageable[i] = fgetc(key_fp);
   }
+
+  //host pinned
+  unsigned int *cpu_text_pinned;
+  unsigned int *cpu_key_pinned;
+  unsigned int *cpu_result_pinned;
+
+  //pin it
+  cudaMallocHost((void **)&cpu_text_pinned, array_size_in_bytes);
+  cudaMallocHost((void **)&cpu_key_pinned, array_size_in_bytes);
+  cudaMallocHost((void **)&cpu_result_pinned, array_size_in_bytes);
+
+  // Copy the memory over
+  memcpy(cpu_text_pinned, cpu_text_pageable, array_size_in_bytes);
+  memcpy(cpu_key_pinned, cpu_key_pageable, array_size_in_bytes);
+  memcpy(cpu_result_pinned, cpu_result_pageable, array_size_in_bytes);
 
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *gpu_text;
@@ -180,8 +204,8 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   cudaMalloc((void **)&gpu_result, array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
-  cudaMemcpy( gpu_text, cpu_text, array_size_in_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy( gpu_key, cpu_key, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy( gpu_text, cpu_text_pinned, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy( gpu_key, cpu_key_pinned, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
   const unsigned int num_blocks = array_size/threads_per_block;
@@ -191,12 +215,22 @@ void pinned_transfer(int array_size, int threads_per_block, FILE *input_fp, FILE
   encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
   cudaFree(gpu_key);
   cudaFree(gpu_result);
+
+  /* Free the pinned CPU memory */
+  cudaFreeHost(cpu_text_pinned);
+  cudaFreeHost(cpu_key_pinned);
+  cudaFreeHost(cpu_result_pinned);
+
+  /* Free the pageable CPU memory */
+  free(cpu_text_pageable);
+  free(cpu_key_pageable);
+  free(cpu_result_pageable);
 
   print_all_results(cpu_text, cpu_key, cpu_result, array_size);
 }
