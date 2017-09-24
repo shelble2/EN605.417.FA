@@ -83,11 +83,11 @@ void print_all_results(unsigned int *text, unsigned int *key, unsigned int *resu
   int i = 0;
 
   /* Print the plain text, key, and result */
-  printf("\nSummary:\n\nEncrypted text:\n");
+  printf("\nPlaintext:\n");
   for(i = 0; i < array_size; i++) {
     printf("%c", text[i]);
   }
-  printf("\n\nWith Key:\n");
+  printf("\n\nKey:\n");
   for(i = 0; i < array_size; i++) {
     printf("%c", key[i]);
   }
@@ -355,8 +355,11 @@ int main(int argc, char *argv[])
       exit(-1);
   }
 
+  printf("\n");
   /* Perform the pageable transfer */
   pageable_transfer(num_threads, threads_per_block, argv[3], argv[4]);
+
+  printf("-----------------------------------------------------\n");
 
   /* Perform the pinned transfer */
   pinned_transfer(num_threads, threads_per_block, argv[3], argv[4]);
