@@ -216,8 +216,8 @@ __device__ void shuffle(u32 * const sort_tmp,
 				const u32 tid,
 				u32 * const sort_tmp_0)
 {
-		for(int i = 0; i < num_elements, i++) {
-				sort_tmp_0 = sort_tmp[num_elements - i];
+		for(int i = 0; i < num_elements; i++) {
+				sort_tmp_0[i] = sort_tmp[num_elements - i];
 		}
 }
 
