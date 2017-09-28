@@ -44,9 +44,9 @@ __host__ cudaEvent_t get_time(void)
 
 __device__ void shuffle(unsigned int *src, unsigned int* dest, unsigned int idx)
 {
-	for(int i = 0; i < NUM_ELEMENTS; i++) {
-		dest[i+idx] = 100;
-	}
+	//for(int i = 0; i < NUM_ELEMENTS; i++) {
+		dest[idx] = 100;
+	//}
 }
 /**
  * Kernel function that creates a ciphertext by adding the values
@@ -61,20 +61,20 @@ __global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *res
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-	__shared__ unsigned int sort_tmp_text[NUM_ELEMENTS];
-	__shared__ unsigned int sort_tmp_result[NUM_ELEMENTS];
+	__shared__ unsigned int sort_tmp_text[1024];
+	__shared__ unsigned int sort_tmp_result[1024];
 
 	// copy to shared memory
-	for(int i = 0; i < NUM_ELEMENTS; i++) {
-			sort_tmp_text[idx+i] = text[idx+i];
-	}
+	//for(int i = 0; i < NUM_ELEMENTS; i++) {
+			sort_tmp_text[idx] = text[idx];
+	//}
 
   shuffle(sort_tmp_text, sort_tmp_result, idx);
 
 	//copy back to global memory
-	for(int i = 0; i < NUM_ELEMENTS; i++){
-		result[idx+i] = sort_tmp_result[idx+i];
-	}
+	//for(int i = 0; i < NUM_ELEMENTS; i++){
+		result[idx] = sort_tmp_result[idx];
+	//}
 }
 
 /**
