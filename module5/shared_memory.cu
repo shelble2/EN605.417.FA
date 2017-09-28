@@ -62,7 +62,7 @@ __device__ void radix_sort(u32 * const sort_tmp,
 	{
 		u32 base_cnt_0 = 0;
 		u32 base_cnt_1 = 0;
-	
+
 		for(u32 i=0; i<num_elements; i+=num_lists)
 		{
 			const u32 elem = sort_tmp[i+tid];
@@ -78,13 +78,13 @@ __device__ void radix_sort(u32 * const sort_tmp,
 				base_cnt_0+=num_lists;
 			}
 		}
-		
+
 		// Copy data back to source - first the zero list
 		for(u32 i=0;i<base_cnt_0;i+=num_lists)
 		{
 			sort_tmp[i+tid] = sort_tmp_0[i+tid];
 		}
-		
+
 		//Copy data back to source - then the one list
 		for(u32 i=0;i<base_cnt_1; i+=num_lists)
 		{
@@ -108,7 +108,7 @@ __device__ void radix_sort2(u32 * const sort_tmp,
 		const u32 bit_mask = (1 << bit);
 		u32 base_cnt_0 = 0;
 		u32 base_cnt_1 = 0;
-	
+
 		for(u32 i=0; i<num_elements; i+=num_lists)
 		{
 			const u32 elem = sort_tmp[i+tid];
@@ -123,7 +123,7 @@ __device__ void radix_sort2(u32 * const sort_tmp,
 				base_cnt_0+=num_lists;
 			}
 		}
-		
+
 		//Copy data back to source - then the one list
 		for(u32 i=0;i<base_cnt_1; i+=num_lists)
 		{
@@ -150,7 +150,7 @@ u32 find_min(const u32 * const src_array,
 			const u32 src_idx = i + (list_indexes[i] * num_lists);
 
 			const u32 data = src_array[src_idx];
-	
+
 			if(data <= min_val)
 			{
 				min_val = data;
@@ -507,11 +507,12 @@ void execute_gpu_functions()
 	unsigned int idata[NUM_ELEMENTS], odata[NUM_ELEMENTS];
 	int i;
 	for (i = 0; i < NUM_ELEMENTS; i++){
-		idata[i] = (unsigned int) i;
+		idata[i] = (unsigned int) (NUM_ELEMENTS - i);
 	}
 
 	cudaMalloc((void** ) &d, sizeof(int) * NUM_ELEMENTS);
-	
+
+	//dest, src, size, type
 	cudaMemcpy(d, idata, sizeof(unsigned int) * NUM_ELEMENTS, cudaMemcpyHostToDevice);
 
 	//Call GPU kernels
@@ -519,13 +520,13 @@ void execute_gpu_functions()
 
 	cudaThreadSynchronize();	// Wait for the GPU launched work to complete
 	cudaGetLastError();
-	
+
 	cudaMemcpy(odata, d, sizeof(int) * NUM_ELEMENTS, cudaMemcpyDeviceToHost);
 
 	for (i = 0; i < NUM_ELEMENTS; i++) {
 		printf("Input value: %u, device output: %u\n", idata[i], odata[i]);
 	}
-	
+
 	cudaFree((void* ) d);
 	cudaDeviceReset();
 
