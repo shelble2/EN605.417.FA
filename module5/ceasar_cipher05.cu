@@ -56,7 +56,7 @@ __device__ void shuffle(unsigned int *src, unsigned int* dest, unsigned int idx)
  * @key key values
  * @result ciphertext
  */
-__global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result)
+__global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result, int NUM_ELEMENTS)
 {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -155,7 +155,7 @@ void pageable_transfer_execution(int array_size, int threads_per_block, FILE *in
   float duration = 0;
   cudaEvent_t start_time = get_time();
 
-  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
+  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result, array_size);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
@@ -245,7 +245,7 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   float duration = 0;
   cudaEvent_t start_time = get_time();
 
-  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
+  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result, array_size);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
