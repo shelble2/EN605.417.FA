@@ -211,15 +211,7 @@ __device__ void copy_data_to_global(const u32 * const data,
 	__syncthreads();
 }
 
-__device__ void shuffle(u32 * const sort_tmp,
-				const u32 num_elements,
-				const u32 tid,
-				u32 * const sort_tmp_0)
-{
-		for(int i = 0; i < num_elements; i++) {
-				sort_tmp_0[i] = sort_tmp[num_elements - i];
-		}
-}
+
 
 // Uses a single thread for merge
 __device__ void merge_array1(const u32 * const src_array,
@@ -267,6 +259,16 @@ __device__ void merge_array1(const u32 * const src_array,
 	}
 }
 
+__device__ void shuffle(u32 * const sort_tmp,
+				const u32 num_elements,
+				const u32 tid,
+				u32 * const sort_tmp_0)
+{
+		for(int i = 0; i < num_elements; i++) {
+				sort_tmp_0[i] = sort_tmp[num_elements - i];
+		}
+}
+
 __global__ void gpu_sort_array_array(u32 * const data,
 					const u32 num_lists,
 					const u32 num_elements)
@@ -275,11 +277,11 @@ __global__ void gpu_sort_array_array(u32 * const data,
 
 	__shared__ u32 sort_tmp[NUM_ELEMENTS];
 	__shared__ u32 sort_tmp_0[NUM_ELEMENTS];
-	__shared__ u32 sort_tmp_1[NUM_ELEMENTS];
+	//__shared__ u32 sort_tmp_1[NUM_ELEMENTS];
 
 	copy_data_to_shared(data, sort_tmp, num_elements, tid);
 
-	shuffle(data, sort_tmp, num_elements, tid, sort_tmp_0);
+	shuffle(sort_tmp, num_elements, tid, sort_tmp_0);
 
 	copy_data_to_global(data, sort_tmp_0, num_elements, tid);
 	//radix_sort2(sort_tmp, num_lists, num_elements, tid, sort_tmp_0, sort_tmp_1);
