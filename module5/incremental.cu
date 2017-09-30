@@ -56,7 +56,7 @@ void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
  */
-void pageable_transfer(int array_size, int threads_per_block)
+void regular_memory_shuffle(int array_size, int threads_per_block)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
@@ -97,7 +97,7 @@ void pageable_transfer(int array_size, int threads_per_block)
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  printf("Pageable Transfer- Duration: %fmsn\n", duration);
+  printf("Regular memory shuffle- Duration: %fmsn\n", duration);
   print_results(ordered, shuffled_result, array_size);
 
   /* Free the GPU memory */
@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
 
   printf("\n");
   /* Perform the pageable transfer */
-  pageable_transfer(num_threads, threads_per_block);
+  regular_memory_shuffle(num_threads, threads_per_block);
 
   printf("-----------------------------------------------------------------\n");
 
