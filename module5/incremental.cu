@@ -56,7 +56,7 @@ void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
  */
-void pageable_transfer_execution(int array_size, int threads_per_block)
+void pageable_transfer(int array_size, int threads_per_block)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
@@ -115,7 +115,7 @@ void pageable_transfer_execution(int array_size, int threads_per_block)
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
  */
-void pinned_transfer_execution(int array_size, int threads_per_block)
+void pinned_transfer(int array_size, int threads_per_block)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
@@ -191,71 +191,17 @@ void pinned_transfer_execution(int array_size, int threads_per_block)
  */
 void print_usage(char *name)
 {
-  printf("Usage: %s <total_num_threads> <threads_per_block> <input_file> <key_file>\n", name);
+  printf("Usage: %s <total_num_threads> <threads_per_block>\n", name);
 }
 
 /**
- * Performs simple setup functions before calling the pageable_transfer_execution()
- * function.
- * Makes sure the files are valid, handles opening and closing of file pointers.
- */
-void pageable_transfer(int num_threads, int threads_per_block, char *input_file, char *key_file)
-{
-  /* Make sure the input text file and the key file are openable */
-  FILE *input_fp = fopen(input_file, "r");
-  if(!input_fp) {
-    printf("Error: failed to open input file %s\n", input_file);
-    exit(-1);
-  }
-  FILE *key_fp = fopen(key_file, "r");
-  if(!key_fp){
-    printf("Error: failed to open key file %s\n", key_file);
-    fclose(input_fp);
-    exit(-1);
-  }
-
-  /* Perform the pageable transfer */
-  pageable_transfer_execution(num_threads, threads_per_block);
-
-  fclose(input_fp);
-  fclose(key_fp);
-}
-
-/**
- * Performs setup functions before calling the pageable_transfer_execution()
- * function.
- * Makes sure the files are valid, handles opening and closing of file pointers.
- */
-void pinned_transfer(int num_threads, int threads_per_block, char *input_file, char *key_file)
-{
-  /* Make sure the input text file and the key file are openable */
-  FILE *input_fp = fopen(input_file, "r");
-  if(!input_fp) {
-    printf("Error: failed to open input file %s\n", input_file);
-    exit(-1);
-  }
-  FILE *key_fp = fopen(key_file, "r");
-  if(!key_fp){
-    printf("Error: failed to open key file %s\n", key_file);
-    fclose(input_fp);
-    exit(-1);
-  }
-
-  /* Perform the pageable transfer */
-  pinned_transfer_execution(num_threads, threads_per_block);
-
-  fclose(input_fp);
-  fclose(key_fp);
-}
-
-/**
- * Entry point for excution. Checks command line arguments and
- * opens input files, then passes execution to subordinate main_sub()
+ * Entry point for execution. Checks command line arguments 
+ * then passes execution to subordinate function
  */
 int main(int argc, char *argv[])
 {
   /* Check the number of arguments, print usage if wrong */
-  if(argc != 5) {
+  if(argc != 3) {
     printf("Error: Incorrect number of command line arguments\n");
     print_usage(argv[0]);
     exit(-1);
@@ -278,12 +224,12 @@ int main(int argc, char *argv[])
 
   printf("\n");
   /* Perform the pageable transfer */
-  pageable_transfer(num_threads, threads_per_block, argv[3], argv[4]);
+  pageable_transfer(num_threads, threads_per_block);
 
   printf("-----------------------------------------------------------------\n");
 
   /* Perform the pinned transfer */
-  pinned_transfer(num_threads, threads_per_block, argv[3], argv[4]);
+  pinned_transfer(num_threads, threads_per_block);
 
   return EXIT_SUCCESS;
 }
