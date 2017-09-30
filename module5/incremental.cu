@@ -131,7 +131,7 @@ void exec_shuffle(int global_array, int global_plan)
 		printf("Global Array, Global Plan:\n");
 		cudaMemcpyToSymbol(gmem_plan, plan, PLAN_DEPTH * sizeof(int));
 		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
-	} else if(global_plan == 0 && global_array == 1) {}
+	} else if(global_plan == 0 && global_array == 1) {
 		// Plan still global, but array shared
 		printf("Shared Array, Global Plan:\n");
 		cudaMemcpyToSymbol(gmem_plan, plan, PLAN_DEPTH * sizeof(int));
@@ -201,11 +201,11 @@ int main(int argc, char *argv[])
 	printf("-----------------------------------------------------------------\n");
 
 	/* Do the shuffle with global memory for array, constants for plan */
-	//exec_shuffle(0, 1);
+	exec_shuffle(0, 1);
 	printf("-----------------------------------------------------------------\n");
 
 	/* Do the shuffle with shared memory for array, constants for plan */
-	//exec_shuffle(1, 1);
+	exec_shuffle(1, 1);
 
   return EXIT_SUCCESS;
 }
