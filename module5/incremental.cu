@@ -121,16 +121,6 @@ void pinned_transfer(int array_size, int threads_per_block)
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
-  /*host pageable */
-  unsigned int *ordered_pageable = (unsigned int *) malloc(array_size_in_bytes);
-  unsigned int *shuffled_result_pageable = (unsigned int *) malloc(array_size_in_bytes);
-
-  /* Read characters from the input and key files into the text and key arrays respectively */
-  for(i = 0; i < array_size; i++) {
-  	ordered_pageable[i] = i;
-  }
-
-  //host pinned
   unsigned int *ordered_pinned;
   unsigned int *shuffled_result_pinned;
 
@@ -138,9 +128,10 @@ void pinned_transfer(int array_size, int threads_per_block)
   cudaMallocHost((void **)&ordered_pinned, array_size_in_bytes);
   cudaMallocHost((void **)&shuffled_result_pinned, array_size_in_bytes);
 
-  /* Copy the memory over */
-  memcpy(ordered_pinned, ordered_pageable, array_size_in_bytes);
-  memcpy(shuffled_result_pinned, shuffled_result_pageable, array_size_in_bytes);
+  /* Read characters from the input and key files into the text and key arrays respectively */
+  for(i = 0; i < array_size; i++) {
+  	ordered_pinned[i] = i;
+  }
 
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *d_ordered;
@@ -179,10 +170,6 @@ void pinned_transfer(int array_size, int threads_per_block)
   /* Free the pinned CPU memory */
   cudaFreeHost(ordered_pinned);
   cudaFreeHost(shuffled_result_pinned);
-
-  /* Free the pageable CPU memory */
-  free(ordered_pageable);
-  free(shuffled_result_pageable);
 }
 
 /**
