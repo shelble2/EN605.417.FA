@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define NUM_ELEMENTS 512
+
 /**
  * Returns the current time
  */
@@ -41,6 +43,12 @@ __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 
   shuffled[idx + instruction] = ordered[idx];
 }
+
+__global__ void shared_shuffle(unsigned int *ordered, unsigned int *shuffled)
+{
+	
+	__shared__ unsigned int tmp[NUM_ELEMENTS];
+	}
 
 /**
  * One fuction to handle the printing of results.
@@ -105,8 +113,12 @@ void exec_shuffle(int array_size, int threads_per_block, int global_array, int g
 	if(global_array == 0) {
 		if(global_plan == 0) {
   		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+		}		
+	} else {
+	  if(global_plan == 0) {
+	  	shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 		}
-	}
+		}
   	cudaEvent_t end_time = get_time();
   	cudaEventSynchronize(end_time);
 
