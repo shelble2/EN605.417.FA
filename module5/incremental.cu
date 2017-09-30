@@ -36,27 +36,49 @@ __host__ cudaEvent_t get_time(void)
  *    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] Becomes
  *    [ 4, 2, 0, 7, 1, 3, 6, 9, 5, 8 ]
  */
-__global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
+__global__ void shuffle_const(unsigned int *ordered, unsigned int *shuffled)
 {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  int plan[10] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
-
   unsigned int instruction_num = idx % 10;
-  int instruction = plan[instruction_num];
+  int instruction = const_plan[instruction_num];
 
   shuffled[idx + instruction] = ordered[idx];
 }
 
-__global__ void shared_shuffle(unsigned int *ordered, unsigned int *shuffled)
+__global__ void shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
+{
+  /* Calculate the current index */
+  const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+  unsigned int instruction_num = idx % 10;
+  int instruction = gmem_plan[instruction_num];
+
+  shuffled[idx + instruction] = ordered[idx];
+}
+
+__global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffled)
 {
 	__shared__ unsigned int tmp[NUM_ELEMENTS];
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
-	int plan[10] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
 
 	unsigned int instruction_num = idx % 10;
-  int instruction = plan[instruction_num];
+  int instruction = const_plan[instruction_num];
+
+	tmp[idx] = ordered[idx];
+	__syncthreads();
+
+	shuffled[idx+instruction] = tmp[idx];
+}
+
+__global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffled)
+{
+	__shared__ unsigned int tmp[NUM_ELEMENTS];
+  const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+	unsigned int instruction_num = idx % 10;
+  int instruction = gmem_plan[instruction_num];
 
 	tmp[idx] = ordered[idx];
 	__syncthreads();
@@ -130,22 +152,22 @@ void exec_shuffle(int global_array, int global_plan)
 		// Everything global
 		printf("Global Array, Global Plan:\n");
 		cudaMemcpyToSymbol(gmem_plan, plan, PLAN_DEPTH * sizeof(int));
-		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+		shuffle_gmem<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 	} else if(global_plan == 0 && global_array == 1) {
 		// Plan still global, but array shared
 		printf("Shared Array, Global Plan:\n");
 		cudaMemcpyToSymbol(gmem_plan, plan, PLAN_DEPTH * sizeof(int));
-		shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+		shared_shuffle_gmem<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 	} else if(global_plan == 1 && global_array == 0) {
 		// Plan Constant Mem, But Array back to global
 		printf("Global Array, Constant Plan:\n");
 		cudaMemcpyToSymbol(const_plan, plan, PLAN_DEPTH * sizeof(int));
-		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+		shuffle_const<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 	} else if(global_plan == 1 && global_array == 1) {
 		// Plan Constant Mem, But Array back to global
 		printf("Shared Array, Constant Plan:\n");
 		cudaMemcpyToSymbol(const_plan, plan, PLAN_DEPTH * sizeof(int));
-		shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+		shared_shuffle_const<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 	}
 
   cudaEvent_t end_time = get_time();
