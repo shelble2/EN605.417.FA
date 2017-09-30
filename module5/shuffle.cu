@@ -1,9 +1,12 @@
 /**
- * Assignment 05 Program
+ * Assignment 05 Program - shuffle.cu
  * Sarah Helble
  * 9/29/17
  *
- * Usage ./out
+ * Shuffles the contents of an array according to a pre-determined pattern
+ * Used to test the difference between shared/global and const/global memory
+ * 
+ * Usage ./aout
  *
  */
 
@@ -41,7 +44,7 @@ __global__ void shuffle_const(unsigned int *ordered, unsigned int *shuffled)
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  unsigned int instruction_num = idx % 10;
+  unsigned int instruction_num = idx % PLAN_DEPTH;
   int instruction = const_plan[instruction_num];
 
   shuffled[idx + instruction] = ordered[idx];
@@ -52,7 +55,7 @@ __global__ void shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  unsigned int instruction_num = idx % 10;
+  unsigned int instruction_num = idx % PLAN_DEPTH;
   int instruction = gmem_plan[instruction_num];
 
   shuffled[idx + instruction] = ordered[idx];
@@ -63,7 +66,7 @@ __global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffl
 	__shared__ unsigned int tmp[NUM_ELEMENTS];
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-	unsigned int instruction_num = idx % 10;
+	unsigned int instruction_num = idx % PLAN_DEPTH;
   int instruction = const_plan[instruction_num];
 
 	tmp[idx] = ordered[idx];
@@ -72,12 +75,12 @@ __global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffl
 	shuffled[idx+instruction] = tmp[idx];
 }
 
-__global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffled)
+__global__ void shared_shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
 {
 	__shared__ unsigned int tmp[NUM_ELEMENTS];
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-	unsigned int instruction_num = idx % 10;
+	unsigned int instruction_num = idx % PLAN_DEPTH;
   int instruction = gmem_plan[instruction_num];
 
 	tmp[idx] = ordered[idx];
