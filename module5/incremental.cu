@@ -3,7 +3,7 @@
  * Sarah Helble
  * 9/29/17
  *
- * Usage ./out <total_num_threads> <threads_per_block>
+ * Usage ./out
  *
  */
 
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #define NUM_ELEMENTS 512
+#define THREADS_PER_BLOCK 16
 
 /**
  * Returns the current time
@@ -46,7 +47,7 @@ __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 
 __global__ void shared_shuffle(unsigned int *ordered, unsigned int *shuffled)
 {
-	
+
 	__shared__ unsigned int tmp[NUM_ELEMENTS];
 	}
 
@@ -74,10 +75,10 @@ void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size
  * @global_array is 0 if the array should be global memory, 1 if it should be shared
  * @global_plan is 0 if the plan should be global memory, 1 if it should be constant
  */
-void exec_shuffle(int array_size, int threads_per_block, int global_array, int global_plan)
+void exec_shuffle(int global_array, int global_plan)
 {
   /* Calculate the size of the array */
-  int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
+  int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
   int i = 0;
 
   unsigned int *ordered;
@@ -88,7 +89,7 @@ void exec_shuffle(int array_size, int threads_per_block, int global_array, int g
   cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
-  for(i = 0; i < array_size; i++) {
+  for(i = 0; i < NUM_ELEMENTS; i++) {
   	ordered[i] = i;
   }
 
@@ -103,8 +104,8 @@ void exec_shuffle(int array_size, int threads_per_block, int global_array, int g
   cudaMemcpy(d_ordered, ordered, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
-  const unsigned int num_blocks = array_size/threads_per_block;
-  const unsigned int num_threads = array_size/num_blocks;
+  const unsigned int num_blocks = NUM_ELEMENTS/THREADS_PER_BLOCK;
+  const unsigned int num_threads = NUM_ELEMENTS/num_blocks;
 
   /* Execute the kernel and keep track of start and end time for duration */
   float duration = 0;
@@ -113,7 +114,7 @@ void exec_shuffle(int array_size, int threads_per_block, int global_array, int g
 	if(global_array == 0) {
 		if(global_plan == 0) {
   		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
-		}		
+		}
 	} else {
 	  if(global_plan == 0) {
 	  	shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
@@ -145,7 +146,7 @@ void exec_shuffle(int array_size, int threads_per_block, int global_array, int g
  */
 void print_usage(char *name)
 {
-  printf("Usage: %s <total_num_threads> <threads_per_block>\n", name);
+  printf("Usage: %s \n", name);
 }
 
 /**
@@ -155,14 +156,15 @@ void print_usage(char *name)
 int main(int argc, char *argv[])
 {
   /* Check the number of arguments, print usage if wrong */
-  if(argc != 3) {
+  if(argc != 1) {
     printf("Error: Incorrect number of command line arguments\n");
     print_usage(argv[0]);
     exit(-1);
   }
 
-  /* Check the values for num_threads and threads_per_block */
-  int num_threads = atoi(argv[1]);
+  /* Check the values for num_threads and threads_per_block
+	// no point using these when need #define NUM_ELEMENTS for shared mem
+	int num_threads = atoi(argv[1]);
   int threads_per_block = atoi(argv[2]);
   if(num_threads <= 0 || threads_per_block <= 0) {
     printf("Error: num_threads and threads_per_block must be integer > 0");
@@ -174,24 +176,24 @@ int main(int argc, char *argv[])
       printf("Error: threads per block is greater than number of threads\n");
       print_usage(argv[0]);
       exit(-1);
-  }
+  }*/
 
   printf("\n");
 
 	/* Do the shuffle with all global memory */
-  exec_shuffle(num_threads, threads_per_block, 0, 0);
+  exec_shuffle(0, 0);
 	printf("-----------------------------------------------------------------\n");
 
 	/* Do the shuffle with shared memory for array, global plan */
-	//exec_shuffle(num_threads, threads_per_block, 1, 0);
+	//exec_shuffle(1, 0);
 	printf("-----------------------------------------------------------------\n");
 
 	/* Do the shuffle with global memory for array, constants for plan */
-	//exec_shuffle(num_threads, threads_per_block, 0, 1);
+	//exec_shuffle(0, 1);
 	printf("-----------------------------------------------------------------\n");
 
 	/* Do the shuffle with shared memory for array, constants for plan */
-	//exec_shuffle(num_threads, threads_per_block, 1, 1);
+	//exec_shuffle(1, 1);
 
   return EXIT_SUCCESS;
 }
