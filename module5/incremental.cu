@@ -36,7 +36,6 @@ __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-
   int plan[10] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
 
   unsigned int instruction_num = idx % 10;
@@ -47,9 +46,18 @@ __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 
 __global__ void shared_shuffle(unsigned int *ordered, unsigned int *shuffled)
 {
-
 	__shared__ unsigned int tmp[NUM_ELEMENTS];
-	}
+  const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int plan[10] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
+
+	unsigned int instruction_num = idx % 10;
+  int instruction = plan[instruction_num];
+
+	tmp[idx] = ordered[idx];
+	__syncthreads();
+
+	shuffled[idx+instruction] = tmp[idx];
+}
 
 /**
  * One fuction to handle the printing of results.
@@ -119,9 +127,9 @@ void exec_shuffle(int global_array, int global_plan)
 	  if(global_plan == 0) {
 	  	shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 		}
-		}
-  	cudaEvent_t end_time = get_time();
-  	cudaEventSynchronize(end_time);
+	}
+  cudaEvent_t end_time = get_time();
+  cudaEventSynchronize(end_time);
 
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
@@ -162,22 +170,6 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  /* Check the values for num_threads and threads_per_block
-	// no point using these when need #define NUM_ELEMENTS for shared mem
-	int num_threads = atoi(argv[1]);
-  int threads_per_block = atoi(argv[2]);
-  if(num_threads <= 0 || threads_per_block <= 0) {
-    printf("Error: num_threads and threads_per_block must be integer > 0");
-    print_usage(argv[0]);
-    exit(-1);
-  }
-
-  if(threads_per_block > num_threads) {
-      printf("Error: threads per block is greater than number of threads\n");
-      print_usage(argv[0]);
-      exit(-1);
-  }*/
-
   printf("\n");
 
 	/* Do the shuffle with all global memory */
@@ -185,7 +177,7 @@ int main(int argc, char *argv[])
 	printf("-----------------------------------------------------------------\n");
 
 	/* Do the shuffle with shared memory for array, global plan */
-	//exec_shuffle(1, 0);
+	exec_shuffle(1, 0);
 	printf("-----------------------------------------------------------------\n");
 
 	/* Do the shuffle with global memory for array, constants for plan */
