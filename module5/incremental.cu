@@ -62,14 +62,18 @@ void regular_memory_shuffle(int array_size, int threads_per_block)
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
-  unsigned int *ordered = (unsigned int *) malloc(array_size_in_bytes);
-  unsigned int *shuffled_result = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *ordered;
+  unsigned int *shuffled_result;
 
-  // Fill the ordered array
+  //pin it
+  cudaMallocHost((void **)&ordered, array_size_in_bytes);
+  cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
+
+  /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
-  	ordered[i] = i;	
+  	ordered[i] = i;
   }
-
+  
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *d_ordered;
   unsigned int *d_shuffled_result;
@@ -105,8 +109,8 @@ void regular_memory_shuffle(int array_size, int threads_per_block)
   cudaFree(d_shuffled_result);
 
   /* Free the CPU memory */
-  free(ordered);
-  free(shuffled_result);
+  cudaFreeHost(ordered);
+  cudaFreeHost(shuffled_result);
 }
 
 /**
@@ -115,22 +119,22 @@ void regular_memory_shuffle(int array_size, int threads_per_block)
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
  */
-void pinned_transfer(int array_size, int threads_per_block)
+void shared_memory_shuffle(int array_size, int threads_per_block)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
-
-  unsigned int *ordered_pinned;
-  unsigned int *shuffled_result_pinned;
+ 
+  unsigned int *ordered;
+  unsigned int *shuffled_result;
 
   //pin it
-  cudaMallocHost((void **)&ordered_pinned, array_size_in_bytes);
-  cudaMallocHost((void **)&shuffled_result_pinned, array_size_in_bytes);
+  cudaMallocHost((void **)&ordered, array_size_in_bytes);
+  cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
-  	ordered_pinned[i] = i;
+  	ordered[i] = i;
   }
 
   /* Declare and allocate pointers for GPU based parameters */
@@ -141,7 +145,7 @@ void pinned_transfer(int array_size, int threads_per_block)
   cudaMalloc((void **)&d_shuffled_result, array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
-  cudaMemcpy(d_ordered, ordered_pinned, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_ordered, ordered, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
   const unsigned int num_blocks = array_size/threads_per_block;
@@ -158,18 +162,18 @@ void pinned_transfer(int array_size, int threads_per_block)
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( shuffled_result_pinned, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  printf("Pinned Transfer- Duration: %fmsn\n", duration);
-  print_results(ordered_pinned, shuffled_result_pinned, array_size);
+  printf("Shared memory shuffle- Duration: %fmsn\n", duration);
+  print_results(ordered, shuffled_result, array_size);
 
   /* Free the GPU memory */
   cudaFree(d_ordered);
   cudaFree(d_shuffled_result);
 
   /* Free the pinned CPU memory */
-  cudaFreeHost(ordered_pinned);
-  cudaFreeHost(shuffled_result_pinned);
+  cudaFreeHost(ordered);
+  cudaFreeHost(shuffled_result);
 }
 
 /**
@@ -216,7 +220,7 @@ int main(int argc, char *argv[])
   printf("-----------------------------------------------------------------\n");
 
   /* Perform the pinned transfer */
-  pinned_transfer(num_threads, threads_per_block);
+  shared_memory_shuffle(num_threads, threads_per_block);
 
   return EXIT_SUCCESS;
 }
