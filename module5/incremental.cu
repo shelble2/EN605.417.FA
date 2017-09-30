@@ -110,99 +110,79 @@ void pageable_transfer_execution(int array_size, int threads_per_block)
 }
 
 /**
- * Function that sets up everything for the kernel function encrypt()
+ * Function that sets up everything for the kernel function 
  *
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
- * @input_fp file pointer to the input file text
- * @key_fp file pointer to the key file
- *
- * Closes the file pointers @input_fp and @key_fp
  */
-void pinned_transfer_execution(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
+void pinned_transfer_execution(int array_size, int threads_per_block)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
   /*host pageable */
-  unsigned int *cpu_text_pageable = (unsigned int *) malloc(array_size_in_bytes);
-  unsigned int *cpu_key_pageable = (unsigned int *) malloc(array_size_in_bytes);
-  unsigned int *cpu_result_pageable = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *ordered_pageable = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *shuffled_result_pageable = (unsigned int *) malloc(array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
   for(i = 0; i < array_size; i++) {
-    cpu_text_pageable[i] = fgetc(input_fp);
-    cpu_key_pageable[i] = fgetc(key_fp);
-    if(feof(input_fp) || feof(key_fp)) {
-        rewind(input_fp);
-        rewind(key_fp);
-    }
+  	ordered_pageable[i] = i;
   }
 
   //host pinned
-  unsigned int *cpu_text_pinned;
-  unsigned int *cpu_key_pinned;
-  unsigned int *cpu_result_pinned;
+  unsigned int *ordered_pinned;
+  unsigned int *shuffled_result_pinned;
 
   //pin it
-  cudaMallocHost((void **)&cpu_text_pinned, array_size_in_bytes);
-  cudaMallocHost((void **)&cpu_key_pinned, array_size_in_bytes);
-  cudaMallocHost((void **)&cpu_result_pinned, array_size_in_bytes);
+  cudaMallocHost((void **)&ordered_pinned, array_size_in_bytes);
+  cudaMallocHost((void **)&shuffled_result_pinned, array_size_in_bytes);
 
   /* Copy the memory over */
-  memcpy(cpu_text_pinned, cpu_text_pageable, array_size_in_bytes);
-  memcpy(cpu_key_pinned, cpu_key_pageable, array_size_in_bytes);
-  memcpy(cpu_result_pinned, cpu_result_pageable, array_size_in_bytes);
+  memcpy(ordered_pinned, ordered_pageable, array_size_in_bytes);
+  memcpy(shuffled_result_pinned, shuffled_result_pageable, array_size_in_bytes);
 
   /* Declare and allocate pointers for GPU based parameters */
-  unsigned int *gpu_text;
-  unsigned int *gpu_key;
-  unsigned int *gpu_result;
+  unsigned int *d_ordered;
+  unsigned int *d_shuffled_result;
 
-  cudaMalloc((void **)&gpu_text, array_size_in_bytes);
-  cudaMalloc((void **)&gpu_key, array_size_in_bytes);
-  cudaMalloc((void **)&gpu_result, array_size_in_bytes);
+  cudaMalloc((void **)&d_ordered, array_size_in_bytes);
+  cudaMalloc((void **)&d_shuffled_result, array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
-  cudaMemcpy( gpu_text, cpu_text_pinned, array_size_in_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy( gpu_key, cpu_key_pinned, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_ordered, ordered_pinned, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
   const unsigned int num_blocks = array_size/threads_per_block;
   const unsigned int num_threads = array_size/num_blocks;
 
-  /* Execute the encryption kernel and keep track of start and end time for duration */
+  /* Execute the kernel and keep track of start and end time for duration */
   float duration = 0;
   cudaEvent_t start_time = get_time();
 
-  shuffle<<<num_blocks, num_threads>>>(gpu_text, gpu_result);
+  shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy( shuffled_result_pinned, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("Pinned Transfer- Duration: %fmsn\n", duration);
-  print_results(cpu_text_pinned, cpu_result_pinned, array_size);
+  print_results(ordered_pinned, shuffled_result_pinned, array_size);
 
   /* Free the GPU memory */
-  cudaFree(gpu_text);
-  cudaFree(gpu_key);
-  cudaFree(gpu_result);
+  cudaFree(d_ordered);
+  cudaFree(d_shuffled_result);
 
   /* Free the pinned CPU memory */
-  cudaFreeHost(cpu_text_pinned);
-  cudaFreeHost(cpu_key_pinned);
-  cudaFreeHost(cpu_result_pinned);
+  cudaFreeHost(ordered_pinned);
+  cudaFreeHost(shuffled_result_pinned);
 
   /* Free the pageable CPU memory */
-  free(cpu_text_pageable);
-  free(cpu_key_pageable);
-  free(cpu_result_pageable);
-
+  free(ordered_pageable);
+  free(shuffled_result_pageable);
 }
 
 /**
@@ -262,7 +242,7 @@ void pinned_transfer(int num_threads, int threads_per_block, char *input_file, c
   }
 
   /* Perform the pageable transfer */
-  pinned_transfer_execution(num_threads, threads_per_block, input_fp, key_fp);
+  pinned_transfer_execution(num_threads, threads_per_block);
 
   fclose(input_fp);
   fclose(key_fp);
