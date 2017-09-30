@@ -64,12 +64,12 @@ __global__ void shared_shuffle(unsigned int *ordered, unsigned int *shuffled)
  * @ordered is the original array
  * @shuffled is the result
  */
-void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size)
+void print_results(unsigned int *ordered, unsigned int *shuffled)
 {
   int i = 0;
 
   printf("\n");
-  for(i = 0; i < array_size; i++) {
+  for(i = 0; i < NUM_ELEMENTS; i++) {
     printf("Original value at index [%d]: %d, shuffled: %d\n", i, ordered[i], shuffled[i]);
   }
   printf("\n");
@@ -137,7 +137,7 @@ void exec_shuffle(int global_array, int global_plan)
   cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("Shared memory shuffle- Duration: %fmsn\n", duration);
-  print_results(ordered, shuffled_result, array_size);
+  print_results(ordered, shuffled_result);
 
   /* Free the GPU memory */
   cudaFree(d_ordered);
