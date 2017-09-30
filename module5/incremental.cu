@@ -34,29 +34,19 @@ __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 }
 
 /**
- * One fuction to handle the printing of encryption results.
- * @text is the plaintext array
- * @key is the key used to encrypt
- * @result is the resulting ciphertext
+ * One fuction to handle the printing of results.
+ * @ordered is the original array
+ * @shuffled is the result 
  */
-void print_encryption_results(unsigned int *text, unsigned int *key, unsigned int *result, int array_size)
+void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size)
 {
   int i = 0;
 
-  /* Print the plain text, key, and result */
-  printf("\nPlaintext:\n");
+  printf("\n");
   for(i = 0; i < array_size; i++) {
-    printf("%c", text[i]);
+    printf("Original value at index [%d]: %d, shuffled: %d\n", i, ordered[i], shuffled[i]);
   }
-  printf("\n\nKey:\n");
-  for(i = 0; i < array_size; i++) {
-    printf("%c", key[i]);
-  }
-  printf("\n\nResults in ciphertext:\n");
-  for(i = 0; i < array_size; i++) {
-    printf("%c", result[i]);
-  }
-  printf("\n\n");
+  printf("\n");
 }
 
 /**
@@ -121,7 +111,7 @@ void pageable_transfer_execution(int array_size, int threads_per_block, FILE *in
   cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("Pageable Transfer- Duration: %fmsn\n", duration);
-  print_encryption_results(cpu_text, cpu_key, cpu_result, array_size);
+  print_results(cpu_text, cpu_result, array_size);
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
@@ -211,7 +201,7 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   cudaMemcpy( cpu_result_pinned, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("Pinned Transfer- Duration: %fmsn\n", duration);
-  print_encryption_results(cpu_text_pinned, cpu_key_pinned, cpu_result_pinned, array_size);
+  print_results(cpu_text_pinned, cpu_result_pinned, array_size);
 
   /* Free the GPU memory */
   cudaFree(gpu_text);
