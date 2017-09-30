@@ -22,30 +22,15 @@ __host__ cudaEvent_t get_time(void)
 }
 
 /**
- * Kernel function that creates a ciphertext by adding the values
- * in @text to the values in @key. As in a caesar cipher with keyword.
- *
- * @text plaintext values
- * @key key values
- * @result ciphertext
+ * Kernel function that shuffles the values in @ordered and puts the
+ * output in @shuffled
  */
-__global__ void encrypt(unsigned int *text, unsigned int *key, unsigned int *result)
+__global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  /*
-   * Adjust value of text and key to be based at 0
-   * Printable ASCII starts at MIN_PRINTABLE, but 0 start is easier to work with
-   */
-  char adjusted_text = text[idx];
-  char adjusted_key = key[idx];
-
-  /* The cipher character is the text char added to the key char modulo the number of chars in the alphabet*/
-  char cipherchar = (adjusted_text + adjusted_key);
-
-  /* adjust back to normal ascii (starting at MIN_PRINTABLE) and save to result */
-  result[idx] = 100;//(unsigned int) cipherchar + MIN_PRINTABLE ;
+  shuffled[idx] = 100;
 }
 
 /**
@@ -126,7 +111,7 @@ void pageable_transfer_execution(int array_size, int threads_per_block, FILE *in
   float duration = 0;
   cudaEvent_t start_time = get_time();
 
-  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
+  shuffle<<<num_blocks, num_threads>>>(gpu_text, gpu_result);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
@@ -216,7 +201,7 @@ void pinned_transfer_execution(int array_size, int threads_per_block, FILE *inpu
   float duration = 0;
   cudaEvent_t start_time = get_time();
 
-  encrypt<<<num_blocks, num_threads>>>(gpu_text, gpu_key, gpu_result);
+  shuffle<<<num_blocks, num_threads>>>(gpu_text, gpu_result);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
