@@ -50,48 +50,35 @@ void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size
 }
 
 /**
- * Function that sets up everything for the kernel function encrypt()
+ * Function that sets up everything for the kernel function 
  * with simple pageable host memory
  *
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
- * @input_fp file pointer to the input file text
- * @key_fp file pointer to the key file
- *
- * Closes the file pointers @input_fp and @key_fp
  */
-void pageable_transfer_execution(int array_size, int threads_per_block, FILE *input_fp, FILE *key_fp)
+void pageable_transfer_execution(int array_size, int threads_per_block)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
 
-  unsigned int *cpu_text = (unsigned int *) malloc(array_size_in_bytes);
-  unsigned int *cpu_key = (unsigned int *) malloc(array_size_in_bytes);
-  unsigned int *cpu_result = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *ordered = (unsigned int *) malloc(array_size_in_bytes);
+  unsigned int *shuffled_result = (unsigned int *) malloc(array_size_in_bytes);
 
-  /* Read characters from the input and key files into the text and key arrays respectively */
+  // Fill the ordered array
   for(i = 0; i < array_size; i++) {
-    cpu_text[i] = fgetc(input_fp);
-    cpu_key[i] = fgetc(key_fp);
-    if(feof(input_fp) || feof(key_fp)) {
-        rewind(input_fp);
-        rewind(key_fp);
-    }
+  	ordered[i] = i;	
   }
 
   /* Declare and allocate pointers for GPU based parameters */
-  unsigned int *gpu_text;
-  unsigned int *gpu_key;
-  unsigned int *gpu_result;
+  unsigned int *d_ordered;
+  unsigned int *d_shuffled_result;
 
-  cudaMalloc((void **)&gpu_text, array_size_in_bytes);
-  cudaMalloc((void **)&gpu_key, array_size_in_bytes);
-  cudaMalloc((void **)&gpu_result, array_size_in_bytes);
+  cudaMalloc((void **)&d_ordered, array_size_in_bytes);
+  cudaMalloc((void **)&d_shuffled_result, array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
-  cudaMemcpy( gpu_text, cpu_text, array_size_in_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy( gpu_key, cpu_key, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy( d_ordered, ordered, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
   const unsigned int num_blocks = array_size/threads_per_block;
@@ -101,27 +88,25 @@ void pageable_transfer_execution(int array_size, int threads_per_block, FILE *in
   float duration = 0;
   cudaEvent_t start_time = get_time();
 
-  shuffle<<<num_blocks, num_threads>>>(gpu_text, gpu_result);
+  shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( cpu_result, gpu_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("Pageable Transfer- Duration: %fmsn\n", duration);
-  print_results(cpu_text, cpu_result, array_size);
+  print_results(ordered, shuffled_result, array_size);
 
   /* Free the GPU memory */
-  cudaFree(gpu_text);
-  cudaFree(gpu_key);
-  cudaFree(gpu_result);
+  cudaFree(d_ordered);
+  cudaFree(d_shuffled_result);
 
   /* Free the CPU memory */
-  free(cpu_text);
-  free(cpu_key);
-  free(cpu_result);
+  free(ordered);
+  free(shuffled_result);
 }
 
 /**
@@ -250,7 +235,7 @@ void pageable_transfer(int num_threads, int threads_per_block, char *input_file,
   }
 
   /* Perform the pageable transfer */
-  pageable_transfer_execution(num_threads, threads_per_block, input_fp, key_fp);
+  pageable_transfer_execution(num_threads, threads_per_block);
 
   fclose(input_fp);
   fclose(key_fp);
