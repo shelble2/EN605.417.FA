@@ -24,7 +24,7 @@ __host__ cudaEvent_t get_time(void)
  * Shuffles the passed @ordered list and places the result in @shuffled
 */
 //TODO: follow the 'plan'
-__global__ void shuffle(unsigned int *ordered; unsigned int *shuffled)
+__global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -33,13 +33,13 @@ __global__ void shuffle(unsigned int *ordered; unsigned int *shuffled)
 
   const int instruction = 0;//plan[instruction_number];
 
-  shuffled[idx + instruction] = ordered[idx];
+  shuffled[idx + instruction] = 0;//ordered[idx];
 }
 
 /* Sets up all of the memory and arrays for
  * call to Kernel
  */
-void main_sub(int num_threads, int threads_per_block)
+void main_sub(int array_size, int threads_per_block)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
@@ -53,7 +53,7 @@ void main_sub(int num_threads, int threads_per_block)
   cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
 
   //Put values in the ordered array
-  for(int i = 0; i < num_threads; i++) {
+  for(int i = 0; i < array_size; i++) {
     ordered[i] = i;
   }
 
@@ -77,7 +77,7 @@ void main_sub(int num_threads, int threads_per_block)
 
   //print
   for(int i = 0; i < num_threads; i++) {
-      printf("original: %d, shuffled: %d", ordered[i], shuffled_result[i]);
+      printf("original: %d, shuffled: %d\n", ordered[i], shuffled_result[i]);
   }
 
   /* Free the GPU memory */
@@ -98,7 +98,6 @@ int main(int argc, char *argv[])
   /* Check the number of arguments, print usage if wrong */
   if(argc != 3) {
     printf("Error: Incorrect number of command line arguments\n");
-    print_usage(argv[0]);
     exit(-1);
   }
 
