@@ -1,5 +1,5 @@
 /**
- * Assignment 05 Program 
+ * Assignment 05 Program
  * Sarah Helble
  * 9/29/17
  *
@@ -24,14 +24,16 @@ __host__ cudaEvent_t get_time(void)
 /**
  * Kernel function that shuffles the values in @ordered and puts the
  * output in @shuffled
+ * With the Plan given below, Example:
+ *    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] Becomes
+ *    [ 4, 2, 0, 7, 1, 3, 6, 9, 5, 8 ]
  */
 __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  //  [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
-  //  [ 4, 2, 0, 7 , 1, 3, 6,  , 5, 8  ]
+
   int plan[10] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
 
   unsigned int instruction_num = idx % 10;
@@ -43,7 +45,7 @@ __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
 /**
  * One fuction to handle the printing of results.
  * @ordered is the original array
- * @shuffled is the result 
+ * @shuffled is the result
  */
 void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size)
 {
@@ -57,17 +59,19 @@ void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size
 }
 
 /**
- * Function that sets up everything for the kernel function 
+ * Function that sets up everything for the kernel function
  *
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
+ * @global_array is 0 if the array should be global memory, 1 if it should be shared
+ * @global_plan is 0 if the plan should be global memory, 1 if it should be constant
  */
-void shared_memory_shuffle(int array_size, int threads_per_block)
+void exec_shuffle(int array_size, int threads_per_block, int global_array, int global_plan)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
   int i = 0;
- 
+
   unsigned int *ordered;
   unsigned int *shuffled_result;
 
@@ -96,12 +100,16 @@ void shared_memory_shuffle(int array_size, int threads_per_block)
 
   /* Execute the kernel and keep track of start and end time for duration */
   float duration = 0;
-  cudaEvent_t start_time = get_time();
 
-  shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+	cudaEvent_t start_time = get_time();
+	if(global_array == 0) {
+		if(global_plan == 0) {
+  		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+		}
+	}
+  	cudaEvent_t end_time = get_time();
+  	cudaEventSynchronize(end_time);
 
-  cudaEvent_t end_time = get_time();
-  cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
@@ -129,7 +137,7 @@ void print_usage(char *name)
 }
 
 /**
- * Entry point for execution. Checks command line arguments 
+ * Entry point for execution. Checks command line arguments
  * then passes execution to subordinate function
  */
 int main(int argc, char *argv[])
@@ -157,13 +165,21 @@ int main(int argc, char *argv[])
   }
 
   printf("\n");
-  /* Perform the pageable transfer */
-  shared_memory_shuffle(num_threads, threads_per_block);
 
-  printf("-----------------------------------------------------------------\n");
+	/* Do the shuffle with all global memory */
+  exec_shuffle(num_threads, threads_per_block, 0, 0);
+	printf("-----------------------------------------------------------------\n");
 
-  /* Perform the pinned transfer */
-  shared_memory_shuffle(num_threads, threads_per_block);
+	/* Do the shuffle with shared memory for array, global plan */
+	//exec_shuffle(num_threads, threads_per_block, 1, 0);
+	printf("-----------------------------------------------------------------\n");
+
+	/* Do the shuffle with global memory for array, constants for plan */
+	//exec_shuffle(num_threads, threads_per_block, 0, 1);
+	printf("-----------------------------------------------------------------\n");
+
+	/* Do the shuffle with shared memory for array, constants for plan */
+	//exec_shuffle(num_threads, threads_per_block, 1, 1);
 
   return EXIT_SUCCESS;
 }
