@@ -30,7 +30,14 @@ __global__ void shuffle(unsigned int *ordered, unsigned int *shuffled)
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  shuffled[idx] = 100;
+  //  [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+  //  [ 4, 2, 0, 7 , 1, 3, 6,  , 5, 8  ]
+  int plan[10] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
+
+  unsigned int instruction_num = idx % 10;
+  int instruction = plan[instruction_num];
+
+  shuffled[idx + instruction] = ordered[idx];
 }
 
 /**
@@ -47,70 +54,6 @@ void print_results(unsigned int *ordered, unsigned int *shuffled, int array_size
     printf("Original value at index [%d]: %d, shuffled: %d\n", i, ordered[i], shuffled[i]);
   }
   printf("\n");
-}
-
-/**
- * Function that sets up everything for the kernel function 
- * with simple pageable host memory
- *
- * @array_size size of array (total number of threads)
- * @threads_per_block number of threads to put in each block
- */
-void regular_memory_shuffle(int array_size, int threads_per_block)
-{
-  /* Calculate the size of the array */
-  int array_size_in_bytes = (sizeof(unsigned int) * (array_size));
-  int i = 0;
-
-  unsigned int *ordered;
-  unsigned int *shuffled_result;
-
-  //pin it
-  cudaMallocHost((void **)&ordered, array_size_in_bytes);
-  cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
-
-  /* Read characters from the input and key files into the text and key arrays respectively */
-  for(i = 0; i < array_size; i++) {
-  	ordered[i] = i;
-  }
-  
-  /* Declare and allocate pointers for GPU based parameters */
-  unsigned int *d_ordered;
-  unsigned int *d_shuffled_result;
-
-  cudaMalloc((void **)&d_ordered, array_size_in_bytes);
-  cudaMalloc((void **)&d_shuffled_result, array_size_in_bytes);
-
-  /* Copy the CPU memory to the GPU memory */
-  cudaMemcpy( d_ordered, ordered, array_size_in_bytes, cudaMemcpyHostToDevice);
-
-  /* Designate the number of blocks and threads */
-  const unsigned int num_blocks = array_size/threads_per_block;
-  const unsigned int num_threads = array_size/num_blocks;
-
-  /* Execute the encryption kernel and keep track of start and end time for duration */
-  float duration = 0;
-  cudaEvent_t start_time = get_time();
-
-  shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
-
-  cudaEvent_t end_time = get_time();
-  cudaEventSynchronize(end_time);
-	cudaEventElapsedTime(&duration, start_time, end_time);
-
-  /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
-
-  printf("Regular memory shuffle- Duration: %fmsn\n", duration);
-  print_results(ordered, shuffled_result, array_size);
-
-  /* Free the GPU memory */
-  cudaFree(d_ordered);
-  cudaFree(d_shuffled_result);
-
-  /* Free the CPU memory */
-  cudaFreeHost(ordered);
-  cudaFreeHost(shuffled_result);
 }
 
 /**
@@ -215,7 +158,7 @@ int main(int argc, char *argv[])
 
   printf("\n");
   /* Perform the pageable transfer */
-  regular_memory_shuffle(num_threads, threads_per_block);
+  shared_memory_shuffle(num_threads, threads_per_block);
 
   printf("-----------------------------------------------------------------\n");
 
