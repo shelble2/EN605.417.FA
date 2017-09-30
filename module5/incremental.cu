@@ -13,6 +13,11 @@
 #define NUM_ELEMENTS 512
 #define THREADS_PER_BLOCK 16
 
+#define PLAN_DEPTH 10
+
+__constant__ int const_plan[PLAN_DEPTH];
+__device__ int gmem_plan[PLAN_DEPTH];
+
 /**
  * Returns the current time
  */
@@ -91,6 +96,7 @@ void exec_shuffle(int global_array, int global_plan)
 
   unsigned int *ordered;
   unsigned int *shuffled_result;
+	int plan[PLAN_DEPTH] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
 
   //pin it
   cudaMallocHost((void **)&ordered, array_size_in_bytes);
@@ -119,15 +125,29 @@ void exec_shuffle(int global_array, int global_plan)
   float duration = 0;
 
 	cudaEvent_t start_time = get_time();
-	if(global_array == 0) {
-		if(global_plan == 0) {
-  		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
-		}
-	} else {
-	  if(global_plan == 0) {
-	  	shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
-		}
+
+	if(global_plan == 0 && global_array == 0) {
+		// Everything global
+		printf("Global Array, Global Plan:\n");
+		cudaMemcpyToSymbol(gmem_plan, plan, PLAN_DEPTH * sizeof(int));
+		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+	} else if(global_plan == 0 && global_array == 1) {}
+		// Plan still global, but array shared
+		printf("Shared Array, Global Plan:\n");
+		cudaMemcpyToSymbol(gmem_plan, plan, PLAN_DEPTH * sizeof(int));
+		shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+	} else if(global_plan == 1 && global_array == 0) {
+		// Plan Constant Mem, But Array back to global
+		printf("Global Array, Constant Plan:\n");
+		cudaMemcpyToSymbol(const_plan, plan, PLAN_DEPTH * sizeof(int));
+		shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+	} else if(global_plan == 1 && global_array == 1) {
+		// Plan Constant Mem, But Array back to global
+		printf("Shared Array, Constant Plan:\n");
+		cudaMemcpyToSymbol(const_plan, plan, PLAN_DEPTH * sizeof(int));
+		shared_shuffle<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 	}
+
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
 
@@ -136,7 +156,7 @@ void exec_shuffle(int global_array, int global_plan)
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  printf("Shared memory shuffle- Duration: %fmsn\n", duration);
+  printf("\tDuration: %fmsn\n", duration);
   print_results(ordered, shuffled_result);
 
   /* Free the GPU memory */
