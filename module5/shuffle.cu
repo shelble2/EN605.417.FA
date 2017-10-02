@@ -47,7 +47,12 @@ __global__ void shuffle_const(unsigned int *ordered, unsigned int *shuffled)
   unsigned int instruction_num = idx % PLAN_DEPTH;
   int instruction = const_plan[instruction_num];
 
-  shuffled[idx + instruction] = ordered[idx];
+  int new_index = idx + instruction;
+  if (new_index >= NUM_ELEMENTS) {
+     shuffled[idx] = ordered[idx];
+  } else {
+     shuffled[new_index] = ordered[idx];
+  }
 }
 
 __global__ void shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
@@ -64,10 +69,10 @@ __global__ void shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
 __global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffled)
 {
 	__shared__ unsigned int tmp[NUM_ELEMENTS];
-  const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+	const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	unsigned int instruction_num = idx % PLAN_DEPTH;
-  int instruction = const_plan[instruction_num];
+	int instruction = const_plan[instruction_num];
 
 	tmp[idx] = ordered[idx];
 	__syncthreads();
@@ -78,10 +83,10 @@ __global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffl
 __global__ void shared_shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
 {
 	__shared__ unsigned int tmp[NUM_ELEMENTS];
-  const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+	const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	unsigned int instruction_num = idx % PLAN_DEPTH;
-  int instruction = gmem_plan[instruction_num];
+	int instruction = gmem_plan[instruction_num];
 
 	tmp[idx] = ordered[idx];
 	__syncthreads();
@@ -121,7 +126,7 @@ void exec_shuffle(int global_array, int global_plan)
 
   unsigned int *ordered;
   unsigned int *shuffled_result;
-	int plan[PLAN_DEPTH] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
+  int plan[PLAN_DEPTH] = {2, 3, -1, 2, -4, 3, 0, -4, 1, -2};
 
   //pin it
   cudaMallocHost((void **)&ordered, array_size_in_bytes);
@@ -149,7 +154,7 @@ void exec_shuffle(int global_array, int global_plan)
   /* Execute the kernel and keep track of start and end time for duration */
   float duration = 0;
 
-	cudaEvent_t start_time = get_time();
+  cudaEvent_t start_time = get_time();
 
 	if(global_plan == 0 && global_array == 0) {
 		// Everything global
@@ -176,7 +181,7 @@ void exec_shuffle(int global_array, int global_plan)
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
 
-	cudaEventElapsedTime(&duration, start_time, end_time);
+  cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
@@ -217,20 +222,20 @@ int main(int argc, char *argv[])
 
   printf("\n");
 
-	/* Do the shuffle with all global memory */
+  /* Do the shuffle with all global memory */
   exec_shuffle(0, 0);
-	printf("-----------------------------------------------------------------\n");
+  printf("-----------------------------------------------------------------\n");
 
-	/* Do the shuffle with shared memory for array, global plan */
-	exec_shuffle(1, 0);
-	printf("-----------------------------------------------------------------\n");
+  /* Do the shuffle with shared memory for array, global plan */
+  exec_shuffle(1, 0);
+  printf("-----------------------------------------------------------------\n");
 
-	/* Do the shuffle with global memory for array, constants for plan */
-	exec_shuffle(0, 1);
-	printf("-----------------------------------------------------------------\n");
+  /* Do the shuffle with global memory for array, constants for plan */
+  exec_shuffle(0, 1);
+  printf("-----------------------------------------------------------------\n");
 
-	/* Do the shuffle with shared memory for array, constants for plan */
-	exec_shuffle(1, 1);
+  /* Do the shuffle with shared memory for array, constants for plan */
+  exec_shuffle(1, 1);
 
   return EXIT_SUCCESS;
 }
