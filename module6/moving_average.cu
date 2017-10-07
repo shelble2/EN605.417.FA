@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define NUM_ELEMENTS 512
-#define THREADS_PER_BLOCK 16
+#define NUM_ELEMENTS 128
+#define THREADS_PER_BLOCK 1
 
 #define MAX_INT 30
 
