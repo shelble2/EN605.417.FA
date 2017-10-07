@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define NUM_ELEMENTS 512
 #define THREADS_PER_BLOCK 16
@@ -43,7 +44,7 @@ __global__ void average_using_registers(unsigned int *list, float *averages)
 		unsigned int num = 1;
 
 		// If there is a previous element, add it to sum
-		if((idx - 1) >= 0) {
+		if(idx > 0) {
 			sum = sum + list[idx - 1];
 			num = num + 1;
 		}
@@ -75,7 +76,7 @@ __global__ void average_using_shared(unsigned int *list, float *averages)
 		nums[idx] = 1;
 
 		// If there is a previous element, add it to sum
-		if((idx - 1) >= 0) {
+		if(idx > 0) {
 			sums[idx] = sums[idx] + list[idx - 1];
 			nums[idx] = nums[idx] + 1;
 		}
@@ -122,23 +123,23 @@ void exec_kernel(bool use_registers)
   int i = 0;
 
   unsigned int *list;
-  unsigned int *result;
+  float *averages;
 
   //pin it
   cudaMallocHost((void **)&list, array_size_in_bytes);
-  cudaMallocHost((void **)&result, array_size_in_bytes);
+  cudaMallocHost((void **)&averages, array_size_in_bytes);
 
 	// Fill array with random numbers between 0 and MAX_INT
   for(i = 0; i < NUM_ELEMENTS; i++) {
-  	ordered[i] = (unsigned int) rand() % MAX_INT;
+  	list[i] = (unsigned int) rand() % MAX_INT;
   }
 
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *d_list;
-  unsigned int *d_result;
+  float *d_averages;
 
   cudaMalloc((void **)&d_list, array_size_in_bytes);
-  cudaMalloc((void **)&d_result, array_size_in_bytes);
+  cudaMalloc((void **)&d_averages, array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
   cudaMemcpy(d_list, list, array_size_in_bytes, cudaMemcpyHostToDevice);
@@ -164,18 +165,18 @@ void exec_kernel(bool use_registers)
   cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy( averages, d_averages, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("\tDuration: %fmsn\n", duration);
-  print_results(ordered, shuffled_result);
+  print_results(list, averages);
 
   /* Free the GPU memory */
-  cudaFree(d_ordered);
-  cudaFree(d_shuffled_result);
+  cudaFree(d_list);
+  cudaFree(d_averages);
 
   /* Free the pinned CPU memory */
-  cudaFreeHost(ordered);
-  cudaFreeHost(shuffled_result);
+  cudaFreeHost(list);
+  cudaFreeHost(averages);
 }
 
 /**
@@ -189,20 +190,20 @@ int main(int argc, char *argv[])
 
   /* Do the average with registers*/
 	printf("First Run of Averages Calculated using Register Memory");
-  exec_kernel(TRUE);
+  exec_kernel(true);
   printf("-----------------------------------------------------------------\n");
 
 	printf("Second Run of Averages Calculated using Register Memory");
-  exec_kernel(TRUE);
+  exec_kernel(true);
   printf("-----------------------------------------------------------------\n");
 
 	/* Do the average with shared memory */
 	printf("First Run of Averages Calculated using Shared Memory");
-  exec_kernel(FALSE);
+  exec_kernel(false);
 	printf("-----------------------------------------------------------------\n");
 
 	printf("Second Run of Averages Calculated using Shared Memory");
-  exec_kernel(FALSE);
+  exec_kernel(false);
 	printf("-----------------------------------------------------------------\n");
 
   return EXIT_SUCCESS;
