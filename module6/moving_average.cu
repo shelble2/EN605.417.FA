@@ -55,7 +55,7 @@ __global__ void average_using_registers(unsigned int *list, float *averages)
 			num = num + 1;
 		}
 
-		averages[idx] = sum / num;
+		averages[idx] = (float) sum / num;
 	}
 }
 
@@ -88,7 +88,7 @@ __global__ void average_using_shared(unsigned int *list, float *averages)
 		}
 
 		// Calculate the average
-		averages[idx] = sums[idx] / nums[idx];
+		averages[idx] = (float) sums[idx] / nums[idx];
 	}
 }
 
@@ -120,6 +120,7 @@ void exec_kernel(bool use_registers)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
+  int float_array_size_in_bytes = (sizeof(float) * (NUM_ELEMENTS));
   int i = 0;
 
   unsigned int *list;
@@ -127,7 +128,7 @@ void exec_kernel(bool use_registers)
 
   //pin it
   cudaMallocHost((void **)&list, array_size_in_bytes);
-  cudaMallocHost((void **)&averages, array_size_in_bytes);
+  cudaMallocHost((void **)&averages, float_array_size_in_bytes);
 
 	// Fill array with random numbers between 0 and MAX_INT
   for(i = 0; i < NUM_ELEMENTS; i++) {
@@ -139,7 +140,7 @@ void exec_kernel(bool use_registers)
   float *d_averages;
 
   cudaMalloc((void **)&d_list, array_size_in_bytes);
-  cudaMalloc((void **)&d_averages, array_size_in_bytes);
+  cudaMalloc((void **)&d_averages, float_array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
   cudaMemcpy(d_list, list, array_size_in_bytes, cudaMemcpyHostToDevice);
@@ -165,7 +166,7 @@ void exec_kernel(bool use_registers)
   cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( averages, d_averages, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy( averages, d_averages, float_array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("\tDuration: %fmsn\n", duration);
   print_results(list, averages);
