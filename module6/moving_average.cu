@@ -13,8 +13,19 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define NUM_ELEMENTS 128
-#define THREADS_PER_BLOCK 1
+// Execution Notes
+// 512, 512 gives about equivalent times
+// 512, 256 register is 2x faster
+// 256, 256 register is slightly better
+// 256, 128 register is slightly better
+// 512, 128 register is slightly better
+// 1024, 256 shared is slightly better
+// 1024, 512 register is slightly better
+//
+// First run always seems to be bad (2x slower)
+
+#define NUM_ELEMENTS 512
+#define THREADS_PER_BLOCK 256
 
 #define MAX_INT 30
 
@@ -189,6 +200,15 @@ int main(int argc, char *argv[])
 
   printf("\n");
 
+	/* Do the average with shared memory */
+	printf("First Run of Averages Calculated using Shared Memory");
+  exec_kernel(false);
+	printf("-----------------------------------------------------------------\n");
+
+	printf("Second Run of Averages Calculated using Shared Memory");
+  exec_kernel(false);
+	printf("-----------------------------------------------------------------\n");
+
   /* Do the average with registers*/
 	printf("First Run of Averages Calculated using Register Memory");
   exec_kernel(true);
@@ -198,14 +218,7 @@ int main(int argc, char *argv[])
   exec_kernel(true);
   printf("-----------------------------------------------------------------\n");
 
-	/* Do the average with shared memory */
-	printf("First Run of Averages Calculated using Shared Memory");
-  exec_kernel(false);
-	printf("-----------------------------------------------------------------\n");
 
-	printf("Second Run of Averages Calculated using Shared Memory");
-  exec_kernel(false);
-	printf("-----------------------------------------------------------------\n");
 
   return EXIT_SUCCESS;
 }
