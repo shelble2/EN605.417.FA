@@ -4,7 +4,7 @@
 #include <time.h> 
 #include <cuda.h> 
 
-#define sizeOfArray 1024*1024
+#define sizeOfArray 4096*4096
  
 __global__ void arrayAddition(int *device_a, int *device_b, int *device_result)
 {
@@ -52,6 +52,7 @@ int main ( int argc, char **argv )
    host_b[index] = rand()%10; 
   } 
 
+  cudaEventRecord(start, 0);
   cudaMemcpyAsync(device_a, host_a,sizeOfArray * sizeof ( int ), cudaMemcpyHostToDevice, stream); 
 
   cudaMemcpyAsync(device_b, host_b, sizeOfArray * sizeof ( int ), cudaMemcpyHostToDevice, stream); 
@@ -63,13 +64,14 @@ int main ( int argc, char **argv )
   cudaMemcpyAsync(device_result, host_result, sizeOfArray * sizeof ( int ), cudaMemcpyHostToDevice, stream); 
 
   cudaStreamSynchronize(stream);
+
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop); 
   cudaEventElapsedTime(&elapsedTime, start, stop); 
 
   printf("*********** CDAC - Tech Workshop : hyPACK-2013 \n"); 
   printf("\n Size of array : %d \n", sizeOfArray); 
-  printf("\n Time taken: %3.1f ms \n", elapsedTime); 
+  printf("\n Time taken: %3.9f ms \n", elapsedTime); 
 
   cudaFreeHost(host_a); 
   cudaFreeHost(host_b); 
