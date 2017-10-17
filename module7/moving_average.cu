@@ -13,8 +13,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <cuda.h>
+#include <unistd.h>
 
-#define NUM_ELEMENTS 512
+#define DEFAULT_NUM_ELEMENTS 512
 #define THREADS_PER_BLOCK 256
 
 #define MAX_INT 30
@@ -29,7 +30,7 @@ __global__ void average_window(unsigned int *list, float *averages)
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-	if(idx < NUM_ELEMENTS) {
+	if(idx < DEFAULT_NUM_ELEMENTS) {
 		unsigned int sum = list[idx];
 		unsigned int num = 1;
 
@@ -40,7 +41,7 @@ __global__ void average_window(unsigned int *list, float *averages)
 		}
 
 		// If there is a next element, add it to sum
-		if((idx + 1) < NUM_ELEMENTS) {
+		if((idx + 1) < DEFAULT_NUM_ELEMENTS) {
 			sum = sum + list[idx + 1];
 			num = num + 1;
 		}
@@ -59,7 +60,7 @@ void print_results(unsigned int *list, float *averages)
   int i = 0;
 
   printf("\n");
-  for(i = 0; i < NUM_ELEMENTS; i++) {
+  for(i = 0; i < DEFAULT_NUM_ELEMENTS; i++) {
     printf("Original value at index [%d]: %d, average: %f\n", i, list[i], averages[i]);
   }
   printf("\n");
@@ -74,8 +75,8 @@ void print_results(unsigned int *list, float *averages)
 void exec_kernel_sync(int verbose)
 {
   /* Calculate the size of the array */
-  int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
-  int float_array_size_in_bytes = (sizeof(float) * (NUM_ELEMENTS));
+  int array_size_in_bytes = (sizeof(unsigned int) * (DEFAULT_NUM_ELEMENTS));
+  int float_array_size_in_bytes = (sizeof(float) * (DEFAULT_NUM_ELEMENTS));
   int i = 0;
 
   unsigned int *list, *d_list;
@@ -94,7 +95,7 @@ void exec_kernel_sync(int verbose)
   cudaMallocHost((void **)&averages, float_array_size_in_bytes);
 
 	// Fill array with random numbers between 0 and MAX_INT
-  for(i = 0; i < NUM_ELEMENTS; i++) {
+  for(i = 0; i < DEFAULT_NUM_ELEMENTS; i++) {
   	list[i] = (unsigned int) rand() % MAX_INT;
   }
 
@@ -105,8 +106,8 @@ void exec_kernel_sync(int verbose)
   cudaMemcpy(d_list, list, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
-  const unsigned int num_blocks = NUM_ELEMENTS/THREADS_PER_BLOCK;
-  const unsigned int num_threads = NUM_ELEMENTS/num_blocks;
+  const unsigned int num_blocks = DEFAULT_NUM_ELEMENTS/THREADS_PER_BLOCK;
+  const unsigned int num_threads = DEFAULT_NUM_ELEMENTS/num_blocks;
 
 	/* Kernel call */
 	average_window<<<num_blocks, num_threads>>>(d_list, d_averages);
@@ -118,7 +119,7 @@ void exec_kernel_sync(int verbose)
 	cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
 
-  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS, duration);
+  printf("\tList size: %d, Duration: %fmsn\n", DEFAULT_NUM_ELEMENTS, duration);
   if(verbose) {
     print_results(list, averages);
   }
@@ -141,8 +142,8 @@ void exec_kernel_sync(int verbose)
 void exec_kernel_async(int verbose)
 {
   /* Calculate the size of the array */
-  int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
-  int float_array_size_in_bytes = (sizeof(float) * (NUM_ELEMENTS));
+  int array_size_in_bytes = (sizeof(unsigned int) * (DEFAULT_NUM_ELEMENTS));
+  int float_array_size_in_bytes = (sizeof(float) * (DEFAULT_NUM_ELEMENTS));
   int i = 0;
 
   unsigned int *list, *d_list;
@@ -164,7 +165,7 @@ void exec_kernel_async(int verbose)
   cudaMallocHost((void **)&averages, float_array_size_in_bytes);
 
 	// Fill array with random numbers between 0 and MAX_INT
-  for(i = 0; i < NUM_ELEMENTS; i++) {
+  for(i = 0; i < DEFAULT_NUM_ELEMENTS; i++) {
   	list[i] = (unsigned int) rand() % MAX_INT;
   }
 
@@ -175,8 +176,8 @@ void exec_kernel_async(int verbose)
   cudaMemcpyAsync(d_list, list, array_size_in_bytes, cudaMemcpyHostToDevice, stream);
 
   /* Designate the number of blocks and threads */
-  const unsigned int num_blocks = NUM_ELEMENTS/THREADS_PER_BLOCK;
-  const unsigned int num_threads = NUM_ELEMENTS/num_blocks;
+  const unsigned int num_blocks = DEFAULT_NUM_ELEMENTS/THREADS_PER_BLOCK;
+  const unsigned int num_threads = DEFAULT_NUM_ELEMENTS/num_blocks;
 
 	/* Kernel call */
 	average_window<<<num_blocks, num_threads>>>(d_list, d_averages);
@@ -190,7 +191,7 @@ void exec_kernel_async(int verbose)
 	cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
 
-  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS, duration);
+  printf("\tList size: %d, Duration: %fmsn\n", DEFAULT_NUM_ELEMENTS, duration);
   if(verbose) {
     print_results(list, averages);
   }
