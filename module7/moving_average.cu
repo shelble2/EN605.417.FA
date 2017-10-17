@@ -118,7 +118,7 @@ void exec_kernel_sync(int verbose)
 	cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
 
-  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS duration);
+  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS, duration);
   if(verbose) {
     print_results(list, averages);
   }
@@ -190,7 +190,7 @@ void exec_kernel_async(int verbose)
 	cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
 
-  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS duration);
+  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS, duration);
   if(verbose) {
     print_results(list, averages);
   }
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 
   /* Check the number of arguments, print usage if wrong */
   if(argc == 2) {
-    if (argv[1] == "-v") {
+    if (strcmp(argv[1], "-v") == 0) {
           verbose = 1;
     }
   }
