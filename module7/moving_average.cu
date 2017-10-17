@@ -211,21 +211,32 @@ void exec_kernel_async(int verbose)
 int main(int argc, char *argv[])
 {
   int verbose = 0;
+  int num_elements = DEFAULT_NUM_ELEMENTS;
+  int c;
 
-  /* Check the number of arguments, print usage if wrong */
-  if(argc == 2) {
-    if (argv[1] == "-v") {
-          verbose = 1;
-    }
+  while((c = getopt(argc, argv, "vn:")) != -1) {
+    switch(c) {
+      case 'v':
+        verbose = 1;
+        break;
+      case 'n':
+        num_elements = atoi(optarg);
+        break;
+      default:
+        printf("Error: unrecognized option: %c\n", c);
+        printf("Usage: %s [-v] [-n num_elements]", argv[0]);
+        exit(-1);
+      }
   }
+  printf("verbosity: %d num_elements %d", verbose, num_elements);
 
 	/* Do the average with shared memory */
 	printf("\nFirst Run of Averages done synchronously");
-  exec_kernel_sync(verbose);
+  //exec_kernel_sync(verbose);
 	printf("-----------------------------------------------------------------\n");
 
 	printf("Second Run of Averages done asynchronously");
-  exec_kernel_async(verbose);
+  //exec_kernel_async(verbose);
 	printf("-----------------------------------------------------------------\n");
 
   return EXIT_SUCCESS;
