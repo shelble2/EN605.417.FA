@@ -152,6 +152,9 @@ void exec_kernel_async()
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
+  cudaStream_t stream;
+  cudaStreamCreate(&stream);
+
 	cudaMalloc((void **)&d_list, array_size_in_bytes);
   cudaMalloc((void **)&d_averages, float_array_size_in_bytes);
 
@@ -166,8 +169,8 @@ void exec_kernel_async()
 	/* Recording from copy to copy back */
 	cudaEventRecord(start, 0);
 
-	/* Copy the CPU memory to the GPU memory */
-  cudaMemcpy(d_list, list, array_size_in_bytes, cudaMemcpyHostToDevice);
+	/* Copy the CPU memory to the GPU memory asynchronously */
+  cudaMemcpyAsync(d_list, list, array_size_in_bytes, cudaMemcpyHostToDevice, stream);
 
   /* Designate the number of blocks and threads */
   const unsigned int num_blocks = NUM_ELEMENTS/THREADS_PER_BLOCK;
@@ -177,7 +180,9 @@ void exec_kernel_async()
 	average_window<<<num_blocks, num_threads>>>(d_list, d_averages);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( averages, d_averages, float_array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpyAsync( averages, d_averages, float_array_size_in_bytes, cudaMemcpyDeviceToHost, stream);
+
+  cudaStreamSynchronize(stream);
 
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
