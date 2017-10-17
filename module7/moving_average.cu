@@ -68,10 +68,10 @@ void print_results(unsigned int *list, float *averages)
 /**
  * Function that sets up everything for the kernel function
  *
- * @array_size size of array (total number of threads)
- * @threads_per_block number of threads to put in each block
+ * @verbose is 1 if the function should print detailed results of averages
+ * verbosity of 0 will only print timing data
  */
-void exec_kernel_sync()
+void exec_kernel_sync(int verbose)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
@@ -118,8 +118,10 @@ void exec_kernel_sync()
 	cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
 
-  printf("\tDuration: %fmsn\n", duration);
-  print_results(list, averages);
+  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS duration);
+  if(verbose) {
+    print_results(list, averages);
+  }
 
   /* Free the GPU memory */
   cudaFree(d_list);
@@ -133,10 +135,10 @@ void exec_kernel_sync()
 /**
  * Function that sets up everything for the kernel function
  *
- * @array_size size of array (total number of threads)
- * @threads_per_block number of threads to put in each block
+ * @verbose is 1 if the function should print detailed results of averages
+ * verbosity of 0 will only print timing data
  */
-void exec_kernel_async()
+void exec_kernel_async(int verbose)
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
@@ -188,8 +190,10 @@ void exec_kernel_async()
 	cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
 
-  printf("\tDuration: %fmsn\n", duration);
-  print_results(list, averages);
+  printf("\tList size: %d, Duration: %fmsn\n", NUM_ELEMENTS duration);
+  if(verbose) {
+    print_results(list, averages);
+  }
 
   /* Free the GPU memory */
   cudaFree(d_list);
@@ -206,16 +210,22 @@ void exec_kernel_async()
  */
 int main(int argc, char *argv[])
 {
+  int verbose = 0;
 
-  printf("\n");
+  /* Check the number of arguments, print usage if wrong */
+  if(argc == 2) {
+    if (argv[1] == "-v") {
+          verbose = 1;
+    }
+  }
 
 	/* Do the average with shared memory */
-	printf("First Run of Averages done synchronously");
-  exec_kernel_sync();
+	printf("\nFirst Run of Averages done synchronously");
+  exec_kernel_sync(verbose);
 	printf("-----------------------------------------------------------------\n");
 
 	printf("Second Run of Averages done asynchronously");
-  exec_kernel_async();
+  exec_kernel_async(verbose);
 	printf("-----------------------------------------------------------------\n");
 
   return EXIT_SUCCESS;
