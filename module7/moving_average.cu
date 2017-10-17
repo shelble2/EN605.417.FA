@@ -82,7 +82,7 @@ void exec_kernel()
   float *averages, *d_averages;
 
 	cudaEvent_t start, stop;
-	float elapsedTime;
+	float duration;
 
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
@@ -115,7 +115,7 @@ void exec_kernel()
   cudaMemcpy( averages, d_averages, float_array_size_in_bytes, cudaMemcpyDeviceToHost);
 
 	cudaEventRecord(stop, 0);
-	cudaStreamSynchronize(stop);
+	cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
 
   printf("\tDuration: %fmsn\n", duration);
@@ -141,20 +141,20 @@ int main(int argc, char *argv[])
 
 	/* Do the average with shared memory */
 	printf("First Run of Averages Calculated using Shared Memory");
-  exec_kernel(false);
+  exec_kernel();
 	printf("-----------------------------------------------------------------\n");
 
 	printf("Second Run of Averages Calculated using Shared Memory");
-  exec_kernel(false);
+  exec_kernel();
 	printf("-----------------------------------------------------------------\n");
 
   /* Do the average with registers*/
 	printf("First Run of Averages Calculated using Register Memory");
-  exec_kernel(true);
+  exec_kernel();
   printf("-----------------------------------------------------------------\n");
 
 	printf("Second Run of Averages Calculated using Register Memory");
-  exec_kernel(true);
+  exec_kernel();
   printf("-----------------------------------------------------------------\n");
 
 
