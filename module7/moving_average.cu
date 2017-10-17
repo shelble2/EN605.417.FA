@@ -1,4 +1,4 @@
-threads_per_block/**
+/**
  * Assignment 07 Program - moving_average.cu  (edited from module 6 for 7)
  * Sarah Helble
  * 10/16/17
@@ -53,7 +53,7 @@ __global__ void average_window(unsigned int *list, float *averages, int num_elem
  * @list is the original array
  * @averages is the result
  */
-void print_results(unsigned int *list, float *averages)
+void print_results(unsigned int *list, float *averages, int num_elements)
 {
   int i = 0;
 
@@ -119,7 +119,7 @@ void exec_kernel_sync(int verbosity, int num_elements, int threads_per_block, in
 
   printf("\tList size: %d, Duration: %fmsn\n", num_elements, duration);
   if(verbosity) {
-    print_results(list, averages);
+    print_results(list, averages, num_elements);
   }
 
   /* Free the GPU memory */
@@ -191,7 +191,7 @@ void exec_kernel_async(int verbosity, int num_elements, int threads_per_block, i
 
   printf("\tList size: %d, Duration: %fmsn\n", num_elements, duration);
   if(verbosity) {
-    print_results(list, averages);
+    print_results(list, averages, num_elements);
   }
 
   /* Free the GPU memory */
