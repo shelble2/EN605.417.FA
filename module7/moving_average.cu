@@ -11,23 +11,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <time.h>
+#include <cuda.h>
 
 #define NUM_ELEMENTS 512
 #define THREADS_PER_BLOCK 256
 
 #define MAX_INT 30
-
-/**
- * Returns the current time
- */
-__host__ cudaEvent_t get_time(void)
-{
-	cudaEvent_t time;
-	cudaEventCreate(&time);
-	cudaEventRecord(time);
-	return time;
-}
 
 /**
  * Kernel function that takes a moving average of the values in
@@ -60,39 +50,6 @@ __global__ void average_using_registers(unsigned int *list, float *averages)
 }
 
 /**
- * Kernel function that takes a moving average of the values in
- * @list and puts the results in @averages
- * Uses shared memory to store the calculations.
- */
-__global__ void average_using_shared(unsigned int *list, float *averages)
-{
-	__shared__ unsigned int sums[NUM_ELEMENTS];
-	__shared__ unsigned int nums[NUM_ELEMENTS];
-
-	const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
-
-	if(idx < NUM_ELEMENTS) {
-		sums[idx] = list[idx];
-		nums[idx] = 1;
-
-		// If there is a previous element, add it to sum
-		if(idx > 0) {
-			sums[idx] = sums[idx] + list[idx - 1];
-			nums[idx] = nums[idx] + 1;
-		}
-
-		// If there is a next element, add it to sum
-		if((idx + 1) < NUM_ELEMENTS) {
-			sums[idx] = sums[idx] + list[idx + 1];
-			nums[idx] = nums[idx] + 1;
-		}
-
-		// Calculate the average
-		averages[idx] = (float) sums[idx] / nums[idx];
-	}
-}
-
-/**
  * Fuction to handle the printing of results.
  * @list is the original array
  * @averages is the result
@@ -113,20 +70,26 @@ void print_results(unsigned int *list, float *averages)
  *
  * @array_size size of array (total number of threads)
  * @threads_per_block number of threads to put in each block
- * @use_registers is 1 if registers should be used. Otherwise, will call
- * kernel that uses shared memory
  */
-void exec_kernel(bool use_registers)
+void exec_kernel()
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
   int float_array_size_in_bytes = (sizeof(float) * (NUM_ELEMENTS));
   int i = 0;
 
-  unsigned int *list;
-  float *averages;
+  unsigned int *list, *d_list;
+  float *averages, *d_averages;
 
-  //pin it
+	cudaEvent_t start, stop;
+	float elapsedTime;
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	cudaMalloc((void **)&d_list, array_size_in_bytes);
+  cudaMalloc((void **)&d_averages, float_array_size_in_bytes);
+
   cudaMallocHost((void **)&list, array_size_in_bytes);
   cudaMallocHost((void **)&averages, float_array_size_in_bytes);
 
@@ -135,38 +98,25 @@ void exec_kernel(bool use_registers)
   	list[i] = (unsigned int) rand() % MAX_INT;
   }
 
-  /* Declare and allocate pointers for GPU based parameters */
-  unsigned int *d_list;
-  float *d_averages;
+	/* Recording from copy to copy back */
+	cudaEventRecord(start, 0);
 
-  cudaMalloc((void **)&d_list, array_size_in_bytes);
-  cudaMalloc((void **)&d_averages, float_array_size_in_bytes);
-
-  /* Copy the CPU memory to the GPU memory */
+	/* Copy the CPU memory to the GPU memory */
   cudaMemcpy(d_list, list, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
   const unsigned int num_blocks = NUM_ELEMENTS/THREADS_PER_BLOCK;
   const unsigned int num_threads = NUM_ELEMENTS/num_blocks;
 
-  /* Execute the kernel and keep track of start and end time for duration */
-  float duration = 0;
-
-  cudaEvent_t start_time = get_time();
-
-	if(use_registers) {
-		average_using_registers<<<num_blocks, num_threads>>>(d_list, d_averages);
-	} else {
-		average_using_shared<<<num_blocks, num_threads>>>(d_list, d_averages);
-	}
-
-  cudaEvent_t end_time = get_time();
-  cudaEventSynchronize(end_time);
-
-  cudaEventElapsedTime(&duration, start_time, end_time);
+	/* Kernel call */
+	average_using_registers<<<num_blocks, num_threads>>>(d_list, d_averages);
 
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy( averages, d_averages, float_array_size_in_bytes, cudaMemcpyDeviceToHost);
+
+	cudaEventRecord(stop, 0);
+	cudaStreamSynchronize(stop);
+  cudaEventElapsedTime(&duration, start, stop);
 
   printf("\tDuration: %fmsn\n", duration);
   print_results(list, averages);
