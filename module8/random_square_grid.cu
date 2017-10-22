@@ -21,6 +21,8 @@
 #define MAX_INT 9                       // 9 is standard sudoku
 #define CELLS (MAX_INT+1) * (MAX_INT+1) // sudokus are square 10 x 10
 
+#define THREADS_PER_BLOCK 1
+
 /* this GPU kernel function is used to initialize the random states */
 __global__ void init(unsigned int seed, curandState_t* states) {
 
@@ -50,8 +52,11 @@ int main( ) {
   /* allocate space on the GPU for the random states */
   cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
 
+  const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
+  const unsigned int num_threads = CELLS/num_blocks;
+
   /* invoke the GPU to initialize all of the random states */
-  init<<<CELLS, 1>>>(time(0), states);
+  init<<<num_blocks, num_threads>>>(time(0), states);
 
   /* allocate an array of unsigned ints on the CPU and GPU */
   unsigned int cpu_nums[CELLS];
@@ -59,7 +64,7 @@ int main( ) {
   cudaMalloc((void**) &gpu_nums, CELLS * sizeof(unsigned int));
 
   /* invoke the kernel to get some random numbers */
-  randoms<<<CELLS, 1>>>(states, gpu_nums);
+  randoms<<<num_blocks, num_threads>>>(states, gpu_nums);
 
   /* copy the random numbers back */
   cudaMemcpy(cpu_nums, gpu_nums, CELLS * sizeof(unsigned int), cudaMemcpyDeviceToHost);
