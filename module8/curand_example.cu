@@ -23,7 +23,7 @@ __global__ void init(unsigned int seed, curandState_t* states) {
 /* this GPU kernel takes an array of states, and an array of ints, and puts a random int into each */
 __global__ void randoms(curandState_t* states, unsigned int* numbers) {
   /* curand works like rand - except that it takes a state as a parameter */
-  numbers[blockIdx.x] = curand(&states[blockIdx.x]) % 100;
+  numbers[blockIdx.x] = curand(&states[blockIdx.x]) % MAX;
 }
  
 /* this GPU kernel function calculates a random number and stores it in the parameter */
