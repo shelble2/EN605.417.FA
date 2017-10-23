@@ -127,11 +127,14 @@ void rand_sub(unsigned int **out) {
   cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
   cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
 
+  unsigned int seed = time(NULL);
+  printf("seed: %d", seed);
+  
   /* Recording from init to copy back */
 	cudaEventRecord(start, 0);
 
   /* Allocate space and invoke the GPU to initialize the states for cuRAND */
-  init_states<<<num_blocks, num_threads>>>(time(0), states);
+  init_states<<<num_blocks, num_threads>>>(seed, states);
 
   /* invoke the kernel to generate random numbers */
   fill_grid<<<num_blocks, num_threads>>>(states, d_nums);
