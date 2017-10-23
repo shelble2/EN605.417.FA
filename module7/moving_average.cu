@@ -28,24 +28,22 @@ __global__ void average_window(unsigned int *list, float *averages, int num_elem
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-	if(idx < num_elements) {
-		unsigned int sum = list[idx];
-		unsigned int num = 1;
+  unsigned int sum;
+  unsigned int num;
 
-		// If there is a previous element, add it to sum
-		if(idx > 0) {
-			sum = sum + list[idx - 1];
-			num = num + 1;
-		}
+  if(idx == 0) {
+    sum = list[idx] + list[idx+1];
+    num = 2;
+  } else if(idx + 1 == num_elements) {
+    sum = list[idx] + list[idx-1];
+    num = 2;
+  } else {
+    sum = list[idx] + list[idx-1] + list[idx+1];
+    num = 3;
+  }
 
-		// If there is a next element, add it to sum
-		if((idx + 1) < num_elements) {
-			sum = sum + list[idx + 1];
-			num = num + 1;
-		}
+	averages[idx] = (float) sum / num;
 
-		averages[idx] = (float) sum / num;
-	}
 }
 
 /**
@@ -241,6 +239,15 @@ int main(int argc, char *argv[])
 	/* Do the average with shared memory */
 	printf("\nFirst Run of Averages done synchronously");
   exec_kernel_sync(verbosity, num_elements, threads_per_block, max_int);
+	printf("-----------------------------------------------------------------\n");
+
+	printf("Second Run of Averages done synchronously");
+  exec_kernel_sync(verbosity, num_elements, threads_per_block, max_int);
+	printf("-----------------------------------------------------------------\n");
+
+  /* Do the average with shared memory */
+	printf("\nFirst Run of Averages done asynchronously");
+  exec_kernel_async(verbosity, num_elements, threads_per_block, max_int);
 	printf("-----------------------------------------------------------------\n");
 
 	printf("Second Run of Averages done asynchronously");
