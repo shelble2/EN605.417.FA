@@ -91,7 +91,6 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
 
 void main_sub( ) {
   //TODO: Put it in 2D array or matrix
-  //TODO: add timing data
 
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
