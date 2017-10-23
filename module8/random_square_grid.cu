@@ -97,7 +97,7 @@ void main_sub( ) {
   const unsigned int num_threads = CELLS/num_blocks;
 
   curandState_t* states;
-  unsigned int* nums, d_nums;
+  unsigned int* nums, *d_nums;
 
   cudaEvent_t start, stop;
 	float duration;
@@ -140,11 +140,12 @@ void main_sub( ) {
  * modifying surrounding functions
  */
 int main() {
-  int iters = 2;
+  int iters = 3;
 
   for(int i = 0; i < iters; i++) {
     printf("\nRun #%d of kernel function:\n", i+1);
     main_sub();
+    printf("\n");
   }
 
   return 0;
