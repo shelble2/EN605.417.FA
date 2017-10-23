@@ -127,9 +127,10 @@ void rand_sub(unsigned int **out) {
   cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
   cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
 
+  //TODO: goes too fast; all get same seed. Only second resolution
   unsigned int seed = time(NULL);
   printf("seed: %d", seed);
-  
+
   /* Recording from init to copy back */
 	cudaEventRecord(start, 0);
 
