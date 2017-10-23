@@ -105,16 +105,15 @@ void main_sub( ) {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
+  cudaMallocHost((void**) &nums, CELLS * sizeof(unsigned int));
+  cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
+  cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
+
   /* Recording from init to copy back */
 	cudaEventRecord(start, 0);
 
   /* Allocate space and invoke the GPU to initialize the states for cuRAND */
-  cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
   init_states<<<num_blocks, num_threads>>>(time(0), states);
-
-  /* Allocate memory for host and device sides of number arrays */
-  cudaMallocHost((void**) &nums, CELLS * sizeof(unsigned int));
-  cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
 
   /* invoke the kernel to generate random numbers */
   fill_grid<<<num_blocks, num_threads>>>(states, d_nums);
