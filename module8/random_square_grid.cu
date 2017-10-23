@@ -2,7 +2,7 @@
  * Assignment 08
  * Beginnings of what would be needed to produce random sudoku puzzles.
  * This program produces a square matrix and fills each cell with a random
- * value between 0 and MAX_INT.
+ * value between 1 and MAX_INT (inclusive).
  *
  * Future work will make this production follow the rules of sudoku (i.e., one
  * of each value in each row, col, square)
@@ -14,12 +14,13 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <math.h>
 
 #include <curand.h>
 #include <curand_kernel.h>
 
-#define MAX_INT 9                       // 9 is standard sudoku
-#define CELLS (MAX_INT+1) * (MAX_INT+1) // sudokus are square 10 x 10
+#define MAX_INT 9               // 9 is standard sudoku
+#define CELLS MAX_INT * MAX_INT // sudokus are square 9 x 9
 
 #define THREADS_PER_BLOCK 1
 
@@ -28,7 +29,7 @@
  * @seed is the seed for the init function
  * @states is an allocated array, where the output of this fuction will be stored
  */
-__global__ void init(unsigned int seed, curandState_t* states) {
+__global__ void init_states(unsigned int seed, curandState_t* states) {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -41,11 +42,17 @@ __global__ void init(unsigned int seed, curandState_t* states) {
  * @states is the set of states already initialized by CUDA
  * @numbers is an allocated array where this kernel function will put its output
  */
-__global__ void randoms(curandState_t* states, unsigned int* numbers) {
+__global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
   numbers[idx] = curand(&states[idx]) % MAX_INT;
+
+  // If we got a 0, make it MAX_INT, since sudokus don't have 0's
+  //TODO: think of a more elegant way to do this.
+  if(numbers[idx] == 0) {
+      numbers[idx] = MAX_INT;
+  }
 }
 
 /**
@@ -57,14 +64,27 @@ __global__ void randoms(curandState_t* states, unsigned int* numbers) {
 {
   int i;
   int j;
+  float block_dim = round(sqrt(MAX_INT));
 
-  printf("\n________________________________________________________\n");
+  printf("\n________________________________________________________");
 
-  for (i = 0; i <= MAX_INT; i++) {
-    for (j = 0; j <= MAX_INT; j++) {
-      printf("| %u |", numbers[ ( (i*MAX_INT) + j ) ]);
+  for (i = 0; i < MAX_INT; i++) {
+    //Breaks between each row
+    if(i % block_dim == 0) {
+      printf("\n____________________________________________________________\n");
+    } else if(i != 0) {
+      printf("\n------------------------------------------------------\n");
     }
-    printf("\n------------------------------------------------------\n");
+
+    // Between each cell
+    printf("|");
+    for (j = 0; j < MAX_INT; j++) {
+      printf(" %u |", numbers[ ( (i*MAX_INT) + j ) ]);
+      if(j % block_dim == 0) {
+          printf("|");
+      }
+    }
+
     j = 0;
   }
 
@@ -86,7 +106,7 @@ int main( ) {
   const unsigned int num_threads = CELLS/num_blocks;
 
   /* invoke the GPU to initialize all of the random states */
-  init<<<num_blocks, num_threads>>>(time(0), states);
+  init_states<<<num_blocks, num_threads>>>(time(0), states);
 
   /* allocate an array of unsigned ints on the CPU and GPU */
   unsigned int cpu_nums[CELLS];
@@ -94,7 +114,7 @@ int main( ) {
   cudaMalloc((void**) &gpu_nums, CELLS * sizeof(unsigned int));
 
   /* invoke the kernel to get some random numbers */
-  randoms<<<num_blocks, num_threads>>>(states, gpu_nums);
+  fill_grid<<<num_blocks, num_threads>>>(states, gpu_nums);
 
   /* copy the random numbers back */
   cudaMemcpy(cpu_nums, gpu_nums, CELLS * sizeof(unsigned int), cudaMemcpyDeviceToHost);
