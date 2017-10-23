@@ -60,6 +60,19 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
 }
 
 /**
+ * Multiply the two passed matrices into the resultant matrix
+ * @A and @B are the matrices to Multiply
+ * @result is the result
+ */
+__global__ void matrix_multiply(unsigned int *A, unsigned int *B, unsigned int *result) {
+  /* Calculate the current index */
+  const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+  //TODO: actually multiply here instead of just copying A
+  result[idx] = A[idx];
+}
+
+/**
  * Prints the passed array like a sudoku puzzle in ascii art
  * @numbers array to print
  */
@@ -96,7 +109,7 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
  * Harness for the creation of random nxn matrices
  * Returns matrix of unsigned ints to be freed by caller
  */
-void main_sub(unsigned int **out) {
+void rand_sub(unsigned int **out) {
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
 
@@ -137,9 +150,71 @@ void main_sub(unsigned int **out) {
   cudaFree(states);
   cudaFree(d_nums);
 
-  memcpy(nums, tmp, CELLS *sizeof(unsigned int));
+  memcpy(tmp, nums, CELLS *sizeof(unsigned int));
+
+  cudaFreeHost(nums);
 
   *out = tmp;
+}
+
+/**
+ * Sub function for handling calls to the matrix multiplication
+ * kernel function
+ * @matrix_1 and @matrix_2 are two matrices to multiply together
+ */
+void blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
+{
+  const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
+  const unsigned int num_threads = CELLS/num_blocks;
+  const unsigned int array_size_in_bytes = CELLS *sizeof(unsigned int);
+
+  unsigned int *m_A, *m_B, *result, *d_A, *d_B, *d_result;
+
+  cudaEvent_t start, stop;
+  float duration;
+
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+
+  cudaMallocHost((void**) &m_A, array_size_in_bytes);
+  cudaMallocHost((void**) &m_B, array_size_in_bytes);
+  cudaMallocHost((void**) &result, array_size_in_bytes);
+
+  //Copy passed arrays to pinned memory
+  memcpy(m_A, matrix_1, array_size_in_bytes);
+  memcpy(m_B, matrix_2, array_size_in_bytes);
+
+  cudaMalloc((void**) &d_A, array_size_in_bytes);
+  cudaMalloc((void**) &d_B, array_size_in_bytes);
+  cudaMalloc((void**) &d_result, array_size_in_bytes);
+
+  //copy pinned host memory to device memory
+  cudaMemcpy( d_A, m_A, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy( d_B, m_B, array_size_in_bytes, cudaMemcpyHostToDevice);
+
+  /* Recording from init to copy back */
+  cudaEventRecord(start, 0);
+
+  /* Allocate space and invoke the GPU to initialize the states for cuRAND */
+  matrix_multiply<<<num_blocks, num_threads>>>(d_A, d_B, d_result);
+
+  //Copy the result back to the host
+  cudaMemcpy(result, d_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&duration, start, stop);
+  printf("Elapsed Time: %f", duration);
+
+  sudoku_print(result);
+
+  cudaFreeHost(m_A);
+  cudaFreeHost(m_B);
+  cudaFreeHost(result);
+
+  cudaFree(d_A);
+  cudaFree(d_B);
+  cudaFree(d_result);
 }
 
 /**
@@ -150,20 +225,30 @@ int main() {
   unsigned int *A, *B, *C, *D;
 
   printf("\nRun #1 of cuRAND kernel function. Matrix A:\n");
-  main_sub(&A);
+  rand_sub(&A);
   printf("\n");
 
   printf("\nRun #2 of cuRAND kernel function. Matrix B:\n");
-  main_sub(&B);
+  rand_sub(&B);
   printf("\n");
 
   printf("\nRun #3 of cuRAND kernel function. Matrix C:\n");
-  main_sub(&C);
+  rand_sub(&C);
   printf("\n");
 
   printf("\nRun #4 of cuRAND kernel function. Matrix D:\n");
-  main_sub(&D);
+  rand_sub(&D);
   printf("\n");
 
+  printf("\nRun #1 of cuBLAS kernel function. Matrix A x Matrix B:\n");
+  blas_sub(A, B);
+
+  printf("\nRun #2 of cuBLAS kernel function. Matrix C x Matrix D:\n");
+  blas_sub(C, D);
+
+  free(A);
+  free(B);
+  free(C);
+  free(D);
   return 0;
 }
