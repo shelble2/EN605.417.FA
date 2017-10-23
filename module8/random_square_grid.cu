@@ -102,7 +102,6 @@ void main_sub(unsigned int **out) {
 
   curandState_t* states;
   unsigned int *tmp, *nums, *d_nums;
-  unsigned int out[CELLS];
 
   cudaEvent_t start, stop;
 	float duration;
@@ -110,7 +109,7 @@ void main_sub(unsigned int **out) {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-  malloc((void**)tmp, CELLS * (sizeof(unsigned int)));
+  tmp = (unsigned int*)malloc(CELLS * (sizeof(unsigned int)));
   cudaMallocHost((void**) &nums, CELLS * sizeof(unsigned int));
   cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
   cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
@@ -150,19 +149,19 @@ void main_sub(unsigned int **out) {
 int main() {
   unsigned int *A, *B, *C, *D;
 
-  printf("\nRun #1 of cuRAND kernel function:\n");
+  printf("\nRun #1 of cuRAND kernel function. Matrix A:\n");
   main_sub(&A);
   printf("\n");
 
-  printf("\nRun #2 of cuRAND kernel function:\n");
+  printf("\nRun #2 of cuRAND kernel function. Matrix B:\n");
   main_sub(&B);
   printf("\n");
 
-  printf("\nRun #3 of cuRAND kernel function:\n");
+  printf("\nRun #3 of cuRAND kernel function. Matrix C:\n");
   main_sub(&C);
   printf("\n");
 
-  printf("\nRun #4 of cuRAND kernel function:\n");
+  printf("\nRun #4 of cuRAND kernel function. Matrix D:\n");
   main_sub(&D);
   printf("\n");
 
