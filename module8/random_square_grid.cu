@@ -92,14 +92,17 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
  }
 }
 
-void main_sub( ) {
-  //TODO: Put it in 2D array or matrix
-
+/**
+ * Harness for the creation of random nxn matrices
+ * Returns matrix of unsigned ints
+ */
+unsigned int* main_sub( ) {
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
 
   curandState_t* states;
-  unsigned int* nums, *d_nums;
+  unsigned int *nums, *d_nums;
+  unsigned int out[CELLS];
 
   cudaEvent_t start, stop;
 	float duration;
@@ -133,7 +136,10 @@ void main_sub( ) {
   /* free the memory we allocated for the states and numbers */
   cudaFree(states);
   cudaFree(d_nums);
-  cudaFree(nums);
+
+  memcpy(nums, out, CELLS *sizeof(unsigned int));
+
+  return out;
 }
 
 /**
@@ -141,13 +147,23 @@ void main_sub( ) {
  * modifying surrounding functions
  */
 int main() {
-  int iters = 3;
+  unsigned int *A, *B, *C, *D;
 
-  for(int i = 0; i < iters; i++) {
-    printf("\nRun #%d of kernel function:\n", i+1);
-    main_sub();
-    printf("\n");
-  }
+  printf("\nRun #1 of cuRAND kernel function:\n");
+  A = main_sub();
+  printf("\n");
+
+  printf("\nRun #2 of cuRAND kernel function:\n");
+  B = main_sub();
+  printf("\n");
+
+  printf("\nRun #3 of cuRAND kernel function:\n");
+  C = main_sub();
+  printf("\n");
+
+  printf("\nRun #4 of cuRAND kernel function:\n");
+  D = main_sub();
+  printf("\n");
 
   return 0;
 }
