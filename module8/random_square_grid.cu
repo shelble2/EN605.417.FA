@@ -118,9 +118,7 @@ void main_sub( ) {
   /* free the memory we allocated for the states and numbers */
   cudaFree(states);
   cudaFree(d_nums);
-  free(nums);
-
-  return 0;
+  cudaFree(nums);
 }
 
 /**
@@ -131,7 +129,9 @@ int main() {
   int iters = 2;
 
   for(int i = 0; i < iters; i++) {
-    printf("Run #%d of kernel function:\n", i);
+    printf("\nRun #%d of kernel function:\n", i+1);
     main_sub();
   }
+  
+  return 0;
 }
