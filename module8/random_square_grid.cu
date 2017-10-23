@@ -23,30 +23,56 @@
 
 #define THREADS_PER_BLOCK 1
 
-/* this GPU kernel function is used to initialize the random states */
+/**
+ * This kernel initializes the states for each input in the array
+ * @seed is the seed for the init function
+ * @states is an allocated array, where the output of this fuction will be stored
+ */
 __global__ void init(unsigned int seed, curandState_t* states) {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  /* we have to initialize the state */
-  curand_init(seed, /* the seed can be the same for each core, here we pass the time in from the CPU */
-              idx, /* the sequence number should be different for each core (unless you want all
-                      cores to get the same sequence of numbers for some reason - use thread id! */
-              0, /* the offset is how much extra we advance in the sequence for each call, can be 0 */
-              &states[idx]);
+  curand_init(seed, idx, 0, &states[idx]);
 }
 
-/* this GPU kernel takes an array of states, and an array of ints, and puts a random int into each */
+/**
+ * Given the passed array of states @states, this kernel fills allocated array
+ * @numbers with a random int between 0 and MAX_INT
+ * @states is the set of states already initialized by CUDA
+ * @numbers is an allocated array where this kernel function will put its output
+ */
 __global__ void randoms(curandState_t* states, unsigned int* numbers) {
   /* Calculate the current index */
   const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  /* curand works like rand - except that it takes a state as a parameter */
   numbers[idx] = curand(&states[idx]) % MAX_INT;
 }
 
+/**
+ * Prints the passed array like a sudoku puzzle in ascii art
+ * @numbers array to print
+ */
+ //TODO: need to add block breaks
+ void sudoku_print(unsigned int* numbers)
+{
+  int i;
+  int j;
+
+  printf("\n________________________________________________________\n")
+
+  for (i = 0; i <= MAX_INT; i++) {
+    for (j = 0; j <= MAX_INT; j++) {
+      printf("| %u |", numbers[ ( (i*MAX_INT) + j ) ]);
+    }
+    printf("\n------------------------------------------------------\n")
+    j = 0;
+  }
+
+  printf("\n________________________________________________________\n")
+}
+
 int main( ) {
-  //TODO: Clean this up, make it print like a sudoku. Put it in 2D array
+  //TODO: make it print like a sudoku. Put it in 2D array
 
    /* CUDA's random number library uses curandState_t to keep track
       of the seed value
