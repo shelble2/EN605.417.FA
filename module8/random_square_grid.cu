@@ -64,31 +64,30 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
 {
   int i;
   int j;
-  float block_dim = round(sqrt(MAX_INT));
-
-  printf("\n________________________________________________________");
-
+  int block_dim = round(sqrt(MAX_INT));
+printf("block dim: %d\n", block_dim);
+ 
+  printf("\n_________________________________________\n");
+ 
   for (i = 0; i < MAX_INT; i++) {
-    //Breaks between each row
-    if(i % block_dim == 0) {
-      printf("\n____________________________________________________________\n");
-    } else if(i != 0) {
-      printf("\n------------------------------------------------------\n");
-    }
 
-    // Between each cell
-    printf("|");
+    printf("||");
     for (j = 0; j < MAX_INT; j++) {
       printf(" %u |", numbers[ ( (i*MAX_INT) + j ) ]);
-      if(j % block_dim == 0) {
+      if((j+1) % block_dim == 0) {
           printf("|");
       }
     }
 
     j = 0;
-  }
-
-  printf("\n________________________________________________________\n");
+    //Breaks between each row
+    if( ((i+1) % block_dim) == 0) {
+      printf("\n||___|___|___||___|___|___||___|___|___||\n");
+    } else {
+ 		//TODO:make this able to handle other sizes prettily
+      printf("\n||---|---|---||---|---|---||---|---|---||\n");
+    }
+ }
 }
 
 int main( ) {
