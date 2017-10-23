@@ -4,6 +4,9 @@
  * This program produces a square matrix and fills each cell with a random
  * value between 1 and MAX_INT (inclusive).
  *
+ * In order to try out a second CUDA library, this program also uses cuBLAS to
+ * invert the resulting matrix
+ *
  * Future work will make this production follow the rules of sudoku (i.e., one
  * of each value in each row, col, square)
  *
