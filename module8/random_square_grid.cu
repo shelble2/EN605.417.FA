@@ -58,17 +58,17 @@ __global__ void randoms(curandState_t* states, unsigned int* numbers) {
   int i;
   int j;
 
-  printf("\n________________________________________________________\n")
+  printf("\n________________________________________________________\n");
 
   for (i = 0; i <= MAX_INT; i++) {
     for (j = 0; j <= MAX_INT; j++) {
       printf("| %u |", numbers[ ( (i*MAX_INT) + j ) ]);
     }
-    printf("\n------------------------------------------------------\n")
+    printf("\n------------------------------------------------------\n");
     j = 0;
   }
 
-  printf("\n________________________________________________________\n")
+  printf("\n________________________________________________________\n");
 }
 
 int main( ) {
@@ -99,10 +99,7 @@ int main( ) {
   /* copy the random numbers back */
   cudaMemcpy(cpu_nums, gpu_nums, CELLS * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
-  /* print them out */
-  for (int i = 0; i < CELLS; i++) {
-    printf("%u\n", cpu_nums[i]);
-  }
+  sudoku_print(cpu_nums);
 
   /* free the memory we allocated for the states and numbers */
   cudaFree(states);
