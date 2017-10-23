@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
 
@@ -89,11 +90,20 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
 }
 
 void main_sub( ) {
-  //TODO:  Put it in 2D array
+  //TODO: Put it in 2D array or matrix
   //TODO: add timing data
 
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
+
+  cudaEvent_t start, stop;
+	float duration;
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+  /* Recording from init to copy back */
+	cudaEventRecord(start, 0);
 
   curandState_t* states;
   cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
@@ -112,6 +122,11 @@ void main_sub( ) {
 
   /* copy the result back to the CPU */
   cudaMemcpy(nums, d_nums, CELLS * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&duration, start, stop);
+  printf("Elapsed Time: %f", duration);
 
   sudoku_print(nums);
 
@@ -132,6 +147,6 @@ int main() {
     printf("\nRun #%d of kernel function:\n", i+1);
     main_sub();
   }
-  
+
   return 0;
 }
