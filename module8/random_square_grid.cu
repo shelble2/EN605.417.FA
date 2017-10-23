@@ -59,16 +59,14 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
  * Prints the passed array like a sudoku puzzle in ascii art
  * @numbers array to print
  */
- //TODO: need to add block breaks
  void sudoku_print(unsigned int* numbers)
 {
   int i;
   int j;
   int block_dim = round(sqrt(MAX_INT));
-printf("block dim: %d\n", block_dim);
- 
+
   printf("\n_________________________________________\n");
- 
+
   for (i = 0; i < MAX_INT; i++) {
 
     printf("||");
@@ -84,45 +82,56 @@ printf("block dim: %d\n", block_dim);
     if( ((i+1) % block_dim) == 0) {
       printf("\n||___|___|___||___|___|___||___|___|___||\n");
     } else {
- 		//TODO:make this able to handle other sizes prettily
+      //TODO:make this able to handle other sizes prettily
       printf("\n||---|---|---||---|---|---||---|---|---||\n");
     }
  }
 }
 
-int main( ) {
-  //TODO: make it print like a sudoku. Put it in 2D array
-
-   /* CUDA's random number library uses curandState_t to keep track
-      of the seed value
-      we will store a random state for every thread  */
-  curandState_t* states;
-
-  /* allocate space on the GPU for the random states */
-  cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
+void main_sub( ) {
+  //TODO:  Put it in 2D array
+  //TODO: add timing data
 
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
 
-  /* invoke the GPU to initialize all of the random states */
+  curandState_t* states;
+  cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
+
+  /* invoke the GPU to initialize the states for cuRAND */
   init_states<<<num_blocks, num_threads>>>(time(0), states);
 
-  /* allocate an array of unsigned ints on the CPU and GPU */
-  unsigned int cpu_nums[CELLS];
-  unsigned int* gpu_nums;
-  cudaMalloc((void**) &gpu_nums, CELLS * sizeof(unsigned int));
+  unsigned int* nums;
+  cudaMallocHost((void**) &nums, CELLS * sizeof(unsigned int));
+
+  unsigned int* d_nums;
+  cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
 
   /* invoke the kernel to get some random numbers */
-  fill_grid<<<num_blocks, num_threads>>>(states, gpu_nums);
+  fill_grid<<<num_blocks, num_threads>>>(states, d_nums);
 
-  /* copy the random numbers back */
-  cudaMemcpy(cpu_nums, gpu_nums, CELLS * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  /* copy the result back to the CPU */
+  cudaMemcpy(nums, d_nums, CELLS * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
-  sudoku_print(cpu_nums);
+  sudoku_print(nums);
 
   /* free the memory we allocated for the states and numbers */
   cudaFree(states);
-  cudaFree(gpu_nums);
+  cudaFree(d_nums);
+  free(nums);
 
   return 0;
+}
+
+/**
+ * Starting here so that we can easily execute two runs of each kernel without
+ * modifying surrounding functions
+ */
+int main() {
+  int iters = 2;
+
+  for(int i = 0; i < iters; i++) {
+    printf("Run #%d of kernel function:\n", i);
+    main_sub();
+  }
 }
