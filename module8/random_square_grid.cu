@@ -94,22 +94,22 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
 }
 
 /**
- * Prints the passed array like a sudoku puzzle in ascii art
+ * Prints the passed matrix prettily
  * @numbers array to print
  */
- void sudoku_print_float(float* numbers)
+ void print_float_matrix(float* numbers)
  {
   int i;
   int j;
   int block_dim = round(sqrt(MAX_INT));
 
-  printf("\n_________________________________________\n");
+  printf("\n__________________________________________________________\n");
 
   for (i = 0; i < MAX_INT; i++) {
 
     printf("||");
     for (j = 0; j < MAX_INT; j++) {
-      printf(" %f |", numbers[ ( (i*MAX_INT) + j ) ]);
+      printf(" %.0f |", numbers[ ( (i*MAX_INT) + j ) ]);
       if((j+1) % block_dim == 0) {
           printf("|");
       }
@@ -118,10 +118,10 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
     j = 0;
     //Breaks between each row
     if( ((i+1) % block_dim) == 0) {
-      printf("\n||___|___|___||___|___|___||___|___|___||\n");
+      printf("\n______________________________________________________________\n");
     } else {
       //TODO:make this able to handle other sizes prettily
-      printf("\n||---|---|---||---|---|---||---|---|---||\n");
+      printf("\n--------------------------------------------------------------\n");
     }
  }
 }
@@ -275,10 +275,7 @@ int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
   cudaEventElapsedTime(&duration, start, stop);
   printf("Elapsed Time: %f\n", duration);
 
-  for(int i = 0; i < CELLS; i++) {
-      printf("%f\n", h_result[i]);
-  }
-  //sudoku_print(h_result);
+  print_float_matrix(h_result);
 
   cublasFree(d_m1);
   cublasFree(d_m2);
