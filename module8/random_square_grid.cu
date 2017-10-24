@@ -22,6 +22,7 @@
 #include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include <cublas.h>
 
 #define MAX_INT 9               // 9 is standard sudoku
 #define CELLS MAX_INT * MAX_INT // sudokus are square 9 x 9
@@ -57,19 +58,6 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
   if(numbers[idx] == 0) {
       numbers[idx] = MAX_INT;
   }
-}
-
-/**
- * Multiply the two passed matrices into the resultant matrix
- * @A and @B are the matrices to Multiply
- * @result is the result
- */
-__global__ void matrix_multiply(unsigned int *A, unsigned int *B, unsigned int *result) {
-  /* Calculate the current index */
-  const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
-
-  //TODO: actually multiply here instead of just copying A
-  result[idx] = A[idx];
 }
 
 /**
@@ -129,7 +117,7 @@ void rand_sub(unsigned int **out) {
 
   //TODO: goes too fast; all get same seed. Only second resolution
   unsigned int seed = time(NULL);
-  printf("seed: %d", seed);
+  printf("seed: %d ", seed);
 
   /* Recording from init to copy back */
 	cudaEventRecord(start, 0);
@@ -166,59 +154,98 @@ void rand_sub(unsigned int **out) {
  * kernel function
  * @matrix_1 and @matrix_2 are two matrices to multiply together
  */
-void blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
+int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
 {
-  const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
-  const unsigned int num_threads = CELLS/num_blocks;
-  const unsigned int array_size_in_bytes = CELLS *sizeof(unsigned int);
+  const unsigned int array_size_in_bytes = CELLS *sizeof(float);
+  float *h_m1, *h_m2, *h_result, *d_m1, *d_m2, *d_result;
 
-  unsigned int *m_A, *m_B, *result, *d_A, *d_B, *d_result;
+  //Get the passed arrays into pinned host memory
+  // And need to convert to float for cublas
+  cudaMallocHost((void**) &h_m1, array_size_in_bytes);
+  cudaMallocHost((void**) &h_m2, array_size_in_bytes);
 
-  cudaEvent_t start, stop;
-  float duration;
+  for(int i = 0; i < CELLS; i++){
+      h_m1[i] = (float)matrix_1[i];
+      h_m2[i] = (float)matrix_2[i];
+  }
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  cublasStatus status;
+  cublasInit();
 
-  cudaMallocHost((void**) &m_A, array_size_in_bytes);
-  cudaMallocHost((void**) &m_B, array_size_in_bytes);
-  cudaMallocHost((void**) &result, array_size_in_bytes);
+  // We know its of size CELLS because both arrays are guaranteed to be
+  // the same size and square
+  h_result = (unsigned int *)malloc(array_size_in_bytes));
+  if(result == NULL) {
+      printf("Error: failed to allocate memory for result array\n");
+      return EXIT_FAILURE;
+  }
 
-  //Copy passed arrays to pinned memory
-  memcpy(m_A, matrix_1, array_size_in_bytes);
-  memcpy(m_B, matrix_2, array_size_in_bytes);
+  // Allocate device memory
+  status = cublasAlloc(CELLS, sizeof(float), (void **)&d_m1);
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: failed to allocate device memory for m1\n");
+    return EXIT_FAILURE;
+  }
 
-  cudaMalloc((void**) &d_A, array_size_in_bytes);
-  cudaMalloc((void**) &d_B, array_size_in_bytes);
-  cudaMalloc((void**) &d_result, array_size_in_bytes);
+  status = cublasAlloc(CELLS, sizeof(float), (void**)&d_m2);
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: failed to allocate device memory for m2\n");
+    return EXIT_FAILURE;
+  }
 
-  //copy pinned host memory to device memory
-  cudaMemcpy( d_A, m_A, array_size_in_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy( d_B, m_B, array_size_in_bytes, cudaMemcpyHostToDevice);
+  status = cublasAlloc(CELLS, sizeof(float), (void**)&d_result);
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: failed to allocate device memory for result\n");
+    return EXIT_FAILURE;
+  }
 
-  /* Recording from init to copy back */
-  cudaEventRecord(start, 0);
+  // Set input matrices
+  status = cublasSetMatrix(MAX_INT, MAX_INT, sizeof(float), h_m1, MAX_INT, d_m1, MAX_INT);
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: failed to set matrix 1\n");
+    return EXIT_FAILURE;
+  }
 
-  /* Allocate space and invoke the GPU to initialize the states for cuRAND */
-  matrix_multiply<<<num_blocks, num_threads>>>(d_A, d_B, d_result);
+  status = cublasSetMatrix(MAX_INT, MAX_INT, sizeof(float), h_m2, MAX_INT, d_m2, MAX_INT);
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: failed to set matrix 2\n");
+    return EXIT_FAILURE;
+  }
+  //TODO: add timing data
 
-  //Copy the result back to the host
-  cudaMemcpy(result, d_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  //run the kernel
+  cublasSgemm('n', 'n', MAX_INT, MAX_INT, MAX_INT, 1, d_m1, MAX_INT, d_m2, MAX_INT, 0, d_result, MAX_INT);
 
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&duration, start, stop);
-  printf("Elapsed Time: %f", duration);
+  status = cublasGetError();
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: cublas kernel returned failure");
+    return EXIT_FAILURE;
+  }
 
-  sudoku_print(result);
+  cublasGetMatrix(MAX_INT, MAX_INT, sizeof(float), d_result, MAX_INT, h_result, MAX_INT);
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: cublas get matrix returned failure");
+    return EXIT_FAILURE;
+  }
 
-  cudaFreeHost(m_A);
-  cudaFreeHost(m_B);
-  cudaFreeHost(result);
+  for(int i = 0; i < CELLS; i++) {
+      printf("%f\n", h_result[i]);
+  }
+  //sudoku_print(h_result);
 
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_result);
+  cublasFree(d_m1);
+  cublasFree(d_m2);
+  cublasFree(d_result);
+
+  cudaFreeHost(h_m1);
+  cudaFreeHost(h_m2);
+  free(h_result);
+
+  status = cublasShutdown();
+  if(status != CUBLAS_STATUS_SUCCESS) {
+    printf("Error: cublas shutdown returned failure");
+    return EXIT_FAILURE;
+  }
 }
 
 /**
