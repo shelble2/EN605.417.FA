@@ -97,19 +97,19 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
  * Prints the passed array like a sudoku puzzle in ascii art
  * @numbers array to print
  */
- void print_float_matrix(float* numbers)
+ void sudoku_print_float(float* numbers)
  {
   int i;
   int j;
   int block_dim = round(sqrt(MAX_INT));
 
-  printf("\n____________________________________________________________\n");
+  printf("\n_________________________________________\n");
 
   for (i = 0; i < MAX_INT; i++) {
 
     printf("||");
     for (j = 0; j < MAX_INT; j++) {
-      printf(" %.0f |", numbers[ ( (i*MAX_INT) + j ) ]);
+      printf(" %f |", numbers[ ( (i*MAX_INT) + j ) ]);
       if((j+1) % block_dim == 0) {
           printf("|");
       }
@@ -118,10 +118,10 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
     j = 0;
     //Breaks between each row
     if( ((i+1) % block_dim) == 0) {
-      printf("\n______________________________________________________________\n");
+      printf("\n||___|___|___||___|___|___||___|___|___||\n");
     } else {
       //TODO:make this able to handle other sizes prettily
-      printf("\n--------------------------------------------------------------\n");
+      printf("\n||---|---|---||---|---|---||---|---|---||\n");
     }
  }
 }
@@ -148,7 +148,7 @@ void rand_sub(unsigned int **out) {
   cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
   cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
 
-  //TODO: goes too fast; all get same seed. Only second resolution
+  //TODO: goes too fast; all get same seed. Only has second resolution
   unsigned int seed = time(NULL);
   printf("seed: %d ", seed);
 
@@ -192,6 +192,12 @@ int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
   const unsigned int array_size_in_bytes = CELLS *sizeof(float);
   float *h_m1, *h_m2, *h_result, *d_m1, *d_m2, *d_result;
 
+  cudaEvent_t start, stop;
+	float duration;
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
   //Get the passed arrays into pinned host memory
   // And need to convert to float for cublas
   cudaMallocHost((void**) &h_m1, array_size_in_bytes);
@@ -212,6 +218,9 @@ int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
       printf("Error: failed to allocate memory for result array\n");
       return EXIT_FAILURE;
   }
+
+  /* Recording from cublasAllocs to copy back */
+	cudaEventRecord(start, 0);
 
   // Allocate device memory
   status = cublasAlloc(CELLS, sizeof(float), (void **)&d_m1);
@@ -261,8 +270,15 @@ int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
     return EXIT_FAILURE;
   }
 
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&duration, start, stop);
+  printf("Elapsed Time: %f\n", duration);
 
-  print_float_matrix(h_result);
+  for(int i = 0; i < CELLS; i++) {
+      printf("%f\n", h_result[i]);
+  }
+  //sudoku_print(h_result);
 
   cublasFree(d_m1);
   cublasFree(d_m2);
