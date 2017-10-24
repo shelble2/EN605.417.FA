@@ -174,8 +174,8 @@ int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
 
   // We know its of size CELLS because both arrays are guaranteed to be
   // the same size and square
-  h_result = (unsigned int *)malloc(array_size_in_bytes));
-  if(result == NULL) {
+  h_result = (float *)malloc(array_size_in_bytes);
+  if(h_result == NULL) {
       printf("Error: failed to allocate memory for result array\n");
       return EXIT_FAILURE;
   }
@@ -246,6 +246,7 @@ int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
     printf("Error: cublas shutdown returned failure");
     return EXIT_FAILURE;
   }
+ return EXIT_SUCCESS;
 }
 
 /**
