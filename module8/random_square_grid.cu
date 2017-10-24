@@ -5,13 +5,13 @@
  * value between 1 and MAX_INT (inclusive).
  *
  * In order to try out a second CUDA library, this program also uses cuBLAS to
- * invert the resulting matrix
+ * multiply the resulting matrices.
  *
  * Future work will make this production follow the rules of sudoku (i.e., one
  * of each value in each row, col, square)
  *
  * Sarah Helble
- * 22 Oct 2017
+ * 23 Oct 2017
  *
  **/
 
@@ -128,7 +128,7 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
 
 /**
  * Harness for the creation of random nxn matrices
- * Returns matrix of unsigned ints to be freed by caller
+ * @out is set to matrix of unsigned ints to be freed by caller
  */
 void rand_sub(unsigned int **out) {
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
@@ -148,8 +148,11 @@ void rand_sub(unsigned int **out) {
   cudaMalloc((void**) &states, CELLS * sizeof(curandState_t));
   cudaMalloc((void**) &d_nums, CELLS * sizeof(unsigned int));
 
-  //TODO: goes too fast; all get same seed. Only has second resolution
-  unsigned int seed = time(NULL);
+  /*
+   * Using clock() because this function goes too fast- time() always gave the
+   * same output because it's only second resolution.
+   */
+  unsigned int seed = clock();
   printf("seed: %d ", seed);
 
   /* Recording from init to copy back */
@@ -299,6 +302,8 @@ int blas_sub(unsigned int *matrix_1, unsigned int *matrix_2)
  */
 int main() {
   unsigned int *A, *B, *C, *D;
+
+  printf("%d x %d matrix; %d theads per block\n", MAX_INT, MAX_INT, THREADS_PER_BLOCK);
 
   printf("\nRun #1 of cuRAND kernel function. Matrix A:\n");
   rand_sub(&A);
