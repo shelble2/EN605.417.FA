@@ -94,6 +94,39 @@ __global__ void fill_grid(curandState_t* states, unsigned int* numbers) {
 }
 
 /**
+ * Prints the passed array like a sudoku puzzle in ascii art
+ * @numbers array to print
+ */
+ void sudoku_print_float(float* numbers)
+ {
+  int i;
+  int j;
+  int block_dim = round(sqrt(MAX_INT));
+
+  printf("\n_________________________________________\n");
+
+  for (i = 0; i < MAX_INT; i++) {
+
+    printf("||");
+    for (j = 0; j < MAX_INT; j++) {
+      printf(" %f |", numbers[ ( (i*MAX_INT) + j ) ]);
+      if((j+1) % block_dim == 0) {
+          printf("|");
+      }
+    }
+
+    j = 0;
+    //Breaks between each row
+    if( ((i+1) % block_dim) == 0) {
+      printf("\n||___|___|___||___|___|___||___|___|___||\n");
+    } else {
+      //TODO:make this able to handle other sizes prettily
+      printf("\n||---|---|---||---|---|---||---|---|---||\n");
+    }
+ }
+}
+
+/**
  * Harness for the creation of random nxn matrices
  * Returns matrix of unsigned ints to be freed by caller
  */
