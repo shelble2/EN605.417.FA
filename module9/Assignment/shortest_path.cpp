@@ -10,8 +10,8 @@
 #include <helper_cuda.h>
 #include "nvgraph.h"
 
-#define NUM_VERTICES 10
-#define NUM_EDGES 20
+#define NUM_VERTICES 100
+#define NUM_EDGES 200
 #define VERTEX_NUMSETS 2
 #define EDGE_NUMSETS 1
 
