@@ -46,6 +46,7 @@ int widest_path_sub()
 
     for(i = 0; i < NUM_EDGES; i++){
       weights_h[i] = (float) (rand() % MAX_INT) / (rand() % MAX_INT);
+      if(weights_h[i] > 1.0) weights_h[i] = 1.0;
       printf("weights[%d] = %0.1f\n", i, weights_h[i]);
     }
     for(i = 0; i < NUM_EDGES; i++) {
@@ -61,7 +62,7 @@ int widest_path_sub()
       printf("destination offset[%d] = %d\n", i, destination_offsets_h[i]);
     }
     for(i = 0; i < NUM_VERTICES; i++) {
-      bookmark_h[i] = (float) (rand() % MAX_INT) / (rand() % MAX_INT);
+      bookmark_h[i] = 0.0;
       printf("bookmark[%d] = %0.1f\n", i, bookmark_h[i]);
     }
 
