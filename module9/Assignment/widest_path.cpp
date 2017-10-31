@@ -40,8 +40,7 @@ int widest_path_sub()
     CSC_input = (nvgraphCSCTopology32I_t) malloc(sizeof(struct nvgraphCSCTopology32I_st));
     CSC_input->nvertices = NUM_VERTICES;
     CSC_input->nedges = NUM_EDGES;
-    CSC_input->destination_offsets = destination_offsets_h;
-    CSC_input->source_indices = source_indices_h;
+
 
     //TODO: Not sure about this whole part
     float *pr_1,*pr_2;
@@ -54,9 +53,9 @@ int widest_path_sub()
 
     // Initialize host data
     vertex_dimT[0] = CUDA_R_32F; vertex_dimT[1]= CUDA_R_32F, vertex_dimT[2]= CUDA_R_32F;
-    //////////////////////
+    /////////////////////
 
-    //Fill graph variables
+    // Fill graph variables
     weights_h = (float*)malloc(NUM_EDGES*sizeof(float));
     source_indices_h = (int*) malloc(NUM_EDGES*sizeof(int));
 
@@ -74,6 +73,9 @@ int widest_path_sub()
     }
     destination_offsets_h[i] = rand() % NUM_VERTICES;
 
+    CSC_input->destination_offsets = destination_offsets_h;
+    CSC_input->source_indices = source_indices_h;
+ 
     vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1, vertex_dim[2]= (void*)pr_2;
 
     int ret = nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32);
@@ -86,7 +88,6 @@ int widest_path_sub()
 
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
-    // First run with default values
     nvgraphWidestPath(handle, graph, 0, 0, 1);
 
     // Get and print result
@@ -95,7 +96,7 @@ int widest_path_sub()
       printf("%f\n",pr_1[i]);
     }
 
-    //Clean
+    // Clean Up
     nvgraphDestroyGraphDescr(handle, graph);
     nvgraphDestroy(handle);
 
