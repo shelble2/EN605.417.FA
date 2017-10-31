@@ -62,22 +62,22 @@ int widest_path_sub()
       printf("destination offset[%d] = %d\n", i, destination_offsets_h[i]);
     }
     for(i = 0; i < NUM_VERTICES; i++) {
-      bookmark_h[i] = 0.0;
+      bookmark_h[i] = 1.0;
       printf("bookmark[%d] = %0.1f\n", i, bookmark_h[i]);
     }
 
     CSC_input->destination_offsets = destination_offsets_h;
     CSC_input->source_indices = source_indices_h;
 
-    // Host variables for result
-    float *pr_1;
+    // Host variables for passed values and result
     void** vertex_dim;
-    pr_1 = (float*)malloc(NUM_VERTICES*sizeof(float));
     vertex_dim = (void**)malloc(VERTEX_NUMSETS*sizeof(void*));
+    float *pr_1;
+    pr_1 = (float*)malloc(NUM_VERTICES*sizeof(float));
     vertex_dim[0] = (void*)bookmark_h;
     vertex_dim[1]= (void*)pr_1;
 
-    // Device variables for result
+    // Device variables for passed values and result
     cudaDataType_t d_edge_dim = CUDA_R_32F;
     cudaDataType_t *d_vertex_dim = (cudaDataType_t*)malloc(VERTEX_NUMSETS*sizeof(cudaDataType_t));
     d_vertex_dim[0] = CUDA_R_32F;
@@ -99,7 +99,7 @@ int widest_path_sub()
       printf("Failed to set up graph or allocate memory for graph data\n");
       return EXIT_FAILURE;
     }
-    nvgraphSetVertexData(handle, graph, vertex_dim[1], 1);
+    nvgraphSetVertexData(handle, graph, vertex_dim[0], 0);
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
     // Call the kernel
@@ -109,7 +109,7 @@ int widest_path_sub()
     nvgraphSssp(handle, graph, 0, 0, 1);
 
     // Get and print result
-    nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
+    nvgraphGetVertexData(handle, graph, (void *)pr_1, 1);
 
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
