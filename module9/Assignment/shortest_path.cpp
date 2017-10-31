@@ -83,7 +83,6 @@ int widest_path_sub()
     d_vertex_dim[0] = CUDA_R_32F;
     d_vertex_dim[1] = CUDA_R_32F;
 
-
     cudaEvent_t start, stop;
     float duration;
 
@@ -103,7 +102,11 @@ int widest_path_sub()
     nvgraphSetVertexData(handle, graph, vertex_dim[1], 1);
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
-    nvgraphSssp(handle, graph, 0, 0, 0);
+    // Call the kernel
+    // arg 1 and 2 are self-explanatory
+    // arg 3 is index of edge weights, arg 4 is index of source
+    // arg 5 is index of result
+    nvgraphSssp(handle, graph, 0, 0, 1);
 
     // Get and print result
     nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
