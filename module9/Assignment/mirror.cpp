@@ -12,6 +12,8 @@
 #include <cuda_runtime.h>
 #include <npp.h>
 #include <ImagesNPP.h>
+#include <ImagesCPU.h>
+#include <ImageIO.h>
 
 int main_sub(int argc, char *argv[])
 {
@@ -37,8 +39,7 @@ int main_sub(int argc, char *argv[])
   NppiSize size_ROI = {(int)d_original.width() , (int)d_original.height() };
 
   //Declare a pointer for the result
-  npp:ImageNPP_8u_C1 d_mirror(size_ROI.width, size_ROI.height);
-
+  npp::ImageNPP_8u_C1 d_mirror(d_original.size());
   NppStatus status = nppiMirror_8u_C1R(d_original, 1, d_mirror, d_mirror, 1, size_ROI, NPP_BOTH_AXIS);
 
   // Make host destination
