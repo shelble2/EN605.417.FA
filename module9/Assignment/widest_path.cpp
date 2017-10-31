@@ -19,73 +19,15 @@
 
 int widest_path_sub()
 {
-    const size_t  n = NUM_VERTICES, nnz = NUM_EDGES, vertex_numsets = VERTEX_NUMSETS, edge_numsets = EDGE_NUMSETS;
-    int i, *destination_offsets_h, *source_indices_h;
-    float *weights_h, *bookmark_h, *pr_1,*pr_2;
-    void** vertex_dim;
-
-    // nvgraph variables
+    int i = 0;
     nvgraphStatus_t status;
     nvgraphHandle_t handle;
     nvgraphGraphDescr_t graph;
     nvgraphCSCTopology32I_t CSC_input;
     cudaDataType_t edge_dimT = CUDA_R_32F;
-    cudaDataType_t* vertex_dimT;
+    int *destination_offsets_h, *source_indices_h;
+    float *weights_h, *bookmark_h;
 
-    // Allocate host data
-    destination_offsets_h = (int*) malloc((n+1)*sizeof(int));
-    source_indices_h = (int*) malloc(nnz*sizeof(int));
-    weights_h = (float*)malloc(nnz*sizeof(float));
-    bookmark_h = (float*)malloc(n*sizeof(float));
-    pr_1 = (float*)malloc(n*sizeof(float));
-    pr_2 = (float*)malloc(n*sizeof(float));
-    vertex_dim = (void**)malloc(vertex_numsets*sizeof(void*));
-    vertex_dimT = (cudaDataType_t*)malloc(vertex_numsets*sizeof(cudaDataType_t));
-    CSC_input = (nvgraphCSCTopology32I_t) malloc(sizeof(struct nvgraphCSCTopology32I_st));
-
-    // Initialize host data
-    vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1, vertex_dim[2]= (void*)pr_2;
-    vertex_dimT[0] = CUDA_R_32F; vertex_dimT[1]= CUDA_R_32F, vertex_dimT[2]= CUDA_R_32F;
-
-
-    weights_h [0] = 0.333333f;
-    weights_h [1] = 0.500000f;
-    weights_h [2] = 0.333333f;
-    weights_h [3] = 0.500000f;
-    weights_h [4] = 0.500000f;
-    weights_h [5] = 1.000000f;
-    weights_h [6] = 0.333333f;
-    weights_h [7] = 0.500000f;
-    weights_h [8] = 0.500000f;
-    weights_h [9] = 0.500000f;
-
-    destination_offsets_h [0] = 0;
-    destination_offsets_h [1] = 1;
-    destination_offsets_h [2] = 3;
-    destination_offsets_h [3] = 4;
-    destination_offsets_h [4] = 6;
-    destination_offsets_h [5] = 8;
-    destination_offsets_h [6] = 10;
-
-    source_indices_h [0] = 2;
-    source_indices_h [1] = 0;
-    source_indices_h [2] = 2;
-    source_indices_h [3] = 0;
-    source_indices_h [4] = 4;
-    source_indices_h [5] = 5;
-    source_indices_h [6] = 2;
-    source_indices_h [7] = 3;
-    source_indices_h [8] = 3;
-    source_indices_h [9] = 4;
-
-    bookmark_h[0] = 0.0f;
-    bookmark_h[1] = 1.0f;
-    bookmark_h[2] = 0.0f;
-    bookmark_h[3] = 0.0f;
-    bookmark_h[4] = 0.0f;
-    bookmark_h[5] = 0.0f;
-
-    // Starting nvgraph
     if(nvgraphCreate (&handle) != 0) {
       printf("Failed to create graph handle\n");
       return EXIT_FAILURE;
@@ -95,23 +37,52 @@ int widest_path_sub()
       return EXIT_FAILURE;
     }
 
-    CSC_input->nvertices = n;
-    CSC_input->nedges = nnz;
+    CSC_input = (nvgraphCSCTopology32I_t) malloc(sizeof(struct nvgraphCSCTopology32I_st));
+    CSC_input->nvertices = NUM_VERTICES;
+    CSC_input->nedges = NUM_EDGES;
     CSC_input->destination_offsets = destination_offsets_h;
     CSC_input->source_indices = source_indices_h;
 
-    // Set graph connectivity and properties (tranfers)
+    //TODO: Not sure about this whole part
+    float *pr_1,*pr_2;
+    void** vertex_dim;
+    cudaDataType_t* vertex_dimT;
+    pr_1 = (float*)malloc(NUM_VERTICES*sizeof(float));
+    pr_2 = (float*)malloc(NUM_VERTICES*sizeof(float));
+    vertex_dim = (void**)malloc(VERTEX_NUMSETS*sizeof(void*));
+    vertex_dimT = (cudaDataType_t*)malloc(VERTEX_NUMSETS*sizeof(cudaDataType_t));
+
+    // Initialize host data
+    vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1, vertex_dim[2]= (void*)pr_2;
+    vertex_dimT[0] = CUDA_R_32F; vertex_dimT[1]= CUDA_R_32F, vertex_dimT[2]= CUDA_R_32F;
+    //////////////////////
+
+    //Fill graph variables
+    weights_h = (float*)malloc(NUM_EDGES*sizeof(float));
+    source_indices_h = (int*) malloc(NUM_EDGES*sizeof(int));
+
+    for(i = 0; i < NUM_EDGES; i++){
+      weights_h[i] = (float) (rand() / MAX_INT);
+      source_indices_h[i] = rand() % NUM_VERTICES;
+    }
+
+    destination_offsets_h = (int*) malloc((NUM_VERTICES+1)*sizeof(int));
+    bookmark_h = (float*)malloc(NUM_VERTICES*sizeof(float));
+
+    for(i = 0; i < NUM_VERTICES; i++) {
+      destination_offsets_h[i] = rand() % NUM_VERTICES;
+      bookmark_h[i] = (float) (rand() / MAX_INT);
+    }
+    destination_offsets_h[i] = rand() % NUM_VERTICES;
+
     int ret = nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32);
     ret += nvgraphAllocateVertexData(handle, graph, VERTEX_NUMSETS, vertex_dimT);
-    ret += nvgraphAllocateEdgeData  (handle, graph, EDGE_NUMSETS, &edge_dimT);
+    ret += nvgraphAllocateEdgeData(handle, graph, EDGE_NUMSETS, &edge_dimT);
     if(ret != 0 ) {
-      printf("Failed to set up graph\n");
+      printf("Failed to set up graph or allocate memory for graph data\n");
       return EXIT_FAILURE;
     }
-/*
-    for (i = 0; i < 2; ++i) {
-        nvgraphSetVertexData(handle, graph, vertex_dim[i], i);
-    }*/
+
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
     // First run with default values
