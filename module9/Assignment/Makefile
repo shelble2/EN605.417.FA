@@ -255,7 +255,7 @@ endif
 # Target rules
 all: build
 
-build: mirror
+build: mirror widest_path
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -263,6 +263,14 @@ ifeq ($(SAMPLE_ENABLED),0)
 else
 	@echo "Sample is ready - all dependencies have been met"
 endif
+
+widest_path.o:widest_path.cpp
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+widest_path: widest_path.o
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+	$(EXEC) mkdir -p ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+	$(EXEC) cp $@ ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
 mirror.o:mirror.cpp
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
@@ -274,9 +282,12 @@ mirror: mirror.o
 
 run: build
 	$(EXEC) ./mirror
+	$(EXEC) ./widest_path
 
 clean:
 	rm -f mirror mirror.o
+	rm -f widest_path widest_path.o
 	rm -rf ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/mirror
+	rm -rf ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/widest_path
 
 clobber: clean
