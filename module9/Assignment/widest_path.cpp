@@ -91,7 +91,7 @@ int widest_path_sub()
 
     // Get and print result
     nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
-    for (i = 0; i<n; i++) {
+    for (i = 0; i < NUM_VERTICES; i++) {
       printf("%f\n",pr_1[i]);
     }
 
