@@ -57,19 +57,20 @@ void main_sub()
   for(int i = 0; i < H.size(); i++)
   {
     if(H[i] == 0) {
-      std::cout << " " << i << " " << std::endl;
+      printf("%d\t", i);
     }
   }
-  printf("Elapsed Time: %f", duration);
+  printf("\nElapsed Time: %f\n", duration);
 
 }
 
 int main(void)
 {
 
-  printf("Run 1 of Thrust Program\n");
+  printf("\nRun 1 of Thrust Program\n");
   main_sub();
 
-  printf("Run 2 of Thrust Program\n");
+  printf("\nRun 2 of Thrust Program\n");
   main_sub();
+  printf("\n");
 }
