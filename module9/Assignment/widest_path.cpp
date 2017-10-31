@@ -46,17 +46,25 @@ int widest_path_sub()
 
     for(i = 0; i < NUM_EDGES; i++){
       weights_h[i] = (float) (rand() / MAX_INT);
+      printf("weights[%d] = %0.1f\n", i, weights_h[i]);
+    }
+    for(i = 0; i < NUM_EDGES; i++) {
       source_indices_h[i] = rand() % NUM_VERTICES;
+      printf("source indices[%d] = %d\n", i, source_indices_h[i]);
     }
 
     destination_offsets_h = (int*) malloc((NUM_VERTICES+1)*sizeof(int));
     bookmark_h = (float*)malloc(NUM_VERTICES*sizeof(float));
 
-    for(i = 0; i < NUM_VERTICES; i++) {
+    for(i = 0; i < NUM_VERTICES+1; i++) {
       destination_offsets_h[i] = rand() % NUM_VERTICES;
+      printf("destination offset[%d] = %d", i, destination_offsets_h[i]);
       bookmark_h[i] = (float) (rand() / MAX_INT);
     }
-    destination_offsets_h[i] = rand() % NUM_VERTICES;
+    for(i = 0; i < NUM_VERTICES; i++) {
+      bookmark_h[i] = (float) (rand() / MAX_INT);
+      printf("bookmark[%d] = %0.1f", i, bookmark_h[i]);
+    }
 
     CSC_input->destination_offsets = destination_offsets_h;
     CSC_input->source_indices = source_indices_h;
@@ -72,8 +80,18 @@ int widest_path_sub()
     // Device variables for result
     cudaDataType_t d_edge_dim = CUDA_R_32F;
     cudaDataType_t *d_vertex_dim = (cudaDataType_t*)malloc(VERTEX_NUMSETS*sizeof(cudaDataType_t));
-    d_vertex_dim[0] = CUDA_R_32F; 
+    d_vertex_dim[0] = CUDA_R_32F;
     d_vertex_dim[1] = CUDA_R_32F;
+
+
+    cudaEvent_t start, stop;
+    float duration;
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // Recording from load to copy back
+    cudaEventRecord(start, 0);
 
     int ret = nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32);
     ret += nvgraphAllocateVertexData(handle, graph, VERTEX_NUMSETS, d_vertex_dim);
@@ -89,6 +107,11 @@ int widest_path_sub()
 
     // Get and print result
     nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
+
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&duration, start, stop);
+    printf("Elapsed Time: %f\n", duration);
     for (i = 0; i < NUM_VERTICES; i++) {
       printf("%f\n",pr_1[i]);
     }
