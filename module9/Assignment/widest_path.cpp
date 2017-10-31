@@ -53,7 +53,6 @@ int widest_path_sub()
     vertex_dimT = (cudaDataType_t*)malloc(VERTEX_NUMSETS*sizeof(cudaDataType_t));
 
     // Initialize host data
-    vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1, vertex_dim[2]= (void*)pr_2;
     vertex_dimT[0] = CUDA_R_32F; vertex_dimT[1]= CUDA_R_32F, vertex_dimT[2]= CUDA_R_32F;
     //////////////////////
 
@@ -74,6 +73,8 @@ int widest_path_sub()
       bookmark_h[i] = (float) (rand() / MAX_INT);
     }
     destination_offsets_h[i] = rand() % NUM_VERTICES;
+
+    vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1, vertex_dim[2]= (void*)pr_2;
 
     int ret = nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32);
     ret += nvgraphAllocateVertexData(handle, graph, VERTEX_NUMSETS, vertex_dimT);
