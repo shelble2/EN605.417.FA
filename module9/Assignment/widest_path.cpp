@@ -73,7 +73,7 @@ int widest_path_sub()
     cudaDataType_t d_edge_dim = CUDA_R_32F;
     cudaDataType_t *d_vertex_dim = (cudaDataType_t*)malloc(VERTEX_NUMSETS*sizeof(cudaDataType_t));
     d_vertex_dim[0] = CUDA_R_32F; 
-    d_vertex_dim[1]= CUDA_R_32F,
+    d_vertex_dim[1] = CUDA_R_32F;
 
     int ret = nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32);
     ret += nvgraphAllocateVertexData(handle, graph, VERTEX_NUMSETS, d_vertex_dim);
@@ -82,10 +82,10 @@ int widest_path_sub()
       printf("Failed to set up graph or allocate memory for graph data\n");
       return EXIT_FAILURE;
     }
-    nvgraphSetVertexData(handle, graph, vertex_dim[1], 1)
+    nvgraphSetVertexData(handle, graph, vertex_dim[1], 1);
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
-    nvgraphWidestPath(handle, graph, 0, 0, 0);
+    nvgraphSssp(handle, graph, 0, 0, 0);
 
     // Get and print result
     nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
