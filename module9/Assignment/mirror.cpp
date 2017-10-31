@@ -10,16 +10,18 @@
 #include <iostream>
 
 #include <cuda_runtime.h>
+#include <helper_cuda.h>
 #include <npp.h>
+#include <Exceptions.h>
+
 #include <ImagesNPP.h>
 #include <ImagesCPU.h>
 #include <ImageIO.h>
 
-int main_sub(int argc, char *argv[])
+int main_sub(void)
 {
   std::string image_fn = "Lena.pgm";
-  int file_errors = 0;
-  
+ 
   // Construct the filename for the result
   std::string mirror_fn = image_fn;
   std::string::size_type dot = mirror_fn.rfind('.');
@@ -30,8 +32,14 @@ int main_sub(int argc, char *argv[])
   mirror_fn += "_mirror.pgm";
 
   npp::ImageCPU_8u_C1 h_original;
-  npp::loadImage(mirror_fn, h_original);
-
+ try { 
+  npp::loadImage(image_fn, h_original);
+ } catch (npp::Exception &rException) {
+  std::cerr << "Error! Exception occurred: " << std::endl;
+  std::cerr << rException << std::endl;
+  exit(EXIT_FAILURE);
+ }
+  
   //Copy to device
   npp::ImageNPP_8u_C1 d_original(h_original);
 
@@ -40,15 +48,21 @@ int main_sub(int argc, char *argv[])
 
   //Declare a pointer for the result
   npp::ImageNPP_8u_C1 d_mirror(d_original.size());
-  NppStatus status = nppiMirror_8u_C1R(d_original, 1, d_mirror, d_mirror, 1, size_ROI, NPP_BOTH_AXIS);
+ try { 
+  NppStatus status = nppiMirror_8u_C1R(d_original.data(), 0, d_mirror.data(), 0, size_ROI, NPP_BOTH_AXIS);
+ } catch (npp::Exception &rException) {
+  std::cerr << "Error! Exception occurred: " << std::endl;
+  std::cerr << rException << std::endl;
+  exit(EXIT_FAILURE);
+ }
 
   // Make host destination
   npp::ImageCPU_8u_C1 h_mirror(h_original.size());
 
-  //copy it back
+  // Copy it back
   d_mirror.copyTo(h_mirror.data(), h_mirror.pitch());
 
-  //Save it to file
+  // Save it to file
   saveImage(mirror_fn, h_mirror);
   std::cout << "Saved image to file: " << mirror_fn << std::endl;
 
@@ -58,4 +72,9 @@ int main_sub(int argc, char *argv[])
   nppiFree(h_mirror.data());
 
   exit(EXIT_SUCCESS);
+}
+
+int main(void) 
+{
+ main_sub();
 }
