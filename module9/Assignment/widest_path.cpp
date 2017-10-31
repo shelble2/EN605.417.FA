@@ -45,7 +45,7 @@ int widest_path_sub()
     source_indices_h = (int*) malloc(NUM_EDGES*sizeof(int));
 
     for(i = 0; i < NUM_EDGES; i++){
-      weights_h[i] = (float) (rand() / MAX_INT);
+      weights_h[i] = (float) (rand() % MAX_INT) / (rand() % MAX_INT);
       printf("weights[%d] = %0.1f\n", i, weights_h[i]);
     }
     for(i = 0; i < NUM_EDGES; i++) {
@@ -58,12 +58,11 @@ int widest_path_sub()
 
     for(i = 0; i < NUM_VERTICES+1; i++) {
       destination_offsets_h[i] = rand() % NUM_VERTICES;
-      printf("destination offset[%d] = %d", i, destination_offsets_h[i]);
-      bookmark_h[i] = (float) (rand() / MAX_INT);
+      printf("destination offset[%d] = %d\n", i, destination_offsets_h[i]);
     }
     for(i = 0; i < NUM_VERTICES; i++) {
-      bookmark_h[i] = (float) (rand() / MAX_INT);
-      printf("bookmark[%d] = %0.1f", i, bookmark_h[i]);
+      bookmark_h[i] = (float) (rand() % MAX_INT) / (rand() % MAX_INT);
+      printf("bookmark[%d] = %0.1f\n", i, bookmark_h[i]);
     }
 
     CSC_input->destination_offsets = destination_offsets_h;
@@ -111,7 +110,8 @@ int widest_path_sub()
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&duration, start, stop);
-    printf("Elapsed Time: %f\n", duration);
+    printf("\nElapsed Time: %f\n", duration);
+    printf("\nResult:\n");
     for (i = 0; i < NUM_VERTICES; i++) {
       printf("%f\n",pr_1[i]);
     }
