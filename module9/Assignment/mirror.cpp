@@ -5,46 +5,22 @@
  *
  */
 
-
-/*#include <ImagesCPU.h>
-#include <ImagesNPP.h>
-#include <ImageIO.h>
-#include <Exceptions.h>
-*/
 #include <string.h>
 #include <fstream>
 #include <iostream>
 
 #include <cuda_runtime.h>
 #include <npp.h>
-
-#include <helper_string.h>
-#include <helper_cuda.h>
+#include <ImagesNPP.h>
 
 int main_sub(int argc, char *argv[])
 {
-  std::string sFilename;
-  char *image_fn;
-
-  cudaDeviceInit(argc, (const char **)argv);
-
-  image_fn = "Lena.pgm";
-
+  std::string image_fn = "Lena.pgm";
   int file_errors = 0;
-  std::ifstream infile(image_fn.data(), std::ifstream::in);
-
-  if (!infile.good()) {
-      std::cout << "boxFilterNPP unable to open: <" << sFilename.data() << ">" << std::endl;
-      file_errors++;
-      infile.close();
-      exit(EXIT_FAILURE);
-  }
-  infile.close();
-
+  
+  // Construct the filename for the result
   std::string mirror_fn = image_fn;
-
   std::string::size_type dot = mirror_fn.rfind('.');
-
   if (dot != std::string::npos) {
     mirror_fn = mirror_fn.substr(0, dot);
   }
