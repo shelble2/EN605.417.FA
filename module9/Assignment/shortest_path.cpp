@@ -54,10 +54,10 @@ int widest_path_sub()
       printf("source indices[%d] = %d\n", i, source_indices_h[i]);
     }
 
-    destination_offsets_h = (int*) malloc((NUM_VERTICES+1)*sizeof(int));
+    destination_offsets_h = (int*) malloc((NUM_EDGES)*sizeof(int));
     bookmark_h = (float*)malloc(NUM_VERTICES*sizeof(float));
 
-    for(i = 0; i < NUM_VERTICES+1; i++) {
+    for(i = 0; i < NUM_EDGES; i++) {
       destination_offsets_h[i] = rand() % NUM_VERTICES;
       printf("destination offset[%d] = %d\n", i, destination_offsets_h[i]);
     }
@@ -117,7 +117,7 @@ int widest_path_sub()
     printf("\nElapsed Time: %f\n", duration);
     printf("\nResult:\n");
     for (i = 0; i < NUM_VERTICES; i++) {
-      printf("%f\n",pr_1[i]);
+      printf("%.3f\n",pr_1[i]);
     }
 
     // Clean Up
