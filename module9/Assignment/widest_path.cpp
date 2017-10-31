@@ -11,7 +11,7 @@
 #include "nvgraph.h"
 
 #define NUM_VERTICES 10
-#define NUM_EDGES 15
+#define NUM_EDGES 20
 #define VERTEX_NUMSETS 2
 #define EDGE_NUMSETS 1
 
@@ -134,9 +134,9 @@ int widest_path_sub()
 
 int main(void)
 {
-  printf("\nRun 1 of widest_path function:\n");
+  printf("\nRun 1 of single shortest path function:\n Edges: %d, Vertices: %d\n", NUM_EDGES, NUM_VERTICES);
   widest_path_sub();
 
-  printf("\nRun 2 of widest_path function:\n");
+  printf("\nRun 2 of single shortest path function:\n Edges: %d, Vertices: %d\n", NUM_EDGES, NUM_VERTICES);
   widest_path_sub();
 }
