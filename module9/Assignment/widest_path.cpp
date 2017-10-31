@@ -10,11 +10,16 @@
 #include <helper_cuda.h>
 #include "nvgraph.h"
 
+#define NUM_VERTICES 10
+#define NUM_EDGES 15
+#define VERTEX_NUMSETS 3
+#define EDGE_NUMSETS 1
+
+#define MAX_INT 10
+
 int widest_path_sub()
 {
-    const size_t  n = 6, nnz = 10, vertex_numsets = 3, edge_numsets = 1;
-    const float alpha1 = 0.85, alpha2 = 0.90;
-    const void *alpha1_p = (const void *) &alpha1, *alpha2_p = (const void *) &alpha2;
+    const size_t  n = NUM_VERTICES, nnz = NUM_EDGES, vertex_numsets = VERTEX_NUMSETS, edge_numsets = EDGE_NUMSETS;
     int i, *destination_offsets_h, *source_indices_h;
     float *weights_h, *bookmark_h, *pr_1,*pr_2;
     void** vertex_dim;
@@ -41,6 +46,7 @@ int widest_path_sub()
     // Initialize host data
     vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1, vertex_dim[2]= (void*)pr_2;
     vertex_dimT[0] = CUDA_R_32F; vertex_dimT[1]= CUDA_R_32F, vertex_dimT[2]= CUDA_R_32F;
+
 
     weights_h [0] = 0.333333f;
     weights_h [1] = 0.500000f;
@@ -96,16 +102,16 @@ int widest_path_sub()
 
     // Set graph connectivity and properties (tranfers)
     int ret = nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32);
-    ret += nvgraphAllocateVertexData(handle, graph, vertex_numsets, vertex_dimT);
-    ret += nvgraphAllocateEdgeData  (handle, graph, edge_numsets, &edge_dimT);
+    ret += nvgraphAllocateVertexData(handle, graph, VERTEX_NUMSETS, vertex_dimT);
+    ret += nvgraphAllocateEdgeData  (handle, graph, EDGE_NUMSETS, &edge_dimT);
     if(ret != 0 ) {
       printf("Failed to set up graph\n");
       return EXIT_FAILURE;
     }
-
+/*
     for (i = 0; i < 2; ++i) {
         nvgraphSetVertexData(handle, graph, vertex_dim[i], i);
-    }
+    }*/
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
     // First run with default values
@@ -113,7 +119,6 @@ int widest_path_sub()
 
     // Get and print result
     nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
-    printf("%d\n");
     for (i = 0; i<n; i++) {
       printf("%f\n",pr_1[i]);
     }
