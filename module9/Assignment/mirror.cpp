@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 
@@ -36,7 +37,7 @@ int mirror_sub(void)
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  /* Recording from load to copy back */
+  // Recording from load to copy back 
   cudaEventRecord(start, 0);
 
   // Load the original image into host memory
@@ -46,15 +47,15 @@ int mirror_sub(void)
   } catch (npp::Exception &rException) {
     std::cerr << "Error! Exception occurred: " << std::endl;
     std::cerr << rException << std::endl;
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
  }
 
-  //Copy to device
+  // Copy to device
   npp::ImageNPP_8u_C1 d_original(h_original);
 
   NppiSize size_ROI = {(int)d_original.width() , (int)d_original.height() };
 
-  //Declare a pointer for the result
+  // Declare a pointer for the result
   npp::ImageNPP_8u_C1 d_mirror(d_original.size());
 
   // Make a mirror image of the original
@@ -64,7 +65,7 @@ int mirror_sub(void)
   } catch (npp::Exception &rException) {
     std::cerr << "Error! Exception occurred: " << std::endl;
     std::cerr << rException << std::endl;
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   // Make host destination
@@ -76,7 +77,7 @@ int mirror_sub(void)
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&duration, start, stop);
-  printf("\nElapsed Time: %f\n", duration);
+  printf("Elapsed Time: %f\n", duration);
 
   // Save it to file
   saveImage(mirror_fn, h_mirror);
@@ -88,7 +89,7 @@ int mirror_sub(void)
   nppiFree(h_original.data());
   nppiFree(h_mirror.data());
 
-  exit(EXIT_SUCCESS);
+  return 0;
 }
 
 int main(void)
