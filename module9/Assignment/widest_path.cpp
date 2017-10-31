@@ -103,7 +103,7 @@ int widest_path_sub()
       return EXIT_FAILURE;
     }
 
-    for (i = 0; i < 2; ++i) {}
+    for (i = 0; i < 2; ++i) {
         nvgraphSetVertexData(handle, graph, vertex_dim[i], i);
     }
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
