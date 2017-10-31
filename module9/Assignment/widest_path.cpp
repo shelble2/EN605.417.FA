@@ -12,7 +12,7 @@
 
 #define NUM_VERTICES 10
 #define NUM_EDGES 15
-#define VERTEX_NUMSETS 3
+#define VERTEX_NUMSETS 2
 #define EDGE_NUMSETS 1
 
 #define MAX_INT 10
@@ -24,7 +24,6 @@ int widest_path_sub()
     nvgraphHandle_t handle;
     nvgraphGraphDescr_t graph;
     nvgraphCSCTopology32I_t CSC_input;
-    cudaDataType_t edge_dimT = CUDA_R_32F;
     int *destination_offsets_h, *source_indices_h;
     float *weights_h, *bookmark_h;
 
@@ -40,20 +39,6 @@ int widest_path_sub()
     CSC_input = (nvgraphCSCTopology32I_t) malloc(sizeof(struct nvgraphCSCTopology32I_st));
     CSC_input->nvertices = NUM_VERTICES;
     CSC_input->nedges = NUM_EDGES;
-
-
-    //TODO: Not sure about this whole part
-    float *pr_1,*pr_2;
-    void** vertex_dim;
-    cudaDataType_t* vertex_dimT;
-    pr_1 = (float*)malloc(NUM_VERTICES*sizeof(float));
-    pr_2 = (float*)malloc(NUM_VERTICES*sizeof(float));
-    vertex_dim = (void**)malloc(VERTEX_NUMSETS*sizeof(void*));
-    vertex_dimT = (cudaDataType_t*)malloc(VERTEX_NUMSETS*sizeof(cudaDataType_t));
-
-    // Initialize host data
-    vertex_dimT[0] = CUDA_R_32F; vertex_dimT[1]= CUDA_R_32F, vertex_dimT[2]= CUDA_R_32F;
-    /////////////////////
 
     // Fill graph variables
     weights_h = (float*)malloc(NUM_EDGES*sizeof(float));
@@ -75,20 +60,32 @@ int widest_path_sub()
 
     CSC_input->destination_offsets = destination_offsets_h;
     CSC_input->source_indices = source_indices_h;
- 
-    vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1, vertex_dim[2]= (void*)pr_2;
+
+    // Host variables for result
+    float *pr_1;
+    void** vertex_dim;
+    pr_1 = (float*)malloc(NUM_VERTICES*sizeof(float));
+    vertex_dim = (void**)malloc(VERTEX_NUMSETS*sizeof(void*));
+    vertex_dim[0] = (void*)bookmark_h;
+    vertex_dim[1]= (void*)pr_1;
+
+    // Device variables for result
+    cudaDataType_t d_edge_dim = CUDA_R_32F;
+    cudaDataType_t *d_vertex_dim = (cudaDataType_t*)malloc(VERTEX_NUMSETS*sizeof(cudaDataType_t));
+    d_vertex_dim[0] = CUDA_R_32F; 
+    d_vertex_dim[1]= CUDA_R_32F,
 
     int ret = nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32);
-    ret += nvgraphAllocateVertexData(handle, graph, VERTEX_NUMSETS, vertex_dimT);
-    ret += nvgraphAllocateEdgeData(handle, graph, EDGE_NUMSETS, &edge_dimT);
+    ret += nvgraphAllocateVertexData(handle, graph, VERTEX_NUMSETS, d_vertex_dim);
+    ret += nvgraphAllocateEdgeData(handle, graph, EDGE_NUMSETS, &d_edge_dim);
     if(ret != 0 ) {
       printf("Failed to set up graph or allocate memory for graph data\n");
       return EXIT_FAILURE;
     }
-
+    nvgraphSetVertexData(handle, graph, vertex_dim[1], 1)
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
-    nvgraphWidestPath(handle, graph, 0, 0, 1);
+    nvgraphWidestPath(handle, graph, 0, 0, 0);
 
     // Get and print result
     nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
@@ -105,9 +102,8 @@ int widest_path_sub()
     free(weights_h);
     free(bookmark_h);
     free(pr_1);
-    free(pr_2);
     free(vertex_dim);
-    free(vertex_dimT);
+    free(d_vertex_dim);
     free(CSC_input);
 
     return EXIT_SUCCESS;
