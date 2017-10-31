@@ -49,7 +49,8 @@ int main_sub(void)
   //Declare a pointer for the result
   npp::ImageNPP_8u_C1 d_mirror(d_original.size());
  try { 
-  NppStatus status = nppiMirror_8u_C1R(d_original.data(), 0, d_mirror.data(), 0, size_ROI, NPP_BOTH_AXIS);
+  NppStatus status = nppiMirror_8u_C1R(d_original.data(), d_original.pitch(), d_mirror.data(), d_mirror.pitch(), size_ROI, NPP_HORIZONTAL_AXIS);
+  printf("Result of nppiMirror is %d\n", status);
  } catch (npp::Exception &rException) {
   std::cerr << "Error! Exception occurred: " << std::endl;
   std::cerr << rException << std::endl;
