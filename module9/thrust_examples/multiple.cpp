@@ -25,6 +25,15 @@ void main_sub()
   thrust::device_vector<int> M(NUM_ELEMENTS);
   thrust::device_vector<int> R(NUM_ELEMENTS);
 
+  cudaEvent_t start, stop;
+	float duration;
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+  /* Recording from fill to copy back */
+	cudaEventRecord(start, 0);
+
   // Fill the device vector with all numbers between 0 and NUM_ELEMENTS
   thrust::sequence(D.begin(), D.end());
 
@@ -38,15 +47,21 @@ void main_sub()
   // Copy the result back to the host
   H = R;
 
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&duration, start, stop);
+
   // Print result
   printf("%d elements\n", NUM_ELEMENTS);
-  printf("Looking for multiples of %d\n", TARGET);
+  printf("Multiples of %d:\n", TARGET);
   for(int i = 0; i < H.size(); i++)
   {
     if(H[i] == 0) {
-      std::cout << i << " is a multiple of " << TARGET << std::endl;
+      std::cout << " " << i << " " << std::endl;
     }
   }
+  printf("Elapsed Time: %f", duration);
+
 }
 
 int main(void)
