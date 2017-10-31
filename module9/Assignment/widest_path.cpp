@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
-//#include "nvgraph.h"
+#include "nvgraph.h"
 
 int widest_path_sub()
 {
@@ -109,11 +109,14 @@ int widest_path_sub()
     nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0);
 
     // First run with default values
-    nvgraphPagerank(handle, graph, 0, alpha1_p, 0, 0, 1, 0.0f, 0);
+    nvgraphWidestPath(handle, graph, 0, 0, 1);
 
     // Get and print result
     nvgraphGetVertexData(handle, graph, vertex_dim[1], 1);
-    printf("pr_1, alpha = 0.85\n"); for (i = 0; i<n; i++)  printf("%f\n",pr_1[i]); printf("\n");
+    printf("%d\n");
+    for (i = 0; i<n; i++) {
+      printf("%f\n",pr_1[i]);
+    }
 
     //Clean
     nvgraphDestroyGraphDescr(handle, graph);
