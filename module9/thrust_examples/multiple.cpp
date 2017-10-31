@@ -18,7 +18,7 @@
 #define NUM_ELEMENTS 1048
 #define TARGET 7
 
-int main(void)
+void main_sub()
 {
   thrust::host_vector<int> H(NUM_ELEMENTS);
   thrust::device_vector<int> D(NUM_ELEMENTS);
@@ -39,10 +39,22 @@ int main(void)
   H = R;
 
   // Print result
+  printf("%d elements\n", NUM_ELEMENTS);
+  printf("Looking for multiples of %d\n", TARGET);
   for(int i = 0; i < H.size(); i++)
   {
     if(H[i] == 0) {
       std::cout << i << " is a multiple of " << TARGET << std::endl;
     }
   }
+}
+
+int main(void)
+{
+
+  printf("Run 1 of Thrust Program\n");
+  main_sub();
+
+  printf("Run 2 of Thrust Program\n");
+  main_sub();
 }
