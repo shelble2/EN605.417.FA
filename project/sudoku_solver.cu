@@ -6,10 +6,6 @@
  * In the process of adapting shuffle.cu from Module 5 assigment to work on
  * solving sudoku puzzles in the form of a string of numbers, where 0 indicates
  * an empty cell.
- *
- * Previous program:
- * Shuffles the contents of an array according to a pre-determined pattern
- * Used to test the difference between shared/global and const/global memory
  */
 
 #include <stdio.h>
@@ -79,20 +75,12 @@ __global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffl
  }
 }
 
-/**
- * Function that sets up everything for the kernel function
- *
- * @array_size size of array (total number of threads)
- * @threads_per_block number of threads to put in each block
- * @global_array is 0 if the array should be global memory, 1 if it should be shared
- * @global_plan is 0 if the plan should be global memory, 1 if it should be constant
- */
-void exec()
+void main_sub()
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
 
-  unsigned int ordered[CELLS] = {0,0,4,3,0,0,2,0,9,
+  unsigned int h_puzzle[CELLS] = {0,0,4,3,0,0,2,0,9,
 																0,0,5,0,0,9,0,0,1,
 																0,7,0,0,6,0,0,4,3,
 																0,0,6,0,0,2,0,8,7,
@@ -101,23 +89,25 @@ void exec()
 																6,0,0,0,0,0,1,0,5,
 																0,0,3,5,0,8,6,9,0,
 																0,4,2,9,1,0,3,0,0};
-  unsigned int *shuffled_result;
+	unsigned int *h_pinned_puzzle;
+  unsigned int *h_solution;
 
   //pin it
+  cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
+  cudaMallocHost((void **)&h_solution, array_size_in_bytes);
 
-	//TODO: pin the ordered array to the host
-//  cudaMallocHost((void **)&ordered, array_size_in_bytes);
-  cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
+	// Copy it to pinned memory
+	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
   /* Declare and allocate pointers for GPU based parameters */
-  unsigned int *d_ordered;
-  unsigned int *d_shuffled_result;
+  unsigned int *d_puzzle;
+  unsigned int *d_solution;
 
-  cudaMalloc((void **)&d_ordered, array_size_in_bytes);
-  cudaMalloc((void **)&d_shuffled_result, array_size_in_bytes);
+  cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
+  cudaMalloc((void **)&d_solution, array_size_in_bytes);
 
   /* Copy the CPU memory to the GPU memory */
-  cudaMemcpy(d_ordered, ordered, array_size_in_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
@@ -128,7 +118,7 @@ void exec()
 
   cudaEvent_t start_time = get_time();
 
-	shared_shuffle_const<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
+	shared_shuffle_const<<<num_blocks, num_threads>>>(d_puzzle, d_solution);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
@@ -136,17 +126,23 @@ void exec()
   cudaEventElapsedTime(&duration, start_time, end_time);
 
   /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  printf("\tDuration: %fmsn\n", duration);
-  sudoku_print(shuffled_result);
+	printf("Puzzle:\n");
+	sudoku_print(h_puzzle);
+
+	printf("Solution:\n");
+  sudoku_print(h_solution);
+
+	printf("\tSolved in: %fmsn\n", duration);
 
   /* Free the GPU memory */
-  cudaFree(d_ordered);
-  cudaFree(d_shuffled_result);
+  cudaFree(d_puzzle);
+  cudaFree(d_solution);
 
   /* Free the pinned CPU memory */
-  cudaFreeHost(shuffled_result);
+  cudaFreeHost(h_pinned_puzzle);
+	cudaFreeHost(h_solution);
 }
 
 /**
@@ -173,7 +169,7 @@ int main(int argc, char *argv[])
 
   printf("\n");
 
-  exec();
+  main_sub();
 
   return EXIT_SUCCESS;
 }

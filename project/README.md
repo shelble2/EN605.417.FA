@@ -12,6 +12,9 @@ Todo
 - ingest sudoku puzzles from site
 - solve a given sudoku puzzle
   - in the website I found [1], it's just a string of numbers, where 0 is empty cell
+- solve a lot of sudoku puzzles
+  - how does this change the blocks/threading. One puzzle per block? would that work?
+  - make things asnychronous
 - simple program: check if the answer is correct
   - could either double-check that all rules are followed, or
   - simply check against the answer in the database
