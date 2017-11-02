@@ -1,22 +1,27 @@
 /**
- * Assignment 05 Program - shuffle.cu
+ * sudoku_solver.cu
  * Sarah Helble
- * 9/29/17
+ * 2017-11-01
  *
+ * In the process of adapting shuffle.cu from Module 5 assigment to work on
+ * solving sudoku puzzles in the form of a string of numbers, where 0 indicates
+ * an empty cell.
+ *
+ * Previous program:
  * Shuffles the contents of an array according to a pre-determined pattern
  * Used to test the difference between shared/global and const/global memory
- * 
- * Usage ./aout
- *
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_ELEMENTS 512
-#define THREADS_PER_BLOCK 16
+#define MAX_INT 9                 // Customary sudoku
+#define CELLS MAX_INT * MAX_INT   // 81
+#define THREADS_PER_BLOCK MAX_INT // Seems like a nice way to split..
 
-#define PLAN_DEPTH 10
+//TODO: Look up again rules about sharing data across blocks. They will have to share
+
+#define PLAN_DEPTH 1
 
 __constant__ int const_plan[PLAN_DEPTH];
 __device__ int gmem_plan[PLAN_DEPTH];
@@ -48,7 +53,7 @@ __global__ void shuffle_const(unsigned int *ordered, unsigned int *shuffled)
   int instruction = const_plan[instruction_num];
 
   int new_index = idx + instruction;
-  if (new_index >= NUM_ELEMENTS) {
+  if (new_index >= CELLS) {
      shuffled[idx] = ordered[idx];
   } else {
      shuffled[new_index] = ordered[idx];
@@ -68,7 +73,7 @@ __global__ void shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
 
 __global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffled)
 {
-	__shared__ unsigned int tmp[NUM_ELEMENTS];
+	__shared__ unsigned int tmp[CELLS];
 	const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	unsigned int instruction_num = idx % PLAN_DEPTH;
@@ -82,7 +87,7 @@ __global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffl
 
 __global__ void shared_shuffle_gmem(unsigned int *ordered, unsigned int *shuffled)
 {
-	__shared__ unsigned int tmp[NUM_ELEMENTS];
+	__shared__ unsigned int tmp[CELLS];
 	const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	unsigned int instruction_num = idx % PLAN_DEPTH;
@@ -104,7 +109,7 @@ void print_results(unsigned int *ordered, unsigned int *shuffled)
   int i = 0;
 
   printf("\n");
-  for(i = 0; i < NUM_ELEMENTS; i++) {
+  for(i = 0; i < CELLS; i++) {
     printf("Original value at index [%d]: %d, shuffled: %d\n", i, ordered[i], shuffled[i]);
   }
   printf("\n");
@@ -121,7 +126,7 @@ void print_results(unsigned int *ordered, unsigned int *shuffled)
 void exec_shuffle(int global_array, int global_plan)
 {
   /* Calculate the size of the array */
-  int array_size_in_bytes = (sizeof(unsigned int) * (NUM_ELEMENTS));
+  int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
   int i = 0;
 
   unsigned int *ordered;
@@ -133,7 +138,7 @@ void exec_shuffle(int global_array, int global_plan)
   cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
 
   /* Read characters from the input and key files into the text and key arrays respectively */
-  for(i = 0; i < NUM_ELEMENTS; i++) {
+  for(i = 0; i < CELLS; i++) {
   	ordered[i] = i;
   }
 
@@ -148,8 +153,8 @@ void exec_shuffle(int global_array, int global_plan)
   cudaMemcpy(d_ordered, ordered, array_size_in_bytes, cudaMemcpyHostToDevice);
 
   /* Designate the number of blocks and threads */
-  const unsigned int num_blocks = NUM_ELEMENTS/THREADS_PER_BLOCK;
-  const unsigned int num_threads = NUM_ELEMENTS/num_blocks;
+  const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
+  const unsigned int num_threads = CELLS/num_blocks;
 
   /* Execute the kernel and keep track of start and end time for duration */
   float duration = 0;
