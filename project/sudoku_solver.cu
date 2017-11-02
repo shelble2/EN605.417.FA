@@ -91,21 +91,22 @@ void exec()
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
-  int i = 0;
 
-  unsigned int *ordered = {0,0,4,3,0,0,2,0,9,
-													0,0,5,0,0,9,0,0,1,
-													0,7,0,0,6,0,0,4,3,
-													0,0,6,0,0,2,0,8,7,
-													1,9,0,0,0,7,4,0,0,
-													0,5,0,0,8,3,0,0,0,
-													6,0,0,0,0,0,1,0,5,
-													0,0,3,5,0,8,6,9,0,
-													0,4,2,9,1,0,3,0,0};
+  unsigned int ordered[CELLS] = {0,0,4,3,0,0,2,0,9,
+																0,0,5,0,0,9,0,0,1,
+																0,7,0,0,6,0,0,4,3,
+																0,0,6,0,0,2,0,8,7,
+																1,9,0,0,0,7,4,0,0,
+																0,5,0,0,8,3,0,0,0,
+																6,0,0,0,0,0,1,0,5,
+																0,0,3,5,0,8,6,9,0,
+																0,4,2,9,1,0,3,0,0};
   unsigned int *shuffled_result;
 
   //pin it
-  cudaMallocHost((void **)&ordered, array_size_in_bytes);
+
+	//TODO: pin the ordered array to the host
+//  cudaMallocHost((void **)&ordered, array_size_in_bytes);
   cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
 
   /* Declare and allocate pointers for GPU based parameters */
@@ -145,7 +146,6 @@ void exec()
   cudaFree(d_shuffled_result);
 
   /* Free the pinned CPU memory */
-  cudaFreeHost(ordered);
   cudaFreeHost(shuffled_result);
 }
 
