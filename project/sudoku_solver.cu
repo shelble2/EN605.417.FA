@@ -31,7 +31,7 @@ __host__ cudaEvent_t get_time(void)
 /**
  * Kernel function that moves the values in @ordered to @shuffled
  */
-__global__ void shared_shuffle_const(unsigned int *ordered, unsigned int *shuffled)
+__global__ void solve(unsigned int *ordered, unsigned int *shuffled)
 {
 	__shared__ unsigned int tmp[CELLS];
 	const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -118,7 +118,7 @@ void main_sub()
 
   cudaEvent_t start_time = get_time();
 
-	shared_shuffle_const<<<num_blocks, num_threads>>>(d_puzzle, d_solution);
+	solve<<<num_blocks, num_threads>>>(d_puzzle, d_solution);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
@@ -128,6 +128,7 @@ void main_sub()
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
+	//TODO: would like puzzle and solution to be able to print side by side
 	printf("Puzzle:\n");
 	sudoku_print(h_puzzle);
 

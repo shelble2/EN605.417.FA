@@ -12,6 +12,11 @@ Todo
 - ingest sudoku puzzles from site
 - solve a given sudoku puzzle
   - in the website I found [1], it's just a string of numbers, where 0 is empty cell
+  - how to actually solve
+    - could have one kernel solve by cell (check a cell for values it can hold. If only one, that's it)
+    - and one kernel that solves by dimension (check a row for last values to fill, or values that can only fit in one place)
+    - another kernel or host code to check if you're done
+    - cycle through these until last returns success
 - solve a lot of sudoku puzzles
   - how does this change the blocks/threading. One puzzle per block? would that work?
   - make things asnychronous
