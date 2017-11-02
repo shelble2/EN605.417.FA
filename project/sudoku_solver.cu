@@ -93,17 +93,20 @@ void exec()
   int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
   int i = 0;
 
-  unsigned int *ordered;
+  unsigned int *ordered = {0,0,4,3,0,0,2,0,9,
+													0,0,5,0,0,9,0,0,1,
+													0,7,0,0,6,0,0,4,3,
+													0,0,6,0,0,2,0,8,7,
+													1,9,0,0,0,7,4,0,0,
+													0,5,0,0,8,3,0,0,0,
+													6,0,0,0,0,0,1,0,5,
+													0,0,3,5,0,8,6,9,0,
+													0,4,2,9,1,0,3,0,0};
   unsigned int *shuffled_result;
 
   //pin it
   cudaMallocHost((void **)&ordered, array_size_in_bytes);
   cudaMallocHost((void **)&shuffled_result, array_size_in_bytes);
-
-	//TODO: change this to load example sudoku
-  for(i = 0; i < CELLS; i++) {
-  	ordered[i] = i;
-  }
 
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *d_ordered;
