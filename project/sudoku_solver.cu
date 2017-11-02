@@ -124,7 +124,6 @@ void exec()
 
   cudaEvent_t start_time = get_time();
 
-	cudaMemcpyToSymbol(const_plan, plan, PLAN_DEPTH * sizeof(int));
 	shared_shuffle_const<<<num_blocks, num_threads>>>(d_ordered, d_shuffled_result);
 
   cudaEvent_t end_time = get_time();
