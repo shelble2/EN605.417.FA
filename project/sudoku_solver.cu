@@ -135,7 +135,7 @@ void exec()
   cudaMemcpy( shuffled_result, d_shuffled_result, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
   printf("\tDuration: %fmsn\n", duration);
-  sudoku_print(ordered, shuffled_result);
+  sudoku_print(shuffled_result);
 
   /* Free the GPU memory */
   cudaFree(d_ordered);
