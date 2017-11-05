@@ -386,11 +386,11 @@ int main_sub(enum Command command)
         return 1;
     }
 
-    clWaitForEvent(1, &event);
-    clFinish(queue);
+    clWaitForEvents(1, &event);
+    clFinish(commandQueue);
 
     cl_ulong start, end;
-    double duration;
+    double duration, duration_in_ms;
 
     clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(start),
       &start, NULL);
@@ -417,21 +417,23 @@ int main_sub(enum Command command)
 
 int main (int argc, char** argv)
 {
-  printf("First run; original HelloWorld\n");
+  printf("\nArray size is %d\n", ARRAY_SIZE);
+  
+  /*  printf("\nFirst run; original HelloWorld\n");
   main_sub(HELLO);
-
-  printf("Second run; ADD\n");
+  */
+  printf("\nFirst run; ADD\n");
   main_sub(ADD);
 
-  printf("Third run; SUBTRACT\n");
+  printf("\nSecond run; SUBTRACT\n");
   main_sub(SUBTRACT);
 
-  printf("Fourth run; MULTIPLY\n");
+  printf("\nThird run; MULTIPLY\n");
   main_sub(MULTIPLY);
 
-  printf("Fifth run; DIVIDE\n");
+  printf("\nFourth run; DIVIDE\n");
   main_sub(DIVIDE);
 
-  printf("Sixth run; POWER\n");
+  printf("\nFifth run; POWER\n");
   main_sub(POWER);
 }
