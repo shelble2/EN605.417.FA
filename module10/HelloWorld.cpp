@@ -1,4 +1,8 @@
 //
+// Modified by Sarah Helble 4 Nov 2017 for Module 10 Assignment
+//
+
+//
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
 // ISBN-10:   0-321-74964-2
@@ -22,6 +26,8 @@
 #else
 #include <CL/cl.h>
 #endif
+
+enum Command{HELLO=0, ADD=1, SUBTRACT=2, MULTIPLY=3, DIVIDE=4, POWER=5};
 
 ///
 //  Constants
@@ -221,10 +227,49 @@ void Cleanup(cl_context context, cl_command_queue commandQueue,
 
 }
 
+void choose_file_and_kernel(enum Command command, char **file_out, char **kernel_out)
+{
+  char *tmp_file = malloc(100*sizeof(char));
+  char *tmp_kernel = malloc(100*sizeof(char));
+  switch(command) {
+    case HELLO:
+      tmp_file = "HelloWorld.cl";
+      tmp_kernel = "hello_kernel";
+      break;
+    case ADD:
+      tmp_file = "add.cl";
+      tmp_kernel = "add_kernel";
+      break;
+    case SUBTRACT:
+      tmp_file = "sub.cl";
+      tmp_kernel = "sub_kernel";
+      break;
+    case DIVIDE:
+      tmp_file = "div.cl";
+      tmp_kernel = "div_kernel";
+      break;
+    case MULTIPLY:
+      tmp_file = "mult.cl";
+      tmp_kernel = "mult_kernel";
+      break;
+    case POWER:
+      tmp_file = "pow.cl";
+      tmp_kernel = "pow_kernel";
+      break;
+    default:
+      tmp_file = NULL;
+      tmp_kernel = NULL;
+  }
+
+  *file_out = tmp_file;
+  *kernel_out = tmp_kernel;
+  return;
+}
+
 ///
-//	main() for HelloWorld example
+//	main_sub() for program
 //
-int main(int argc, char** argv)
+int main_sub(enum Command command)
 {
     cl_context context = 0;
     cl_command_queue commandQueue = 0;
@@ -251,22 +296,29 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // Create OpenCL program from HelloWorld.cl kernel source
-    program = CreateProgram(context, device, "HelloWorld.cl");
-    if (program == NULL)
-    {
+    char *file_name;
+    char *kernel_name;
+    choose_file_and_kernel(command, &file_name, &kernel_name);
+    if(!file_name || !kernel_name) {
+      printf("Failed to find file name ane kernel name for command\n");
+      return -1;
+    }
+
+    program = CreateProgram(context, device, file_name);
+    if (program == NULL) {
         Cleanup(context, commandQueue, program, kernel, memObjects);
         return 1;
     }
 
     // Create OpenCL kernel
-    kernel = clCreateKernel(program, "hello_kernel", NULL);
-    if (kernel == NULL)
-    {
-        std::cerr << "Failed to create kernel" << std::endl;
-        Cleanup(context, commandQueue, program, kernel, memObjects);
-        return 1;
+    kernel = clCreateKernel(program, kernel_name, NULL);
+    if (kernel == NULL) {
+      std::cerr << "Failed to create kernel" << std::endl;
+      Cleanup(context, commandQueue, program, kernel, memObjects);
+      return 1;
     }
+    free(file_name);
+    free(kerenl_name);
 
     // Create memory objects that will be used as arguments to
     // kernel.  First create host memory arrays that will be
@@ -332,4 +384,10 @@ int main(int argc, char** argv)
     Cleanup(context, commandQueue, program, kernel, memObjects);
 
     return 0;
+}
+
+int main (int argc, char** argv)
+{
+  printf("First run; original HelloWorld\n");
+  main_sub(HELLO);
 }
