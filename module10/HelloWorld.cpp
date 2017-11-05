@@ -391,4 +391,19 @@ int main (int argc, char** argv)
 {
   printf("First run; original HelloWorld\n");
   main_sub(HELLO);
+
+  printf("Second run; ADD\n");
+  main_sub(ADD);
+
+  printf("Third run; SUBTRACT\n");
+  main_sub(SUBTRACT);
+
+  printf("Fourth run; MULTIPLY\n");
+  main_sub(MULTIPLY);
+
+  printf("Fifth run; DIVIDE\n");
+  main_sub(DIVIDE);
+
+  printf("Sixth run; POWER\n");
+  main_sub(POWER);
 }
