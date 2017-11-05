@@ -17,6 +17,7 @@
 //    This is a simple example that demonstrates basic OpenCL setup and
 //    use.
 
+#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -229,32 +230,32 @@ void Cleanup(cl_context context, cl_command_queue commandQueue,
 
 void choose_file_and_kernel(enum Command command, char **file_out, char **kernel_out)
 {
-  char *tmp_file = malloc(100*sizeof(char));
-  char *tmp_kernel = malloc(100*sizeof(char));
+  char *tmp_file = (char *)malloc(100*sizeof(char));
+  char *tmp_kernel = (char *)malloc(100*sizeof(char));
   switch(command) {
     case HELLO:
-      tmp_file = "HelloWorld.cl";
-      tmp_kernel = "hello_kernel";
+      tmp_file = strdup("HelloWorld.cl");
+      tmp_kernel = strdup("hello_kernel");
       break;
     case ADD:
-      tmp_file = "add.cl";
-      tmp_kernel = "add_kernel";
+      tmp_file = strdup("add.cl");
+      tmp_kernel = strdup("add_kernel");
       break;
     case SUBTRACT:
-      tmp_file = "sub.cl";
-      tmp_kernel = "sub_kernel";
+      tmp_file = strdup("sub.cl");
+      tmp_kernel = strdup("sub_kernel");
       break;
     case DIVIDE:
-      tmp_file = "div.cl";
-      tmp_kernel = "div_kernel";
+      tmp_file = strdup("div.cl");
+      tmp_kernel = strdup("div_kernel");
       break;
     case MULTIPLY:
-      tmp_file = "mult.cl";
-      tmp_kernel = "mult_kernel";
+      tmp_file = strdup("mult.cl");
+      tmp_kernel = strdup("mult_kernel");
       break;
     case POWER:
-      tmp_file = "pow.cl";
-      tmp_kernel = "pow_kernel";
+      tmp_file = strdup("pow.cl");
+      tmp_kernel = strdup("pow_kernel");
       break;
     default:
       tmp_file = NULL;
@@ -318,7 +319,7 @@ int main_sub(enum Command command)
       return 1;
     }
     free(file_name);
-    free(kerenl_name);
+    free(kernel_name);
 
     // Create memory objects that will be used as arguments to
     // kernel.  First create host memory arrays that will be
