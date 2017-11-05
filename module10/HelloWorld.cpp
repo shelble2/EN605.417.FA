@@ -120,7 +120,7 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
     // In this example, we just choose the first available device.  In a
     // real program, you would likely use all available devices or choose
     // the highest performance device based on OpenCL device queries
-    commandQueue = clCreateCommandQueue(context, devices[0], 0, NULL);
+    commandQueue = clCreateCommandQueue(context, devices[0], CL_QUEUE_PROFILING_ENABLE, NULL);
     if (commandQueue == NULL)
     {
         delete [] devices;
@@ -206,7 +206,7 @@ bool CreateMemObjects(cl_context context, cl_mem memObjects[3],
 ///
 //  Cleanup any created OpenCL resources
 //
-void Cleanup(cl_context context, cl_command_queue commandQueue,
+void Cleanup(cl_context context, cl_command_queue commandQueue, char *fn, char *kn,
              cl_program program, cl_kernel kernel, cl_mem memObjects[3])
 {
     for (int i = 0; i < 3; i++)
@@ -216,6 +216,9 @@ void Cleanup(cl_context context, cl_command_queue commandQueue,
     }
     if (commandQueue != 0)
         clReleaseCommandQueue(commandQueue);
+
+    free(fn);
+    free(kn);
 
     if (kernel != 0)
         clReleaseKernel(kernel);
@@ -279,6 +282,8 @@ int main_sub(enum Command command)
     cl_kernel kernel = 0;
     cl_mem memObjects[3] = { 0, 0, 0 };
     cl_int errNum;
+    char *file_name = NULL;
+    char *kernel_name = NULL;
 
     // Create an OpenCL context on first available platform
     context = CreateContext();
@@ -293,21 +298,24 @@ int main_sub(enum Command command)
     commandQueue = CreateCommandQueue(context, &device);
     if (commandQueue == NULL)
     {
-        Cleanup(context, commandQueue, program, kernel, memObjects);
+        Cleanup(context, commandQueue, file_name, kernel_name, program,
+            kernel, memObjects);
         return 1;
     }
 
-    char *file_name;
-    char *kernel_name;
+
     choose_file_and_kernel(command, &file_name, &kernel_name);
     if(!file_name || !kernel_name) {
       printf("Failed to find file name ane kernel name for command\n");
+      Cleanup(context, commandQueue, file_name, kernel_name, program,
+          kernel, memObjects);
       return -1;
     }
 
     program = CreateProgram(context, device, file_name);
     if (program == NULL) {
-        Cleanup(context, commandQueue, program, kernel, memObjects);
+        Cleanup(context, commandQueue, file_name, kernel_name, program,
+            kernel, memObjects);
         return 1;
     }
 
@@ -315,11 +323,10 @@ int main_sub(enum Command command)
     kernel = clCreateKernel(program, kernel_name, NULL);
     if (kernel == NULL) {
       std::cerr << "Failed to create kernel" << std::endl;
-      Cleanup(context, commandQueue, program, kernel, memObjects);
+      Cleanup(context, commandQueue, file_name, kernel_name, program,
+          kernel, memObjects);
       return 1;
     }
-    free(file_name);
-    free(kernel_name);
 
     // Create memory objects that will be used as arguments to
     // kernel.  First create host memory arrays that will be
@@ -335,7 +342,8 @@ int main_sub(enum Command command)
 
     if (!CreateMemObjects(context, memObjects, a, b))
     {
-        Cleanup(context, commandQueue, program, kernel, memObjects);
+        Cleanup(context, commandQueue, file_name, kernel_name, program,
+            kernel, memObjects);
         return 1;
     }
 
@@ -346,21 +354,24 @@ int main_sub(enum Command command)
     if (errNum != CL_SUCCESS)
     {
         std::cerr << "Error setting kernel arguments." << std::endl;
-        Cleanup(context, commandQueue, program, kernel, memObjects);
+        Cleanup(context, commandQueue, file_name, kernel_name, program,
+            kernel, memObjects);
         return 1;
     }
 
     size_t globalWorkSize[1] = { ARRAY_SIZE };
     size_t localWorkSize[1] = { 1 };
 
+    cl_event event;
     // Queue the kernel up for execution across the array
     errNum = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL,
                                     globalWorkSize, localWorkSize,
-                                    0, NULL, NULL);
+                                    0, NULL, &event);
     if (errNum != CL_SUCCESS)
     {
         std::cerr << "Error queuing kernel for execution." << std::endl;
-        Cleanup(context, commandQueue, program, kernel, memObjects);
+        Cleanup(context, commandQueue, file_name, kernel_name, program,
+            kernel, memObjects);
         return 1;
     }
 
@@ -368,12 +379,28 @@ int main_sub(enum Command command)
     errNum = clEnqueueReadBuffer(commandQueue, memObjects[2], CL_TRUE,
                                  0, ARRAY_SIZE * sizeof(float), result,
                                  0, NULL, NULL);
-    if (errNum != CL_SUCCESS)
-    {
+    if (errNum != CL_SUCCESS) {
         std::cerr << "Error reading result buffer." << std::endl;
-        Cleanup(context, commandQueue, program, kernel, memObjects);
+        Cleanup(context, commandQueue, file_name, kernel_name, program,
+            kernel, memObjects);
         return 1;
     }
+
+    clWaitForEvent(1, &event);
+    clFinish(queue);
+
+    cl_ulong start, end;
+    double duration;
+
+    clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(start),
+      &start, NULL);
+    clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(end),
+      &end, NULL);
+
+    duration = end - start;  // duration is in nanoseconds
+    duration_in_ms = duration / 1000000;
+
+    printf("The %s kernel executed in %0.3fms\n", kernel_name, duration_in_ms);
 
     // Output the result buffer
     for (int i = 0; i < ARRAY_SIZE; i++)
@@ -382,7 +409,8 @@ int main_sub(enum Command command)
     }
     std::cout << std::endl;
     std::cout << "Executed program succesfully." << std::endl;
-    Cleanup(context, commandQueue, program, kernel, memObjects);
+    Cleanup(context, commandQueue, file_name, kernel_name, program,
+        kernel, memObjects);
 
     return 0;
 }
