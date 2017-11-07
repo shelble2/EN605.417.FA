@@ -418,22 +418,32 @@ int main_sub(enum Command command)
 int main (int argc, char** argv)
 {
   printf("\nArray size is %d\n", ARRAY_SIZE);
-  
+
   /*  printf("\nFirst run; original HelloWorld\n");
   main_sub(HELLO);
   */
   printf("\nFirst run; ADD\n");
   main_sub(ADD);
+  printf("\nSecond run; ADD\n");
+  main_sub(ADD);
 
+  printf("\nFirst run; SUBTRACT\n");
+  main_sub(SUBTRACT);
   printf("\nSecond run; SUBTRACT\n");
   main_sub(SUBTRACT);
 
-  printf("\nThird run; MULTIPLY\n");
+  printf("\nFirst run; MULTIPLY\n");
+  main_sub(MULTIPLY);
+  printf("\nSecond run; MULTIPLY\n");
   main_sub(MULTIPLY);
 
-  printf("\nFourth run; DIVIDE\n");
+  printf("\nFirst run; DIVIDE\n");
+  main_sub(DIVIDE);
+  printf("\nSecond run; DIVIDE\n");
   main_sub(DIVIDE);
 
-  printf("\nFifth run; POWER\n");
+  printf("\nFirst run; POWER\n");
+  main_sub(POWER);
+  printf("\nSecond run; POWER\n");
   main_sub(POWER);
 }
