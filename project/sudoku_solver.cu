@@ -11,9 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_INT 9                 // Customary sudoku
-#define CELLS MAX_INT * MAX_INT   // 81
-#define THREADS_PER_BLOCK MAX_INT // Seems like a nice way to split..
+#define DIM 9                 // Customary sudoku
+#define CELLS DIM * DIM   // 81
+#define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
 
 //TODO: Look up again rules about sharing data across blocks. They will have to share
 
@@ -34,12 +34,23 @@ __host__ cudaEvent_t get_time(void)
 __global__ void solve(unsigned int *ordered, unsigned int *shuffled)
 {
 	__shared__ unsigned int tmp[CELLS];
-	const unsigned int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+	const unsigned int row = threadIdx.x;
+	const unsigned int col = blockIdx.x;
 
-	tmp[idx] = ordered[idx];
+	const unsigned int my_cell_id = (col * DIM) + row;
+
+	tmp[my_cell_id] = ordered[my_cell_id];
+
+	// Only try to solve if cell is empty
+	if(tmp[my_cell_id] == 0) {
+		//see if there is only one number that can fit in the cell, given row, column, and block entries
+		//TODO: would be easier in matrix-style notation
+		tmp[my_cell_id] = tmp[my_cell_id];
+	}
+
 	__syncthreads();
 
-	shuffled[idx] = tmp[idx];
+	shuffled[my_cell_id] = tmp[my_cell_id];
 }
 
 /**
@@ -50,15 +61,15 @@ __global__ void solve(unsigned int *ordered, unsigned int *shuffled)
 {
   int i;
   int j;
-  int block_dim = round(sqrt(MAX_INT));
+  int block_dim = round(sqrt(DIM));
 
   printf("\n_________________________________________\n");
 
-  for (i = 0; i < MAX_INT; i++) {
+  for (i = 0; i < DIM; i++) {
 
     printf("||");
-    for (j = 0; j < MAX_INT; j++) {
-      printf(" %u |", numbers[ ( (i*MAX_INT) + j ) ]);
+    for (j = 0; j < DIM; j++) {
+      printf(" %u |", numbers[ ( (i*DIM) + j ) ]);
       if((j+1) % block_dim == 0) {
           printf("|");
       }
