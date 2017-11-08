@@ -31,33 +31,31 @@ __host__ cudaEvent_t get_time(void)
 /**
  * Kernel function that moves the values in @ordered to @shuffled
  */
-__global__ void solve(unsigned int *ordered, unsigned int *shuffled)
+__global__ void solve(unsigned int *ordered, unsigned int *solved)
 {
 	__shared__ unsigned int tmp[CELLS];
 	const unsigned int row = threadIdx.x;
 	const unsigned int col = blockIdx.x;
 
-	// col = 0
-	// row = 2
-	//DIM = 3
-	// col * DIM = 0 + row = 2
-	// 1 2 3
-	// 4 5 6
-	// 7 8 9
-	//
 	const unsigned int my_cell_id = (col * DIM) + row;
 
 	tmp[my_cell_id] = ordered[my_cell_id];
 
 	// Only try to solve if cell is empty
-//	if(tmp[my_cell_id] == 0) {
-		//see if there is only one number that can fit in the cell, given row, column, and block entries
-		tmp[my_cell_id] = 10;
-	//}
-
+	if(tmp[my_cell_id] != 0) {
+		tmp[my_cell_id]  = tmp[my_cell_id];
+	} else {
+	        //TODO: run through row, column, and block, keeping track of which numbers are already used. 
+	  	//see if there is only one number that can fit in the cell, given row, column, and block entries
+		tmp[my_cell_id] = row;
+		//your row is col*DIM -> col *DIM + DIM-1 (inclusive)
+		//your column is i = 0->(DIM-1); i*DIM + row
+		// your sudoku block is.. should I use a global to make this easier? given index, know block, given block, know indices?
+	}
+	
 	__syncthreads();
 
-	shuffled[my_cell_id] = tmp[my_cell_id];
+	solved[my_cell_id] = tmp[my_cell_id];
 }
 
 /**
