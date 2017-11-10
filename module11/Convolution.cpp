@@ -39,17 +39,7 @@ const unsigned int inputSignalWidth  = 49;
 const unsigned int inputSignalHeight = 49;
 
 cl_uint inputSignal[inputSignalWidth][inputSignalHeight];
-/*=
-{
-	{3, 1, 1, 4, 8, 2, 1, 3},
-	{4, 2, 1, 1, 2, 1, 2, 3},
-	{4, 4, 4, 4, 3, 2, 2, 2},
-	{9, 8, 3, 8, 9, 0, 0, 0},
-	{9, 3, 3, 9, 0, 0, 0, 0},
-	{0, 9, 0, 8, 0, 0, 0, 0},
-	{3, 0, 8, 8, 9, 4, 4, 4},
-	{5, 9, 8, 1, 8, 1, 1, 1}
-};*/
+
 /*
  * Creating a function so that we don't need a hardcoded 49x49 array
  */
@@ -73,13 +63,13 @@ const unsigned int maskHeight = 7;
 
 cl_uint mask[maskWidth][maskHeight] =
 {
-	{1, 1, 1, 1, 1, 1, 1},
-	{1, 0, 1, 0, 1, 0, 1},
-	{1, 1, 1, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 1},
-	{1, 0, 1, 0, 1, 0, 1},
-	{1, 1, 1, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 1},
+	{2, 2, 2, 2, 2, 2, 2},
+	{2, 3, 3, 3, 3, 3, 2},
+	{2, 3, 4, 4, 4, 3, 2},
+	{2, 3, 4, 5, 4, 3, 2},
+	{2, 3, 4, 4, 4, 3, 2},
+	{2, 3, 3, 3, 3, 3, 2},
+	{2, 2, 2, 2, 2, 2, 2},
 };
 
 ///
