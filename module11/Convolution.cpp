@@ -1,6 +1,6 @@
 //
 // Modified by Sarah Helble 10 Nov 2017 for Module 11 Assignment
-// TODO  multiple runs, timing. Make sure mask is right
+// TODO  timing fixup. Make sure mask is right
 //
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
@@ -101,7 +101,7 @@ void CL_CALLBACK contextCallback(
 ///
 //	main_sub() for Convoloution example
 //
-int main_sub(int argc, char** argv)
+int main_sub()
 {
     cl_int errNum;
     cl_uint numPlatforms;
@@ -290,7 +290,7 @@ int main_sub(int argc, char** argv)
 	checkErr(errNum, "clEnqueueReadBuffer");
 
 	clWaitForEvents(1, &event);
-	clFinish(commandQueue);
+	clFinish(queue);
 
 	cl_ulong start, end;
 	double duration, duration_in_ms;
@@ -304,6 +304,7 @@ int main_sub(int argc, char** argv)
 	duration_in_ms = duration / 1000000;
 
 	// Output the input buffer
+	printf("Input Signal:\n");
 	for (int y = 0; y < inputSignalHeight; y++) {
 		for (int x = 0; x < inputSignalWidth; x++) {
 			std::cout << inputSignal[x][y] << " ";
@@ -312,6 +313,7 @@ int main_sub(int argc, char** argv)
 	}
 
 	// Output the result buffer
+	printf("Output Signal:\n");
 	for (int y = 0; y < outputSignalHeight; y++) {
 		for (int x = 0; x < outputSignalWidth; x++) {
 			std::cout << outputSignal[x][y] << " ";
@@ -319,13 +321,14 @@ int main_sub(int argc, char** argv)
 		std::cout << std::endl;
 	}
 
-	printf("The kernel executed in %0.3fms\n", duration_in_ms);
+	printf("The kernel executed in %0.3fs\n", duration_in_ms / 1000);
 
 	std::cout << std::endl << "Executed program succesfully." << std::endl;
 
 	return 0;
 }
 
+//Test harness for module 11 assignment
 int main(int argc, char** argv)
 {
 	printf("First run: \n");
