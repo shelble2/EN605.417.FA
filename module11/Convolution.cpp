@@ -99,9 +99,9 @@ void CL_CALLBACK contextCallback(
 
 
 ///
-//	main() for Convoloution example
+//	main_sub() for Convoloution example
 //
-int main(int argc, char** argv)
+int main_sub(int argc, char** argv)
 {
     cl_int errNum;
     cl_uint numPlatforms;
@@ -277,52 +277,69 @@ int main(int argc, char** argv)
 	const size_t globalWorkSize[1] = { outputSignalWidth * outputSignalHeight };
     const size_t localWorkSize[1]  = { 1 };
 
+		cl_event event;
+
     // Queue the kernel up for execution across the array
-    errNum = clEnqueueNDRangeKernel(
-		queue,
-		kernel,
-		1,
-		NULL,
-        globalWorkSize,
-		localWorkSize,
-        0,
-		NULL,
-		NULL);
+    errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
+				globalWorkSize, localWorkSize, 0,	NULL, &event);
 	checkErr(errNum, "clEnqueueNDRangeKernel");
 
-	errNum = clEnqueueReadBuffer(
-		queue,
-		outputSignalBuffer,
-		CL_TRUE,
-        0,
+	errNum = clEnqueueReadBuffer(queue, outputSignalBuffer, CL_TRUE, 0,
 		sizeof(cl_float) * outputSignalHeight * outputSignalHeight,
-		outputSignal,
-        0,
-		NULL,
-		NULL);
+		outputSignal, 0, NULL, NULL);
 	checkErr(errNum, "clEnqueueReadBuffer");
 
-    // Output the input buffer
-    for (int y = 0; y < inputSignalHeight; y++)
-	{
-		for (int x = 0; x < inputSignalWidth; x++)
-		{
+	clWaitForEvents(1, &event);
+	clFinish(commandQueue);
+
+	cl_ulong start, end;
+	double duration, duration_in_ms;
+
+	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(start),
+		&start, NULL);
+	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(end),
+		&end, NULL);
+
+	duration = end - start;  // duration is in nanoseconds
+	duration_in_ms = duration / 1000000;
+
+	// Output the input buffer
+	for (int y = 0; y < inputSignalHeight; y++) {
+		for (int x = 0; x < inputSignalWidth; x++) {
 			std::cout << inputSignal[x][y] << " ";
 		}
 		std::cout << std::endl;
 	}
-	
-    // Output the result buffer
-    for (int y = 0; y < outputSignalHeight; y++)
-	{
-		for (int x = 0; x < outputSignalWidth; x++)
-		{
+
+	// Output the result buffer
+	for (int y = 0; y < outputSignalHeight; y++) {
+		for (int x = 0; x < outputSignalWidth; x++) {
 			std::cout << outputSignal[x][y] << " ";
 		}
 		std::cout << std::endl;
 	}
 
-    std::cout << std::endl << "Executed program succesfully." << std::endl;
+	printf("The kernel executed in %0.3fms\n", duration_in_ms);
+
+	std::cout << std::endl << "Executed program succesfully." << std::endl;
 
 	return 0;
+}
+
+int main(int argc, char** argv)
+{
+	printf("First run: \n");
+	main_sub();
+
+	printf("Second run: \n");
+	main_sub();
+
+	printf("Third run: \n");
+	main_sub();
+
+	printf("Fourth run: \n");
+	main_sub();
+
+	printf("Fifth run: \n");
+	main_sub();
 }
