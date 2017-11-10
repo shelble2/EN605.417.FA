@@ -53,8 +53,8 @@ void fill_input_signal()
 }
 
 
-const unsigned int outputSignalWidth  = 6;
-const unsigned int outputSignalHeight = 6;
+const unsigned int outputSignalWidth  = 49;
+const unsigned int outputSignalHeight = 49;
 
 cl_uint outputSignal[outputSignalWidth][outputSignalHeight];
 
@@ -63,13 +63,13 @@ const unsigned int maskHeight = 7;
 
 cl_uint mask[maskWidth][maskHeight] =
 {
-	{2, 2, 2, 2, 2, 2, 2},
-	{2, 3, 3, 3, 3, 3, 2},
-	{2, 3, 4, 4, 4, 3, 2},
+	{1, 2, 2, 2, 2, 2, 1},
+	{2, 2, 3, 3, 3, 2, 2},
+	{2, 3, 3, 4, 3, 3, 2},
 	{2, 3, 4, 5, 4, 3, 2},
-	{2, 3, 4, 4, 4, 3, 2},
-	{2, 3, 3, 3, 3, 3, 2},
-	{2, 2, 2, 2, 2, 2, 2},
+	{2, 3, 3, 4, 3, 3, 2},
+	{2, 2, 3, 3, 3, 2, 2},
+	{1, 2, 2, 2, 2, 2, 1},
 };
 
 ///
