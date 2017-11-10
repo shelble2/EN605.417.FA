@@ -53,7 +53,7 @@ cl_uint inputSignal[inputSignalWidth][inputSignalHeight];
 /*
  * Creating a function so that we don't need a hardcoded 49x49 array
  */
-void fill_input_signal(cl_uint *inputSignal)
+void fill_input_signal()
 {
 	for(int i = 0; i< inputSignalWidth; i++) {
 		for(int j = 0; j < inputSignalHeight; j++) {
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 	cl_mem outputSignalBuffer;
 	cl_mem maskBuffer;
 
-	fill_input_signal(inputSignal);
+	fill_input_signal();
     // First, select an OpenCL platform to run on.
 	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
 	checkErr(
