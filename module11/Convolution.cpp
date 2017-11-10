@@ -1,5 +1,6 @@
 //
 // Modified by Sarah Helble 10 Nov 2017 for Module 11 Assignment
+// TODO  multiple runs, timing. Make sure mask is right
 //
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
@@ -38,7 +39,7 @@
 const unsigned int inputSignalWidth  = 49;
 const unsigned int inputSignalHeight = 49;
 
-cl_uint inputSignal[inputSignalWidth][inputSignalHeight];
+cl_float inputSignal[inputSignalWidth][inputSignalHeight];
 
 /*
  * Creating a function so that we don't need a hardcoded 49x49 array
@@ -47,29 +48,29 @@ void fill_input_signal()
 {
 	for(int i = 0; i< inputSignalWidth; i++) {
 		for(int j = 0; j < inputSignalHeight; j++) {
-			inputSignal[i][j] = rand() % MAX_INT;
+		  inputSignal[i][j] = (cl_float) (rand() % MAX_INT);
 		}
 	}
 }
 
 
-const unsigned int outputSignalWidth  = 49;
-const unsigned int outputSignalHeight = 49;
+const unsigned int outputSignalWidth  = 7;
+const unsigned int outputSignalHeight = 7;
 
-cl_uint outputSignal[outputSignalWidth][outputSignalHeight];
+cl_float outputSignal[outputSignalWidth][outputSignalHeight];
 
 const unsigned int maskWidth  = 7;
 const unsigned int maskHeight = 7;
 
-cl_uint mask[maskWidth][maskHeight] =
+cl_float mask[maskWidth][maskHeight] =
 {
-	{1, 2, 2, 2, 2, 2, 1},
-	{2, 2, 3, 3, 3, 2, 2},
-	{2, 3, 3, 4, 3, 3, 2},
-	{2, 3, 4, 5, 4, 3, 2},
-	{2, 3, 3, 4, 3, 3, 2},
-	{2, 2, 3, 3, 3, 2, 2},
-	{1, 2, 2, 2, 2, 2, 1},
+	{.25, .50, .50, .50, .50, .50, .25},
+	{.50, .50, .75, .75, .75, .50, .50},
+	{.50, .75, .75, 1.0, .75, .75, .50},
+	{.50, .75, 1.0, 1.0, 1.0, .75, .50},
+	{.50, .75, .75, 1.0, .75, .75, .50},
+	{.50, .50, .75, .75, .75, .50, .50},
+	{.25, .50, .50, .50, .50, .50, .25},
 };
 
 ///
@@ -237,7 +238,7 @@ int main(int argc, char** argv)
 	inputSignalBuffer = clCreateBuffer(
 		context,
 		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		sizeof(cl_uint) * inputSignalHeight * inputSignalWidth,
+		sizeof(cl_float) * inputSignalHeight * inputSignalWidth,
 		static_cast<void *>(inputSignal),
 		&errNum);
 	checkErr(errNum, "clCreateBuffer(inputSignal)");
@@ -245,7 +246,7 @@ int main(int argc, char** argv)
 	maskBuffer = clCreateBuffer(
 		context,
 		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		sizeof(cl_uint) * maskHeight * maskWidth,
+		sizeof(cl_float) * maskHeight * maskWidth,
 		static_cast<void *>(mask),
 		&errNum);
 	checkErr(errNum, "clCreateBuffer(mask)");
@@ -253,7 +254,7 @@ int main(int argc, char** argv)
 	outputSignalBuffer = clCreateBuffer(
 		context,
 		CL_MEM_WRITE_ONLY,
-		sizeof(cl_uint) * outputSignalHeight * outputSignalWidth,
+		sizeof(cl_float) * outputSignalHeight * outputSignalWidth,
 		NULL,
 		&errNum);
 	checkErr(errNum, "clCreateBuffer(outputSignal)");
@@ -269,8 +270,8 @@ int main(int argc, char** argv)
     errNum  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputSignalBuffer);
 	errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &maskBuffer);
     errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &outputSignalBuffer);
-	errNum |= clSetKernelArg(kernel, 3, sizeof(cl_uint), &inputSignalWidth);
-	errNum |= clSetKernelArg(kernel, 4, sizeof(cl_uint), &maskWidth);
+	errNum |= clSetKernelArg(kernel, 3, sizeof(cl_float), &inputSignalWidth);
+	errNum |= clSetKernelArg(kernel, 4, sizeof(cl_float), &maskWidth);
 	checkErr(errNum, "clSetKernelArg");
 
 	const size_t globalWorkSize[1] = { outputSignalWidth * outputSignalHeight };
@@ -294,13 +295,23 @@ int main(int argc, char** argv)
 		outputSignalBuffer,
 		CL_TRUE,
         0,
-		sizeof(cl_uint) * outputSignalHeight * outputSignalHeight,
+		sizeof(cl_float) * outputSignalHeight * outputSignalHeight,
 		outputSignal,
         0,
 		NULL,
 		NULL);
 	checkErr(errNum, "clEnqueueReadBuffer");
 
+    // Output the input buffer
+    for (int y = 0; y < inputSignalHeight; y++)
+	{
+		for (int x = 0; x < inputSignalWidth; x++)
+		{
+			std::cout << inputSignal[x][y] << " ";
+		}
+		std::cout << std::endl;
+	}
+	
     // Output the result buffer
     for (int y = 0; y < outputSignalHeight; y++)
 	{

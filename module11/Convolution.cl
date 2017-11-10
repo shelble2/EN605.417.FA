@@ -13,9 +13,9 @@
 //    This is a simple kernel performing convolution.
 
 __kernel void convolve(
-	const __global  uint * const input,
-    __constant uint * const mask,
-    __global  uint * const output,
+	 __global  float * const input,
+    __constant float * const mask,
+    __global  float * const output,
     const int inputWidth,
     const int maskWidth)
 {
