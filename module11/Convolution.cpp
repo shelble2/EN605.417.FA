@@ -1,4 +1,6 @@
 //
+// Modified by Sarah Helble 10 Nov 2017 for Module 11 Assignment
+//
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
 // ISBN-10:   0-321-74964-2
@@ -18,6 +20,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <stdlib.h>
 
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
@@ -29,11 +32,14 @@
 #define CL_CALLBACK
 #endif
 
-// Constants
-const unsigned int inputSignalWidth  = 8;
-const unsigned int inputSignalHeight = 8;
+#define MAX_INT 9
 
-cl_uint inputSignal[inputSignalWidth][inputSignalHeight] =
+// Constants
+const unsigned int inputSignalWidth  = 49;
+const unsigned int inputSignalHeight = 49;
+
+cl_uint inputSignal[inputSignalWidth][inputSignalHeight];
+/*=
 {
 	{3, 1, 1, 4, 8, 2, 1, 3},
 	{4, 2, 1, 1, 2, 1, 2, 3},
@@ -43,24 +49,42 @@ cl_uint inputSignal[inputSignalWidth][inputSignalHeight] =
 	{0, 9, 0, 8, 0, 0, 0, 0},
 	{3, 0, 8, 8, 9, 4, 4, 4},
 	{5, 9, 8, 1, 8, 1, 1, 1}
-};
+};*/
+/*
+ * Creating a function so that we don't need a hardcoded 49x49 array
+ */
+void fill_input_signal(cl_uint *inputSignal)
+{
+	for(int i = 0; i< inputSignalWidth; i++) {
+		for(int j = 0; j < inputSignalHeight; j++) {
+			inputSignal[i][j] = rand() % MAX_INT;
+		}
+	}
+}
+
 
 const unsigned int outputSignalWidth  = 6;
 const unsigned int outputSignalHeight = 6;
 
 cl_uint outputSignal[outputSignalWidth][outputSignalHeight];
 
-const unsigned int maskWidth  = 3;
-const unsigned int maskHeight = 3;
+const unsigned int maskWidth  = 7;
+const unsigned int maskHeight = 7;
 
 cl_uint mask[maskWidth][maskHeight] =
 {
-	{1, 1, 1}, {1, 0, 1}, {1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1},
+	{1, 0, 1, 0, 1, 0, 1},
+	{1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1},
+	{1, 0, 1, 0, 1, 0, 1},
+	{1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1},
 };
 
 ///
 // Function to check and handle OpenCL errors
-inline void 
+inline void
 checkErr(cl_int err, const char * name)
 {
     if (err != CL_SUCCESS) {
@@ -81,6 +105,8 @@ void CL_CALLBACK contextCallback(
 	exit(1);
 }
 
+
+
 ///
 //	main() for Convoloution example
 //
@@ -99,18 +125,19 @@ int main(int argc, char** argv)
 	cl_mem outputSignalBuffer;
 	cl_mem maskBuffer;
 
-    // First, select an OpenCL platform to run on.  
+	fill_input_signal(inputSignal);
+    // First, select an OpenCL platform to run on.
 	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
-	checkErr( 
-		(errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), 
-		"clGetPlatformIDs"); 
- 
+	checkErr(
+		(errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
+		"clGetPlatformIDs");
+
 	platformIDs = (cl_platform_id *)alloca(
        		sizeof(cl_platform_id) * numPlatforms);
 
     errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
-    checkErr( 
-	   (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), 
+    checkErr(
+	   (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
 	   "clGetPlatformIDs");
 
 	// Iterate through the list of platforms until we find one that supports
@@ -120,8 +147,8 @@ int main(int argc, char** argv)
 	for (i = 0; i < numPlatforms; i++)
 	{
 		errNum = clGetDeviceIDs(
-            platformIDs[i], 
-            CL_DEVICE_TYPE_GPU, 
+            platformIDs[i],
+            CL_DEVICE_TYPE_GPU,
             0,
             NULL,
             &numDevices);
@@ -129,14 +156,14 @@ int main(int argc, char** argv)
 	    {
 			checkErr(errNum, "clGetDeviceIDs");
         }
-	    else if (numDevices > 0) 
+	    else if (numDevices > 0)
 	    {
 		   	deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
 			errNum = clGetDeviceIDs(
 				platformIDs[i],
 				CL_DEVICE_TYPE_GPU,
-				numDevices, 
-				&deviceIDs[0], 
+				numDevices,
+				&deviceIDs[0],
 				NULL);
 			checkErr(errNum, "clGetDeviceIDs");
 			break;
@@ -149,7 +176,7 @@ int main(int argc, char** argv)
 // 		exit(-1);
 // 	}
 
-    // Next, create an OpenCL context on the selected platform.  
+    // Next, create an OpenCL context on the selected platform.
     cl_context_properties contextProperties[] =
     {
         CL_CONTEXT_PLATFORM,
@@ -157,11 +184,11 @@ int main(int argc, char** argv)
         0
     };
     context = clCreateContext(
-		contextProperties, 
+		contextProperties,
 		numDevices,
-        deviceIDs, 
+        deviceIDs,
 		&contextCallback,
-		NULL, 
+		NULL,
 		&errNum);
 	checkErr(errNum, "clCreateContext");
 
@@ -177,10 +204,10 @@ int main(int argc, char** argv)
 
 	// Create program from source
 	program = clCreateProgramWithSource(
-		context, 
-		1, 
-		&src, 
-		&length, 
+		context,
+		1,
+		&src,
+		&length,
 		&errNum);
 	checkErr(errNum, "clCreateProgramWithSource");
 
@@ -197,11 +224,11 @@ int main(int argc, char** argv)
         // Determine the reason for the error
         char buildLog[16384];
         clGetProgramBuildInfo(
-			program, 
-			deviceIDs[0], 
+			program,
+			deviceIDs[0],
 			CL_PROGRAM_BUILD_LOG,
-            sizeof(buildLog), 
-			buildLog, 
+            sizeof(buildLog),
+			buildLog,
 			NULL);
 
         std::cerr << "Error in kernel: " << std::endl;
@@ -261,26 +288,26 @@ int main(int argc, char** argv)
 
     // Queue the kernel up for execution across the array
     errNum = clEnqueueNDRangeKernel(
-		queue, 
-		kernel, 
-		1, 
+		queue,
+		kernel,
+		1,
 		NULL,
-        globalWorkSize, 
+        globalWorkSize,
 		localWorkSize,
-        0, 
-		NULL, 
+        0,
+		NULL,
 		NULL);
 	checkErr(errNum, "clEnqueueNDRangeKernel");
-    
+
 	errNum = clEnqueueReadBuffer(
-		queue, 
-		outputSignalBuffer, 
+		queue,
+		outputSignalBuffer,
 		CL_TRUE,
-        0, 
-		sizeof(cl_uint) * outputSignalHeight * outputSignalHeight, 
+        0,
+		sizeof(cl_uint) * outputSignalHeight * outputSignalHeight,
 		outputSignal,
-        0, 
-		NULL, 
+        0,
+		NULL,
 		NULL);
 	checkErr(errNum, "clEnqueueReadBuffer");
 
