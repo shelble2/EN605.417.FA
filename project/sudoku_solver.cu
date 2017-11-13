@@ -50,7 +50,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		tmp[my_cell_id]  = tmp[my_cell_id];
 
   //THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
-	} else if (my_cell_id != 0) {
+} else if (my_cell_id != 41) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
 	///////////////////////////////////////
 
@@ -115,7 +115,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		for(int i = 0; i < DIM+1; i++) {
 			if(possibilities[i] == 1) {
 				if (candidate == 0) {
-					candidate = possibilities[i];
+					candidate = i;
 				} else {
 					candidate = 0;
 					break;
