@@ -1,5 +1,4 @@
-#define DEBUG_VAL 4
-
+//#define DEBUG_VAL 80
 /**
  * sudoku_solver.cu
  * Sarah Helble
@@ -9,6 +8,11 @@
  * solving sudoku puzzles in the form of a string of numbers, where 0 indicates
  * an empty cell.
  */
+/*
+Lessons so far
+- sharing accross blocks
+- debug prints
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,72 +51,77 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 	tmp[my_cell_id] = ordered[my_cell_id];
 
 	//THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
-	if (my_cell_id != DEBUG_VAL) {
+/*	if (my_cell_id != DEBUG_VAL) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
-	///////////////////////////////////////
 
+
+	} else*/
 	// Only try to solve if cell is empty
-	} else if(tmp[my_cell_id] != 0 ) {
+	if(tmp[my_cell_id] != 0 ) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
-		#if __CUDA_ARCH__ >= 200
+/*		#if __CUDA_ARCH__ >= 200
 		printf("Cell already has value\n");
 		#endif
-
+*/
 	} else {
-		#if __CUDA_ARCH__ >= 200
+/*		#if __CUDA_ARCH__ >= 200
 		printf("Going through all in my row. I'm %d. Row %d, Col %d\n", DEBUG_VAL, row, col);
 		#endif
+*/
 		// Go through all in the same row
 		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
 			int current = tmp[i];
-			#if __CUDA_ARCH__ >= 200
+/*			#if __CUDA_ARCH__ >= 200
 			printf("current is tmp[%d]: %d\n", i, current);
 			#endif
+*/
 			possibilities[current] = 0;
 		}
-
+/*
 		#if __CUDA_ARCH__ >= 200
 		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
 		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
 		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
 		printf("\nGoing on to all in this column\n");
 		#endif
-
+*/
 		//Go through all in the same column
 		for(int i = 0; i < DIM ; i++) {
 			int current = tmp[i*DIM+col];
-			#if __CUDA_ARCH__ >= 200
+/*			#if __CUDA_ARCH__ >= 200
 			printf("current is tmp[%d]: %d\n", i*DIM+col, current);
 			#endif
+*/
 			possibilities[current] = 0;
 		}
-
+/*
 		#if __CUDA_ARCH__ >= 200
 		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
 		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
 		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
 		printf("\nGoing on to all in this block\n");
 		#endif
-
+*/
 		//Go through all in the same block
 		int s_row = row - (row % B_DIM);
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + B_DIM); i++) {
 			for(int j = s_col; j < (s_col + B_DIM); j++) {
 				int current = tmp[(i*DIM)+j];
-				#if __CUDA_ARCH__ >= 200
+/*				#if __CUDA_ARCH__ >= 200
 				printf("current is tmp[%d]: %d\n", (i*DIM)+j, current);
 				#endif
+*/
 				possibilities[current] = 0;
 			}
 		}
-
+/*
 		#if __CUDA_ARCH__ >= 200
 		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
 		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
 		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
 		#endif
-
+*/
 		int candidate = 0;
 
 		// If only one possibility is left, use it
@@ -227,7 +236,7 @@ void main_sub()
 	sudoku_print(h_puzzle);
 
 	printf("Solution:\n");
-  sudoku_print(h_solution);
+  	sudoku_print(h_solution);
 
 	printf("\tSolved in: %fmsn\n", duration);
 
