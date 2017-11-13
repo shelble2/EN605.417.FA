@@ -11,14 +11,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DEBUG_VAL 0
+#define DEBUG_VAL 3
 
 #define DIM 9             // Customary sudoku
 #define B_DIM 3           // dimension of one sudoku block
 #define CELLS DIM * DIM   // 81
 #define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
-
-//TODO: Look up again rules about sharing data across blocks. They will have to share
 
 /**
  * Returns the current time
@@ -48,18 +46,25 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 
 	tmp[my_cell_id] = ordered[my_cell_id];
 
-	// Only try to solve if cell is empty
-	if(tmp[my_cell_id] != 0 ) {
-		tmp[my_cell_id]  = tmp[my_cell_id];
-
-  //THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
-} else if (my_cell_id != DEBUG_VAL) {
+	#if __CUDA_ARCH__ >= 200
+	printf("Evaluating %d. Row %d, Column %d\n", my_cell_id, row, col);
+	#endif
+	
+	//THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
+	if (my_cell_id != DEBUG_VAL) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
 	///////////////////////////////////////
 
+	// Only try to solve if cell is empty
+	} else if(tmp[my_cell_id] != 0 ) {
+		tmp[my_cell_id]  = tmp[my_cell_id];
+		#if __CUDA_ARCH__ >= 200
+		printf("Cell already has value\n");
+		#endif
+
 	} else {
 		#if __CUDA_ARCH__ >= 200
-		printf("Going through all in my row\n");
+		printf("Going through all in my row. I'm %d\n", DEBUG_VAL);
 		#endif
 		// Go through all in the same row
 		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
