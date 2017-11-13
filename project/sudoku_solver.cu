@@ -207,7 +207,8 @@ void main_sub()
 
   cudaEvent_t start_time = get_time();
 
-	solve_by_possibility<<<num_blocks, num_threads>>>(d_puzzle, d_solution);
+	//SCH: used to be num_blocks, num_threads, but think all has to be on same block to share
+	solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
