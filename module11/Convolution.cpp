@@ -1,6 +1,8 @@
 //
 // Modified by Sarah Helble 10 Nov 2017 for Module 11 Assignment
-// TODO  timing fixup. Make sure mask is right
+// TODO:  Make sure mask is right, capture output
+//
+
 //
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
@@ -263,7 +265,7 @@ int main_sub()
 	queue = clCreateCommandQueue(
 		context,
 		deviceIDs[0],
-		0,
+		CL_QUEUE_PROFILING_ENABLE,
 		&errNum);
 	checkErr(errNum, "clCreateCommandQueue");
 
@@ -289,16 +291,22 @@ int main_sub()
 		outputSignal, 0, NULL, NULL);
 	checkErr(errNum, "clEnqueueReadBuffer");
 
-	clWaitForEvents(1, &event);
-	clFinish(queue);
-
+	errNum = clWaitForEvents(1, &event);
+	checkErr(errNum, "clWaitForEvents");
+	
+	errNum = clFinish(queue);
+	checkErr(errNum, "clFinish");
+	
 	cl_ulong start, end;
 	double duration, duration_in_ms;
 
-	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(start),
+	errNum = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(start),
 		&start, NULL);
-	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(end),
+	checkErr(errNum, "clGetEventProfilingInfo: start");
+	
+	errNum = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(end),
 		&end, NULL);
+	checkErr(errNum, "clGetEventProfilingInfo: end");
 
 	duration = end - start;  // duration is in nanoseconds
 	duration_in_ms = duration / 1000000;
@@ -320,8 +328,7 @@ int main_sub()
 		}
 		std::cout << std::endl;
 	}
-
-	printf("The kernel executed in %0.3fs\n", duration_in_ms / 1000);
+	printf("The kernel executed in %0.3fms\n", duration_in_ms);
 
 	std::cout << std::endl << "Executed program succesfully." << std::endl;
 
