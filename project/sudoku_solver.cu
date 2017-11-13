@@ -30,14 +30,16 @@ __host__ cudaEvent_t get_time(void)
 }
 
 /**
- * Kernel function that moves the values in @ordered to @shuffled
+ * Kernel function that solves based on last available. If only one number
+ * can fit in a given cell, based on the contents of its row, column, and block;
+ * then fill the cell with that value.
  */
-__global__ void solve(unsigned int *ordered, unsigned int *solved)
+__global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved)
 {
 	__shared__ unsigned int tmp[CELLS];
 	const unsigned int row = threadIdx.x;
 	const unsigned int col = blockIdx.x;
-	const unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
+	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
 	const unsigned int my_cell_id = (col * DIM) + row;
 
@@ -93,6 +95,7 @@ __global__ void solve(unsigned int *ordered, unsigned int *solved)
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + (B_DIM - 1)); i++) {
 			for(int j = s_col; j < (s_col +(B_DIM - 1)); j++) {
+				int current = tmp[(j*DIM)+i];
 				#if __CUDA_ARCH__ >= 200
 				printf("current is tmp[%d]: %d\n", (j*DIM)+i, current);
 				#endif
@@ -204,7 +207,7 @@ void main_sub()
 
   cudaEvent_t start_time = get_time();
 
-	solve<<<num_blocks, num_threads>>>(d_puzzle, d_solution);
+	solve_by_possibility<<<num_blocks, num_threads>>>(d_puzzle, d_solution);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
