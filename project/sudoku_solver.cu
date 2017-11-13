@@ -62,7 +62,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		printf("Going through all in my row\n");
 		#endif
 		// Go through all in the same row
-		for(int i = col * DIM; i < ((col*DIM) + DIM); i++) {
+		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
 			int current = tmp[i];
 			#if __CUDA_ARCH__ >= 200
 			printf("current is tmp[%d]: %d\n", i, current);
@@ -79,7 +79,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 
 		//Go through all in the same column
 		for(int i = 0; i < DIM ; i++) {
-			int current = tmp[i*DIM+row];
+			int current = tmp[i*DIM+col];
 			#if __CUDA_ARCH__ >= 200
 			printf("current is tmp[%d]: %d\n", i*DIM+row, current);
 			#endif
