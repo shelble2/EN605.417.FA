@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DIM 9                 // Customary sudoku
+#define DIM 9             // Customary sudoku
+#define B_DIM 3           // dimension of one sudoku block
 #define CELLS DIM * DIM   // 81
 #define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
 
@@ -36,6 +37,7 @@ __global__ void solve(unsigned int *ordered, unsigned int *solved)
 	__shared__ unsigned int tmp[CELLS];
 	const unsigned int row = threadIdx.x;
 	const unsigned int col = blockIdx.x;
+	const unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
 	const unsigned int my_cell_id = (col * DIM) + row;
 
@@ -45,14 +47,45 @@ __global__ void solve(unsigned int *ordered, unsigned int *solved)
 	if(tmp[my_cell_id] != 0) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
 	} else {
-	        //TODO: run through row, column, and block, keeping track of which numbers are already used. 
-	  	//see if there is only one number that can fit in the cell, given row, column, and block entries
-		tmp[my_cell_id] = row;
-		//your row is col*DIM -> col *DIM + DIM-1 (inclusive)
-		//your column is i = 0->(DIM-1); i*DIM + row
-		// your sudoku block is.. should I use a global to make this easier? given index, know block, given block, know indices?
+		// Go through all in the same row
+		for(int i = col * DIM; i < ((col*DIM) + (DIM-1)); i++) {
+			int current = tmp[i];
+			possibilities[current] = 0;
+		}
+
+		//Go through all in the same column
+		for(int i = 0; i < DIM - 1; i++) {
+			int current = tmp[i*DIM+row];
+			possibilities[current] = 0;
+		}
+
+		//Go through all in the same block
+		int s_row = row - (row % B_DIM);
+		int s_col = col - (col % B_DIM);
+		for(int i = s_row; i < (s_row + (B_DIM - 1)); i++) {
+			for(int j = s_col; j < (s_col +(B_DIM - 1)); j++) {
+				int current = tmp[i][j];
+				possibilities[current] = 0;
+			}
+		}
+
+		int candidate = 0;
+
+		// If only one possibility is left, use it
+		for(int i = 0; i < DIM+1; i++) {
+			if(possibilities[i] == 1) {
+				if (candidate == 0) {
+					candidate = possibilities[i];
+				} else {
+					candidate = 0;
+					break;
+				}
+			}
+		}
+
+		tmp[my_cell_id] = candidate;
 	}
-	
+
 	__syncthreads();
 
 	solved[my_cell_id] = tmp[my_cell_id];
