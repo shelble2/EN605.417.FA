@@ -101,7 +101,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 			for(int j = s_col; j < (s_col + B_DIM); j++) {
 				int current = tmp[(i*DIM)+j];
 				#if __CUDA_ARCH__ >= 200
-				printf("current is tmp[%d]: %d\n", (j*DIM)+i, current);
+				printf("current is tmp[%d]: %d\n", (i*DIM)+j, current);
 				#endif
 				possibilities[current] = 0;
 			}
