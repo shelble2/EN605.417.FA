@@ -40,7 +40,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 
 	const unsigned int my_cell_id = threadIdx.x;
 	const unsigned int col = my_cell_id % DIM;
-	const unsigned int row = my_cell_id - (col * DIM);
+	const unsigned int row = (my_cell_id - col) / DIM;
 
 	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
