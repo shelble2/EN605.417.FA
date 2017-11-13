@@ -50,7 +50,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		tmp[my_cell_id]  = tmp[my_cell_id];
 
   //THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
-	} else if (my_cell_id == 0) {
+	} else if (my_cell_id != 0) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
 	///////////////////////////////////////
 
