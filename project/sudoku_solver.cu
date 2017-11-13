@@ -244,6 +244,17 @@ void main_sub()
   solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
 
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+
+	//TODO: would like puzzle and solution to be able to print side by side
+	printf("Increment:\n");
+	sudoku_print(h_solution);
+
+  cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
+
+  solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
+
+  cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+
   
 
 	printf("Solution:\n");
