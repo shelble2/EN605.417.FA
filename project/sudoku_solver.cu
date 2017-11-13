@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define DEBUG_VAL 0
+
 #define DIM 9             // Customary sudoku
 #define B_DIM 3           // dimension of one sudoku block
 #define CELLS DIM * DIM   // 81
@@ -37,11 +39,12 @@ __host__ cudaEvent_t get_time(void)
 __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved)
 {
 	__shared__ unsigned int tmp[CELLS];
-	const unsigned int row = threadIdx.x;
-	const unsigned int col = blockIdx.x;
-	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
-	const unsigned int my_cell_id = (col * DIM) + row;
+	const unsigned int my_cell_id = threadIdx.x;
+	const unsigned int col = my_cell_id % DIM;
+	const unsigned int row = my_cell_id - (col * DIM);
+
+	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
 	tmp[my_cell_id] = ordered[my_cell_id];
 
@@ -50,7 +53,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		tmp[my_cell_id]  = tmp[my_cell_id];
 
   //THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
-} else if (my_cell_id != 41) {
+} else if (my_cell_id != DEBUG_VAL) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
 	///////////////////////////////////////
 
