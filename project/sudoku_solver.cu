@@ -1,3 +1,5 @@
+#define DEBUG_VAL 4
+
 /**
  * sudoku_solver.cu
  * Sarah Helble
@@ -10,8 +12,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#define DEBUG_VAL 3
 
 #define DIM 9             // Customary sudoku
 #define B_DIM 3           // dimension of one sudoku block
@@ -46,10 +46,6 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 
 	tmp[my_cell_id] = ordered[my_cell_id];
 
-	#if __CUDA_ARCH__ >= 200
-	printf("Evaluating %d. Row %d, Column %d\n", my_cell_id, row, col);
-	#endif
-	
 	//THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
 	if (my_cell_id != DEBUG_VAL) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
@@ -64,7 +60,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 
 	} else {
 		#if __CUDA_ARCH__ >= 200
-		printf("Going through all in my row. I'm %d\n", DEBUG_VAL);
+		printf("Going through all in my row. I'm %d. Row %d, Col %d\n", DEBUG_VAL, row, col);
 		#endif
 		// Go through all in the same row
 		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
@@ -86,7 +82,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		for(int i = 0; i < DIM ; i++) {
 			int current = tmp[i*DIM+col];
 			#if __CUDA_ARCH__ >= 200
-			printf("current is tmp[%d]: %d\n", i*DIM+row, current);
+			printf("current is tmp[%d]: %d\n", i*DIM+col, current);
 			#endif
 			possibilities[current] = 0;
 		}
@@ -103,7 +99,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + B_DIM); i++) {
 			for(int j = s_col; j < (s_col + B_DIM); j++) {
-				int current = tmp[(j*DIM)+i];
+				int current = tmp[(i*DIM)+j];
 				#if __CUDA_ARCH__ >= 200
 				printf("current is tmp[%d]: %d\n", (j*DIM)+i, current);
 				#endif
