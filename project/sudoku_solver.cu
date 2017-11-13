@@ -215,6 +215,10 @@ void main_sub()
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
 
+	//TODO: would like puzzle and solution to be able to print side by side
+	printf("Puzzle:\n");
+	sudoku_print(h_puzzle);
+
   /* Execute the kernel and keep track of start and end time for duration */
   float duration = 0;
 
@@ -232,8 +236,15 @@ void main_sub()
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
 	//TODO: would like puzzle and solution to be able to print side by side
-	printf("Puzzle:\n");
-	sudoku_print(h_puzzle);
+	printf("Increment:\n");
+	sudoku_print(h_solution);
+
+  cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
+
+  solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
+
+  cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+  
 
 	printf("Solution:\n");
   	sudoku_print(h_solution);
