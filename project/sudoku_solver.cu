@@ -44,30 +44,67 @@ __global__ void solve(unsigned int *ordered, unsigned int *solved)
 	tmp[my_cell_id] = ordered[my_cell_id];
 
 	// Only try to solve if cell is empty
-	if(tmp[my_cell_id] != 0) {
+	if(tmp[my_cell_id] != 0 ) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
+
+  //THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
+	} else if (my_cell_id == 0) {
+		tmp[my_cell_id]  = tmp[my_cell_id];
+	///////////////////////////////////////
+
 	} else {
+		#if __CUDA_ARCH__ >= 200
+		printf("Going through all in my row\n");
+		#endif
 		// Go through all in the same row
 		for(int i = col * DIM; i < ((col*DIM) + (DIM-1)); i++) {
 			int current = tmp[i];
+			#if __CUDA_ARCH__ >= 200
+			printf("current is tmp[%d]: %d\n", i, current);
+			#endif
 			possibilities[current] = 0;
 		}
+
+		#if __CUDA_ARCH__ >= 200
+		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
+		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
+		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
+		printf("\nGoing on to all in this column\n");
+		#endif
 
 		//Go through all in the same column
 		for(int i = 0; i < DIM - 1; i++) {
 			int current = tmp[i*DIM+row];
+			#if __CUDA_ARCH__ >= 200
+			printf("current is tmp[%d]: %d\n", i, current);
+			#endif
 			possibilities[current] = 0;
 		}
+
+		#if __CUDA_ARCH__ >= 200
+		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
+		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
+		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
+		printf("\nGoing on to all in this block\n");
+		#endif
 
 		//Go through all in the same block
 		int s_row = row - (row % B_DIM);
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + (B_DIM - 1)); i++) {
 			for(int j = s_col; j < (s_col +(B_DIM - 1)); j++) {
-				int current = tmp[i][j];
+				#if __CUDA_ARCH__ >= 200
+				printf("current is tmp[%d]: %d\n", (j*DIM)+i, current);
+				#endif
 				possibilities[current] = 0;
 			}
 		}
+
+		#if __CUDA_ARCH__ >= 200
+		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
+		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
+		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
+		#endif
 
 		int candidate = 0;
 
