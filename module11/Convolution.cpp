@@ -64,9 +64,10 @@ cl_float outputSignal[outputSignalWidth][outputSignalHeight];
 
 //Could probably be a kernel function instead
 //Assumes square filter for math
-void make_gradient_filter(cl_float **filter, unsigned int filterWidth, unsigned int filterHeight)
+cl_float *make_gradient_filter(unsigned int filterWidth, unsigned int filterHeight)
 {
-	//cl_float filter[filterWidth][filterHeight];
+	cl_float *filter = (cl_float*) malloc(sizeof(cl_float)*filterWidth*filterHeight);
+
 	cl_int half_width  = (cl_int) (filterWidth  / 2) - 1;
 	cl_int half_height = (cl_int) (filterHeight / 2) - 1;
 	cl_float increment = 100 / filterWidth;
@@ -81,7 +82,7 @@ void make_gradient_filter(cl_float **filter, unsigned int filterWidth, unsigned 
 				greater = vert_distance;
 
 			cl_float gradient = greater * increment;
-			filter[j][i] = gradient;
+			filter[j+(i*filterWidth)] = gradient;
 		}
 	}
 	return filter;
@@ -131,8 +132,7 @@ int main_sub(unsigned int filterWidth, unsigned int filterHeight)
 	cl_mem filterBuffer;
 
 	// Make host filter
-	cl_float filter[filterWidth][filterHeight];
-	make_gradient_filter(filter, filterWidth, filterHeight);
+	cl_float *filter = make_gradient_filter(filterWidth, filterHeight);
 
 	fill_input_signal();
     // First, select an OpenCL platform to run on.
@@ -340,7 +340,7 @@ int main_sub(unsigned int filterWidth, unsigned int filterHeight)
 	printf("Filter:\n");
 	for (int y = 0; y < filterHeight; y++) {
 		for (int x = 0; x < filterWidth; x++) {
-			std::cout << filter[x][y] << " ";
+			std::cout << filter[x+(y*filterWidth)] << " ";
 		}
 		std::cout << std::endl;
 	}
