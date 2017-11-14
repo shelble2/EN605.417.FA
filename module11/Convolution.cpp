@@ -61,19 +61,31 @@ const unsigned int outputSignalHeight = 7;
 
 cl_float outputSignal[outputSignalWidth][outputSignalHeight];
 
-const unsigned int filterWidth  = 7;
-const unsigned int filterHeight = 7;
 
-cl_float filter_7x7[filterWidth][filterHeight] =
+//Could probably be a kernel function instead
+//Assumes square filter for math
+cl_float **make_gradient_filter(unsigned int filterWidth, unsigned int filterHeight)
 {
-	{.25, .50, .50, .50, .50, .50, .25},
-	{.50, .50, .75, .75, .75, .50, .50},
-	{.50, .75, .75, 1.0, .75, .75, .50},
-	{.50, .75, 1.0, 1.0, 1.0, .75, .50},
-	{.50, .75, .75, 1.0, .75, .75, .50},
-	{.50, .50, .75, .75, .75, .50, .50},
-	{.25, .50, .50, .50, .50, .50, .25},
-};
+	cl_float filter[filterWidth][filterHeight];
+	cl_int half_width  = (cl_int) (filterWidth  / 2) - 1;
+	cl_int half_height = (cl_int) (filterHeight / 2) - 1;
+	cl_float increment = 100 / filterWidth;
+
+	for(int i = 0; i < filterHeight; i++) {
+		for(int j = 0; j < filterWidth; j++) {
+			int hori_distance = abs(filterWidth-i);
+			int vert_distance = abs(filterHeight-j);
+			int greater = hori_distance;
+
+			if(vert_distance > hori_distance)
+				greater = vert_distance;
+
+			cl_float gradient = greater * increment;
+			filter[j][i] = gradient;
+		}
+	}
+	return filter;
+}
 
 ///
 // Function to check and handle OpenCL errors
@@ -103,7 +115,7 @@ void CL_CALLBACK contextCallback(
 ///
 //	main_sub() for Convoloution example
 //
-int main_sub()
+int main_sub(unsigned int filterWidth, unsigned int filterHeight)
 {
     cl_int errNum;
     cl_uint numPlatforms;
@@ -117,6 +129,9 @@ int main_sub()
 	cl_mem inputSignalBuffer;
 	cl_mem outputSignalBuffer;
 	cl_mem filterBuffer;
+
+	// Make host filter
+	cl_float filter = make_gradient_filter(filterWidth, filterHeight);
 
 	fill_input_signal();
     // First, select an OpenCL platform to run on.
@@ -249,7 +264,7 @@ int main_sub()
 		context,
 		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 		sizeof(cl_float) * filterHeight * filterWidth,
-		static_cast<void *>(filter_7x7),
+		static_cast<void *>(filter),
 		&errNum);
 	checkErr(errNum, "clCreateBuffer(filter)");
 
@@ -320,6 +335,15 @@ int main_sub()
 		std::cout << std::endl;
 	}
 
+	// Output the filter
+	printf("Filter:\n");
+	for (int y = 0; y < filterHeight; y++) {
+		for (int x = 0; x < filterWidth; x++) {
+			std::cout << filter[x][y] << " ";
+		}
+		std::cout << std::endl;
+	}
+
 	// Output the result buffer
 	printf("Output Signal:\n");
 	for (int y = 0; y < outputSignalHeight; y++) {
@@ -338,18 +362,10 @@ int main_sub()
 //Test harness for module 11 assignment
 int main(int argc, char** argv)
 {
-	printf("First run: \n");
-	main_sub();
+	printf("First run 7x7: \n");
+	main_sub(7, 7);
 
-	printf("Second run: \n");
-	main_sub();
+	printf("Second run, 49x49: \n");
+	main_sub(49, 49);
 
-	printf("Third run: \n");
-	main_sub();
-
-	printf("Fourth run: \n");
-	main_sub();
-
-	printf("Fifth run: \n");
-	main_sub();
 }
