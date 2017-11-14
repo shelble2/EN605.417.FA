@@ -74,8 +74,8 @@ cl_float *make_gradient_filter(unsigned int filterWidth, unsigned int filterHeig
 
 	for(int i = 0; i < filterHeight; i++) {
 		for(int j = 0; j < filterWidth; j++) {
-			int hori_distance = abs(filterWidth-i);
-			int vert_distance = abs(filterHeight-j);
+			int hori_distance = abs(half_width-i);
+			int vert_distance = abs(half_height-j);
 			int greater = hori_distance;
 
 			if(vert_distance > hori_distance)
