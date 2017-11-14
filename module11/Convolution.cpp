@@ -70,7 +70,7 @@ cl_float *make_gradient_filter(unsigned int filterWidth, unsigned int filterHeig
 
 	cl_int half_width  = (cl_int) (filterWidth  / 2);
 	cl_int half_height = (cl_int) (filterHeight / 2);
-	cl_float increment = 100 / half_width-1;
+	cl_float increment = 100 / half_width;
 
 	for(int i = 0; i < filterHeight; i++) {
 		for(int j = 0; j < filterWidth; j++) {
@@ -81,7 +81,7 @@ cl_float *make_gradient_filter(unsigned int filterWidth, unsigned int filterHeig
 			if(vert_distance > hori_distance)
 				greater = vert_distance;
 
-			cl_float gradient = (half_width-greater+1) * increment;
+			cl_float gradient = (half_width-greater) * increment;
 			filter[j+(i*filterWidth)] = gradient;
 		}
 	}
