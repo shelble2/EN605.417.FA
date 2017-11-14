@@ -1,6 +1,5 @@
 //
 // Modified by Sarah Helble 10 Nov 2017 for Module 11 Assignment
-// TODO:  Make sure filter is right, capture output
 //
 
 //
@@ -363,8 +362,19 @@ int main_sub(unsigned int filterWidth, unsigned int filterHeight)
 //Test harness for module 11 assignment
 int main(int argc, char** argv)
 {
-	printf("First run 7x7: \n");
+	printf("First run, 7x7 filter: \n");
 	main_sub(7, 7);
+
+	printf("Second run, 7x7 filter: \n");
+	main_sub(7, 7);
+
+	printf("First run, 49x49: \n");
+	main_sub(49, 49);
+
+	printf("Second run, 49x49: \n");
+	main_sub(49, 49);
+
+
 
 	printf("Second run, 49x49: \n");
 	main_sub(49, 49);
