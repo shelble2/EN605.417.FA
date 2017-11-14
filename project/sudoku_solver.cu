@@ -1,12 +1,14 @@
-//#define DEBUG_VAL 80
 /**
  * sudoku_solver.cu
  * Sarah Helble
- * 2017-11-01
+ * 2017-11-14
  *
  * In the process of adapting shuffle.cu from Module 5 assigment to work on
  * solving sudoku puzzles in the form of a string of numbers, where 0 indicates
  * an empty cell.
+ *
+ * Should compile with `$ nvcc sudoku_solver.cu -o sudoku_solver` and run with
+ * `$ ./sudoku_solver`
  */
 /*
 Lessons so far
@@ -50,78 +52,32 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 
 	tmp[my_cell_id] = ordered[my_cell_id];
 
-	//THIS STANZA JUST FOR DEBUGGING PURPOSES, SO WE'RE ONLY WORKING WITH CELL 0
-/*	if (my_cell_id != DEBUG_VAL) {
-		tmp[my_cell_id]  = tmp[my_cell_id];
-
-
-	} else*/
 	// Only try to solve if cell is empty
 	if(tmp[my_cell_id] != 0 ) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
-/*		#if __CUDA_ARCH__ >= 200
-		printf("Cell already has value\n");
-		#endif
-*/
 	} else {
-/*		#if __CUDA_ARCH__ >= 200
-		printf("Going through all in my row. I'm %d. Row %d, Col %d\n", DEBUG_VAL, row, col);
-		#endif
-*/
 		// Go through all in the same row
 		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
 			int current = tmp[i];
-/*			#if __CUDA_ARCH__ >= 200
-			printf("current is tmp[%d]: %d\n", i, current);
-			#endif
-*/
 			possibilities[current] = 0;
 		}
-/*
-		#if __CUDA_ARCH__ >= 200
-		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
-		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
-		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
-		printf("\nGoing on to all in this column\n");
-		#endif
-*/
+
 		//Go through all in the same column
 		for(int i = 0; i < DIM ; i++) {
 			int current = tmp[i*DIM+col];
-/*			#if __CUDA_ARCH__ >= 200
-			printf("current is tmp[%d]: %d\n", i*DIM+col, current);
-			#endif
-*/
 			possibilities[current] = 0;
 		}
-/*
-		#if __CUDA_ARCH__ >= 200
-		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
-		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
-		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
-		printf("\nGoing on to all in this block\n");
-		#endif
-*/
+
 		//Go through all in the same block
 		int s_row = row - (row % B_DIM);
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + B_DIM); i++) {
 			for(int j = s_col; j < (s_col + B_DIM); j++) {
 				int current = tmp[(i*DIM)+j];
-/*				#if __CUDA_ARCH__ >= 200
-				printf("current is tmp[%d]: %d\n", (i*DIM)+j, current);
-				#endif
-*/
 				possibilities[current] = 0;
 			}
 		}
-/*
-		#if __CUDA_ARCH__ >= 200
-		printf("possibilities = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d}\n", possibilities[0],
-		possibilities[1], possibilities[2], possibilities[3], possibilities[4], possibilities[5],
-		possibilities[6], possibilities[7], possibilities[8], possibilities[9]);
-		#endif
-*/
+
 		int candidate = 0;
 
 		// If only one possibility is left, use it
@@ -215,7 +171,6 @@ void main_sub()
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
 
-	//TODO: would like puzzle and solution to be able to print side by side
 	printf("Puzzle:\n");
 	sudoku_print(h_puzzle);
 
@@ -235,7 +190,6 @@ void main_sub()
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	//TODO: would like puzzle and solution to be able to print side by side
 	printf("Increment 1:\n");
 	sudoku_print(h_solution);
 
@@ -245,7 +199,6 @@ void main_sub()
 
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	//TODO: would like puzzle and solution to be able to print side by side
 	printf("Increment 2:\n");
 	sudoku_print(h_solution);
 
@@ -255,7 +208,6 @@ void main_sub()
 
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	//TODO: would like puzzle and solution to be able to print side by side
 	printf("Increment 3:\n");
 	sudoku_print(h_solution);
 
