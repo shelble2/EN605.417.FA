@@ -68,8 +68,8 @@ cl_float *make_gradient_filter(unsigned int filterWidth, unsigned int filterHeig
 {
 	cl_float *filter = (cl_float*) malloc(sizeof(cl_float)*filterWidth*filterHeight);
 
-	cl_int half_width  = (cl_int) (filterWidth  / 2) - 1;
-	cl_int half_height = (cl_int) (filterHeight / 2) - 1;
+	cl_int half_width  = (cl_int) (filterWidth  / 2);
+	cl_int half_height = (cl_int) (filterHeight / 2);
 	cl_float increment = 100 / filterWidth;
 
 	for(int i = 0; i < filterHeight; i++) {
