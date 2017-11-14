@@ -64,9 +64,9 @@ cl_float outputSignal[outputSignalWidth][outputSignalHeight];
 
 //Could probably be a kernel function instead
 //Assumes square filter for math
-cl_float **make_gradient_filter(unsigned int filterWidth, unsigned int filterHeight)
+void make_gradient_filter(cl_float **filter, unsigned int filterWidth, unsigned int filterHeight)
 {
-	cl_float filter[filterWidth][filterHeight];
+	//cl_float filter[filterWidth][filterHeight];
 	cl_int half_width  = (cl_int) (filterWidth  / 2) - 1;
 	cl_int half_height = (cl_int) (filterHeight / 2) - 1;
 	cl_float increment = 100 / filterWidth;
@@ -131,7 +131,8 @@ int main_sub(unsigned int filterWidth, unsigned int filterHeight)
 	cl_mem filterBuffer;
 
 	// Make host filter
-	cl_float filter = make_gradient_filter(filterWidth, filterHeight);
+	cl_float filter[filterWidth][filterHeight];
+	make_gradient_filter(filter, filterWidth, filterHeight);
 
 	fill_input_signal();
     // First, select an OpenCL platform to run on.
