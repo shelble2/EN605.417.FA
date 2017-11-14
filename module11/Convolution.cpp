@@ -1,6 +1,6 @@
 //
 // Modified by Sarah Helble 10 Nov 2017 for Module 11 Assignment
-// TODO:  Make sure mask is right, capture output
+// TODO:  Make sure filter is right, capture output
 //
 
 //
@@ -61,10 +61,10 @@ const unsigned int outputSignalHeight = 7;
 
 cl_float outputSignal[outputSignalWidth][outputSignalHeight];
 
-const unsigned int maskWidth  = 7;
-const unsigned int maskHeight = 7;
+const unsigned int filterWidth  = 7;
+const unsigned int filterHeight = 7;
 
-cl_float mask[maskWidth][maskHeight] =
+cl_float filter_7x7[filterWidth][filterHeight] =
 {
 	{.25, .50, .50, .50, .50, .50, .25},
 	{.50, .50, .75, .75, .75, .50, .50},
@@ -116,7 +116,7 @@ int main_sub()
 	cl_kernel kernel;
 	cl_mem inputSignalBuffer;
 	cl_mem outputSignalBuffer;
-	cl_mem maskBuffer;
+	cl_mem filterBuffer;
 
 	fill_input_signal();
     // First, select an OpenCL platform to run on.
@@ -245,13 +245,13 @@ int main_sub()
 		&errNum);
 	checkErr(errNum, "clCreateBuffer(inputSignal)");
 
-	maskBuffer = clCreateBuffer(
+	filterBuffer = clCreateBuffer(
 		context,
 		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		sizeof(cl_float) * maskHeight * maskWidth,
-		static_cast<void *>(mask),
+		sizeof(cl_float) * filterHeight * filterWidth,
+		static_cast<void *>(filter_7x7),
 		&errNum);
-	checkErr(errNum, "clCreateBuffer(mask)");
+	checkErr(errNum, "clCreateBuffer(filter)");
 
 	outputSignalBuffer = clCreateBuffer(
 		context,
@@ -270,10 +270,10 @@ int main_sub()
 	checkErr(errNum, "clCreateCommandQueue");
 
     errNum  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputSignalBuffer);
-	errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &maskBuffer);
+	errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &filterBuffer);
     errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &outputSignalBuffer);
 	errNum |= clSetKernelArg(kernel, 3, sizeof(cl_float), &inputSignalWidth);
-	errNum |= clSetKernelArg(kernel, 4, sizeof(cl_float), &maskWidth);
+	errNum |= clSetKernelArg(kernel, 4, sizeof(cl_float), &filterWidth);
 	checkErr(errNum, "clSetKernelArg");
 
 	const size_t globalWorkSize[1] = { outputSignalWidth * outputSignalHeight };
@@ -293,17 +293,17 @@ int main_sub()
 
 	errNum = clWaitForEvents(1, &event);
 	checkErr(errNum, "clWaitForEvents");
-	
+
 	errNum = clFinish(queue);
 	checkErr(errNum, "clFinish");
-	
+
 	cl_ulong start, end;
 	double duration, duration_in_ms;
 
 	errNum = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(start),
 		&start, NULL);
 	checkErr(errNum, "clGetEventProfilingInfo: start");
-	
+
 	errNum = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(end),
 		&end, NULL);
 	checkErr(errNum, "clGetEventProfilingInfo: end");
