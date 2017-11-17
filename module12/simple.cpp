@@ -1,4 +1,7 @@
 //
+// Modified by Sarah Helble for Module 12 Assignment 11.16.2017
+//
+//
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
 // ISBN-10:   0-321-74964-2
@@ -10,7 +13,7 @@
 
 // raytracer.cpp
 //
-//    This is a (very) simple raytracer that is intended to demonstrate 
+//    This is a (very) simple raytracer that is intended to demonstrate
 //    using OpenCL buffers.
 
 #include <iostream>
@@ -27,7 +30,7 @@
 #define NUM_BUFFER_ELEMENTS 16
 
 // Function to check and handle OpenCL errors
-inline void 
+inline void
 checkErr(cl_int err, const char * name)
 {
     if (err != CL_SUCCESS) {
@@ -53,7 +56,7 @@ int main(int argc, char** argv)
     std::vector<cl_mem> buffers;
     int * inputOutput;
 
-    int platform = DEFAULT_PLATFORM; 
+    int platform = DEFAULT_PLATFORM;
     bool useMap  = DEFAULT_USE_MAP;
 
     std::cout << "Simple buffer and sub-buffer Example" << std::endl;
@@ -80,20 +83,20 @@ int main(int argc, char** argv)
     }
 
 
-    // First, select an OpenCL platform to run on.  
+    // First, select an OpenCL platform to run on.
     errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
-    checkErr( 
-        (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), 
-        "clGetPlatformIDs"); 
- 
+    checkErr(
+        (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
+        "clGetPlatformIDs");
+
     platformIDs = (cl_platform_id *)alloca(
             sizeof(cl_platform_id) * numPlatforms);
 
-    std::cout << "Number of platforms: \t" << numPlatforms << std::endl; 
+    std::cout << "Number of platforms: \t" << numPlatforms << std::endl;
 
     errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
-    checkErr( 
-       (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), 
+    checkErr(
+       (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
        "clGetPlatformIDs");
 
     std::ifstream srcFile("simple.cl");
@@ -108,27 +111,27 @@ int main(int argc, char** argv)
 
     deviceIDs = NULL;
     DisplayPlatformInfo(
-        platformIDs[platform], 
-        CL_PLATFORM_VENDOR, 
+        platformIDs[platform],
+        CL_PLATFORM_VENDOR,
         "CL_PLATFORM_VENDOR");
 
     errNum = clGetDeviceIDs(
-        platformIDs[platform], 
-        CL_DEVICE_TYPE_ALL, 
+        platformIDs[platform],
+        CL_DEVICE_TYPE_ALL,
         0,
         NULL,
         &numDevices);
     if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND)
     {
         checkErr(errNum, "clGetDeviceIDs");
-    }       
+    }
 
     deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
     errNum = clGetDeviceIDs(
         platformIDs[platform],
         CL_DEVICE_TYPE_ALL,
-        numDevices, 
-        &deviceIDs[0], 
+        numDevices,
+        &deviceIDs[0],
         NULL);
     checkErr(errNum, "clGetDeviceIDs");
 
@@ -140,20 +143,20 @@ int main(int argc, char** argv)
     };
 
     context = clCreateContext(
-        contextProperties, 
+        contextProperties,
         numDevices,
-        deviceIDs, 
+        deviceIDs,
         NULL,
-        NULL, 
+        NULL,
         &errNum);
     checkErr(errNum, "clCreateContext");
 
     // Create program from source
     program = clCreateProgramWithSource(
-        context, 
-        1, 
-        &src, 
-        &length, 
+        context,
+        1,
+        &src,
+        &length,
         &errNum);
     checkErr(errNum, "clCreateProgramWithSource");
 
@@ -165,16 +168,16 @@ int main(int argc, char** argv)
         "-I.",
         NULL,
         NULL);
-    if (errNum != CL_SUCCESS) 
+    if (errNum != CL_SUCCESS)
     {
         // Determine the reason for the error
         char buildLog[16384];
         clGetProgramBuildInfo(
-            program, 
-            deviceIDs[0], 
+            program,
+            deviceIDs[0],
             CL_PROGRAM_BUILD_LOG,
-            sizeof(buildLog), 
-            buildLog, 
+            sizeof(buildLog),
+            buildLog,
             NULL);
 
             std::cerr << "Error in OpenCL C source: " << std::endl;
@@ -202,10 +205,10 @@ int main(int argc, char** argv)
     // now for all devices other than the first create a sub-buffer
     for (unsigned int i = 1; i < numDevices; i++)
     {
-        cl_buffer_region region = 
+        cl_buffer_region region =
             {
-                NUM_BUFFER_ELEMENTS * i * sizeof(int), 
-                NUM_BUFFER_ELEMENTS * sizeof(int)
+                i * sizeof(int),
+                2 * sizeof(int)
             };
         buffer = clCreateSubBuffer(
             buffers[0],
@@ -222,11 +225,11 @@ int main(int argc, char** argv)
     for (unsigned int i = 0; i < numDevices; i++)
     {
         InfoDevice<cl_device_type>::display(
-            deviceIDs[i], 
-            CL_DEVICE_TYPE, 
+            deviceIDs[i],
+            CL_DEVICE_TYPE,
             "CL_DEVICE_TYPE");
 
-        cl_command_queue queue = 
+        cl_command_queue queue =
             clCreateCommandQueue(
                 context,
                 deviceIDs[i],
@@ -248,7 +251,7 @@ int main(int argc, char** argv)
         kernels.push_back(kernel);
     }
 
-    if (useMap) 
+    if (useMap)
     {
         cl_int * mapPtr = (cl_int*) clEnqueueMapBuffer(
             queues[0],
@@ -277,7 +280,7 @@ int main(int argc, char** argv)
             NULL);
         checkErr(errNum, "clEnqueueUnmapMemObject(..)");
     }
-    else 
+    else
     {
         // Write input data
         errNum = clEnqueueWriteBuffer(
@@ -301,14 +304,14 @@ int main(int argc, char** argv)
         size_t gWI = NUM_BUFFER_ELEMENTS;
 
         errNum = clEnqueueNDRangeKernel(
-            queues[i], 
-            kernels[i], 
-            1, 
+            queues[i],
+            kernels[i],
+            1,
             NULL,
-            (const size_t*)&gWI, 
-            (const size_t*)NULL, 
-            0, 
-            0, 
+            (const size_t*)&gWI,
+            (const size_t*)NULL,
+            0,
+            0,
             &event);
 
         events.push_back(event);
@@ -348,7 +351,7 @@ int main(int argc, char** argv)
 
         clFinish(queues[0]);
     }
-    else 
+    else
     {
         // Read back computed data
         clEnqueueReadBuffer(
