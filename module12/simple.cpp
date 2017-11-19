@@ -57,12 +57,8 @@ void get_platform_ids(cl_platform_id **out)
 	errNum = clGetPlatformIDs(numPlatforms, tmp, NULL);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
 
-
 	*out = tmp;
 
-	printf("attempt to display platform id inside of get_platform_ids\n");
-	DisplayPlatformInfo( *out[DEFAULT_PLATFORM], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
-	printf("returning to main\n");
 	return;
 }
 
@@ -137,6 +133,11 @@ int main(int argc, char** argv)
 
 	// Read in the kernl file
 	get_platform_ids(&platformIDs);
+
+	printf("attempt to display platform id in main\n");
+	DisplayPlatformInfo( platformIDs[DEFAULT_PLATFORM], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
+	printf("done\n");
+
 	std::ifstream srcFile("simple.cl");
 	checkErr(srcFile.is_open() ? CL_SUCCESS : -1, "reading simple.cl");
 
