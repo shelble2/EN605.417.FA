@@ -106,17 +106,17 @@ int main(int argc, char** argv)
 	size_t length = srcProg.length();
 
 	// Display info of the platform we're using
-	DisplayPlatformInfo( platform_id, CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
+	DisplayPlatformInfo( platformIDs[platform], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
 
 	// Get device information
-	errNum = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
+	errNum = clGetDeviceIDs(platformIDs[platform], CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
 	if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND) {
 		checkErr(errNum, "clGetDeviceIDs");
 	}
 	std::cout << "Number of devices: \t" << numDevices << std::endl;
 
 	deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
-	errNum = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_ALL, numDevices, &deviceIDs[0], NULL);
+	errNum = clGetDeviceIDs( platformIDs[platform], CL_DEVICE_TYPE_ALL, numDevices, &deviceIDs[0], NULL);
 	checkErr(errNum, "clGetDeviceIDs");
 
 	// make the context
