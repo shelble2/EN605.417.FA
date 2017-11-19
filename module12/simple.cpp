@@ -139,6 +139,10 @@ int main(int argc, char** argv)
 	const char * src = srcProg.c_str();
 	size_t length = srcProg.length();
 
+	printf("attempt to display platform id outside of get_device_ids\n");
+	DisplayPlatformInfo( platformIDs[platform], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
+	printf("Calling get_device_ids\n");
+
 	deviceIDs = get_device_ids(platformIDs[platform], &numDevices);
 	printf("back from get_device_ids\n");
 	cl_context_properties contextProperties[] = {
