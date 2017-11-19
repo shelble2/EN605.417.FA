@@ -50,11 +50,11 @@ void get_platform_ids(cl_platform_id **out)
 	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
 
-	platformIDs = (cl_platform_id *)alloca(sizeof(cl_platform_id) * numPlatforms);
+	tmp = (cl_platform_id *)alloca(sizeof(cl_platform_id) * numPlatforms);
 
 	std::cout << "Number of platforms: \t" << numPlatforms << std::endl;
 
-	errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
+	errNum = clGetPlatformIDs(numPlatforms, tmp, NULL);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
 
 	*out = tmp;
