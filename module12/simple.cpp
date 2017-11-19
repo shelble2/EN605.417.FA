@@ -1,5 +1,5 @@
 //
-// Modified by Sarah Helble for Module 12 Assignment 11.16.2017
+// Modified by Sarah Helble for Module 12 Assignment 11.19.2017
 //
 //
 // Book:      OpenCL(R) Programming Guide
@@ -28,6 +28,7 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
+#define SUB_BUF 4
 
 // Function to check and handle OpenCL errors
 inline void
@@ -39,13 +40,69 @@ checkErr(cl_int err, const char * name)
     }
 }
 
+cl_platform_id *get_platform_ids()
+{
+  cl_int errNum;
+  cl_uint numPlatforms;
+  cl_platform_id *platformIDs;
+
+  // First, select an OpenCL platform to run on.
+  errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
+  checkErr(
+      (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
+      "clGetPlatformIDs");
+
+  platformIDs = (cl_platform_id *)alloca(sizeof(cl_platform_id) * numPlatforms);
+
+  std::cout << "Number of platforms: \t" << numPlatforms << std::endl;
+
+  errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
+  checkErr(
+     (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
+     "clGetPlatformIDs");
+  return platformIDs;
+}
+
+cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out)
+{
+  cl_int errNum;
+  cl_uint numDevices;
+  cl_device_id *deviceIDs = NULL;
+  DisplayPlatformInfo( platform_id, CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
+
+  errNum = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
+  if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND) {
+      checkErr(errNum, "clGetDeviceIDs");
+  }
+
+  deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
+  errNum = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_ALL, numDevices, &deviceIDs[0], NULL);
+  checkErr(errNum, "clGetDeviceIDs");
+
+  *numDevices_out = numDevices;
+  return deviceIDs;
+}
+
+void display_output(int *inputOutput, cl_uint numDevices)
+{
+  // Display output in rows
+  for (unsigned i = 0; i < numDevices; i++)
+  {
+      for (unsigned elems = i * NUM_BUFFER_ELEMENTS; elems < ((i+1) * NUM_BUFFER_ELEMENTS); elems++)
+      {
+          std::cout << " " << inputOutput[elems];
+      }
+
+      std::cout << std::endl;
+  }
+}
+
 ///
 //	main() for simple buffer and sub-buffer example
 //
 int main(int argc, char** argv)
 {
     cl_int errNum;
-    cl_uint numPlatforms;
     cl_uint numDevices;
     cl_platform_id * platformIDs;
     cl_device_id * deviceIDs;
@@ -57,83 +114,35 @@ int main(int argc, char** argv)
     int * inputOutput;
 
     int platform = DEFAULT_PLATFORM;
-    bool useMap  = DEFAULT_USE_MAP;
 
-    std::cout << "Simple buffer and sub-buffer Example" << std::endl;
+    std::cout << "Buffer and sub-buffer Example for averaging" << std::endl;
 
-    for (int i = 1; i < argc; i++)
-    {
+    for (int i = 1; i < argc; i++) {
         std::string input(argv[i]);
 
-        if (!input.compare("--platform"))
-        {
+        if (!input.compare("--platform")) {
             input = std::string(argv[++i]);
             std::istringstream buffer(input);
             buffer >> platform;
-        }
-        else if (!input.compare("--useMap"))
-        {
-            useMap = true;
-        }
-        else
-        {
-            std::cout << "usage: --platform n --useMap" << std::endl;
+        } else {
+            std::cout << "usage: --platform n " << std::endl;
             return 0;
         }
     }
 
-
-    // First, select an OpenCL platform to run on.
-    errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
-    checkErr(
-        (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
-        "clGetPlatformIDs");
-
-    platformIDs = (cl_platform_id *)alloca(
-            sizeof(cl_platform_id) * numPlatforms);
-
-    std::cout << "Number of platforms: \t" << numPlatforms << std::endl;
-
-    errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
-    checkErr(
-       (errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS),
-       "clGetPlatformIDs");
+    // Read in the kernl file
+    platformIDs = get_platform_ids();
 
     std::ifstream srcFile("simple.cl");
     checkErr(srcFile.is_open() ? CL_SUCCESS : -1, "reading simple.cl");
 
-    std::string srcProg(
-        std::istreambuf_iterator<char>(srcFile),
+    std::string srcProg(std::istreambuf_iterator<char>(srcFile),
         (std::istreambuf_iterator<char>()));
 
     const char * src = srcProg.c_str();
     size_t length = srcProg.length();
 
-    deviceIDs = NULL;
-    DisplayPlatformInfo(
-        platformIDs[platform],
-        CL_PLATFORM_VENDOR,
-        "CL_PLATFORM_VENDOR");
-
-    errNum = clGetDeviceIDs(
-        platformIDs[platform],
-        CL_DEVICE_TYPE_ALL,
-        0,
-        NULL,
-        &numDevices);
-    if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND)
-    {
-        checkErr(errNum, "clGetDeviceIDs");
-    }
-
-    deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
-    errNum = clGetDeviceIDs(
-        platformIDs[platform],
-        CL_DEVICE_TYPE_ALL,
-        numDevices,
-        &deviceIDs[0],
-        NULL);
-    checkErr(errNum, "clGetDeviceIDs");
+    deviceIDs = get_device_ids(platformIDs[platform], &numDevices);
 
     cl_context_properties contextProperties[] =
     {
@@ -142,177 +151,87 @@ int main(int argc, char** argv)
         0
     };
 
-    context = clCreateContext(
-        contextProperties,
-        numDevices,
-        deviceIDs,
-        NULL,
-        NULL,
-        &errNum);
+    context = clCreateContext( contextProperties, numDevices, deviceIDs, NULL,
+        NULL, &errNum);
     checkErr(errNum, "clCreateContext");
 
     // Create program from source
-    program = clCreateProgramWithSource(
-        context,
-        1,
-        &src,
-        &length,
-        &errNum);
+    program = clCreateProgramWithSource(context, 1, &src, &length, &errNum);
     checkErr(errNum, "clCreateProgramWithSource");
 
     // Build program
-    errNum = clBuildProgram(
-        program,
-        numDevices,
-        deviceIDs,
-        "-I.",
-        NULL,
-        NULL);
-    if (errNum != CL_SUCCESS)
-    {
+    errNum = clBuildProgram( program, numDevices, deviceIDs, "-I.", NULL,  NULL);
+    if (errNum != CL_SUCCESS) {
         // Determine the reason for the error
         char buildLog[16384];
-        clGetProgramBuildInfo(
-            program,
-            deviceIDs[0],
-            CL_PROGRAM_BUILD_LOG,
-            sizeof(buildLog),
-            buildLog,
-            NULL);
+        clGetProgramBuildInfo(program, deviceIDs[0], CL_PROGRAM_BUILD_LOG, sizeof(buildLog),
+            buildLog, NULL);
 
             std::cerr << "Error in OpenCL C source: " << std::endl;
             std::cerr << buildLog;
             checkErr(errNum, "clBuildProgram");
     }
 
-    // create buffers and sub-buffers
+    // create host buffer
     inputOutput = new int[NUM_BUFFER_ELEMENTS * numDevices];
-    for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS * numDevices; i++)
-    {
+    for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS * numDevices; i++) {
         inputOutput[i] = i;
     }
 
-    // create a single buffer to cover all the input data
-    cl_mem buffer = clCreateBuffer(
-        context,
-        CL_MEM_READ_WRITE,
+    // create a single device buffer to cover all the input data
+    cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
         sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices,
-        NULL,
-        &errNum);
+        NULL, &errNum);
     checkErr(errNum, "clCreateBuffer");
     buffers.push_back(buffer);
 
+    printf("Num devices : %d\n", numDevices);
     // now for all devices other than the first create a sub-buffer
-    for (unsigned int i = 1; i < numDevices; i++)
-    {
-        cl_buffer_region region =
-            {
-                i * sizeof(int),
-                2 * sizeof(int)
-            };
-        buffer = clCreateSubBuffer(
-            buffers[0],
-            CL_MEM_READ_WRITE,
-            CL_BUFFER_CREATE_TYPE_REGION,
-            &region,
-            &errNum);
+    //TODO: why not the first?
+    for (unsigned int i = 1; i < numDevices; i++) {
+        cl_buffer_region region = {
+          i * SUB_BUF * sizeof(int),
+          SUB_BUF * sizeof(int) };
+
+        buffer = clCreateSubBuffer(buffers[0], CL_MEM_READ_WRITE,
+            CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
         checkErr(errNum, "clCreateSubBuffer");
 
         buffers.push_back(buffer);
     }
 
     // Create command queues
-    for (unsigned int i = 0; i < numDevices; i++)
-    {
-        InfoDevice<cl_device_type>::display(
-            deviceIDs[i],
-            CL_DEVICE_TYPE,
-            "CL_DEVICE_TYPE");
+    for (unsigned int i = 0; i < numDevices; i++) {
+        InfoDevice<cl_device_type>::display(deviceIDs[i], CL_DEVICE_TYPE, "CL_DEVICE_TYPE");
 
-        cl_command_queue queue =
-            clCreateCommandQueue(
-                context,
-                deviceIDs[i],
-                0,
-                &errNum);
+        cl_command_queue queue = clCreateCommandQueue(context, deviceIDs[i], 0, &errNum);
         checkErr(errNum, "clCreateCommandQueue");
 
         queues.push_back(queue);
 
-        cl_kernel kernel = clCreateKernel(
-            program,
-            "square",
-            &errNum);
-        checkErr(errNum, "clCreateKernel(square)");
+        cl_kernel kernel = clCreateKernel( program, "sub_average", &errNum);
+        checkErr(errNum, "clCreateKernel(sub_average)");
 
         errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
-        checkErr(errNum, "clSetKernelArg(square)");
+        checkErr(errNum, "clSetKernelArg(sub_average)");
 
         kernels.push_back(kernel);
     }
 
-    if (useMap)
-    {
-        cl_int * mapPtr = (cl_int*) clEnqueueMapBuffer(
-            queues[0],
-            buffers[0],
-            CL_TRUE,
-            CL_MAP_WRITE,
-            0,
-            sizeof(cl_int) * NUM_BUFFER_ELEMENTS * numDevices,
-            0,
-            NULL,
-            NULL,
-            &errNum);
-        checkErr(errNum, "clEnqueueMapBuffer(..)");
-
-        for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS * numDevices; i++)
-        {
-            mapPtr[i] = inputOutput[i];
-        }
-
-        errNum = clEnqueueUnmapMemObject(
-            queues[0],
-            buffers[0],
-            mapPtr,
-            0,
-            NULL,
-            NULL);
-        checkErr(errNum, "clEnqueueUnmapMemObject(..)");
-    }
-    else
-    {
-        // Write input data
-        errNum = clEnqueueWriteBuffer(
-            queues[0],
-            buffers[0],
-            CL_TRUE,
-            0,
-            sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices,
-            (void*)inputOutput,
-            0,
-            NULL,
-            NULL);
-    }
+    // Write input data
+    errNum = clEnqueueWriteBuffer(queues[0], buffers[0], CL_TRUE, 0,
+            sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices, (void*)inputOutput,
+            0, NULL, NULL);
 
     std::vector<cl_event> events;
     // call kernel for each device
-    for (unsigned int i = 0; i < queues.size(); i++)
-    {
+    for (unsigned int i = 0; i < queues.size(); i++) {
         cl_event event;
 
         size_t gWI = NUM_BUFFER_ELEMENTS;
 
-        errNum = clEnqueueNDRangeKernel(
-            queues[i],
-            kernels[i],
-            1,
-            NULL,
-            (const size_t*)&gWI,
-            (const size_t*)NULL,
-            0,
-            0,
-            &event);
+        errNum = clEnqueueNDRangeKernel(queues[i], kernels[i], 1, NULL,
+            (const size_t*)&gWI, (const size_t*)NULL, 0, 0, &event);
 
         events.push_back(event);
     }
@@ -321,61 +240,12 @@ int main(int argc, char** argv)
     // with in-order queue.
     clWaitForEvents(events.size(), &events[0]);
 
-    if (useMap)
-    {
-        cl_int * mapPtr = (cl_int*) clEnqueueMapBuffer(
-            queues[0],
-            buffers[0],
-            CL_TRUE,
-            CL_MAP_READ,
-            0,
-            sizeof(cl_int) * NUM_BUFFER_ELEMENTS * numDevices,
-            0,
-            NULL,
-            NULL,
-            &errNum);
-        checkErr(errNum, "clEnqueueMapBuffer(..)");
+    // Read back computed data
+    clEnqueueReadBuffer(queues[0], buffers[0], CL_TRUE, 0,
+            sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices, (void*)inputOutput,
+            0, NULL, NULL);
 
-        for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS * numDevices; i++)
-        {
-            inputOutput[i] = mapPtr[i];
-        }
-
-        errNum = clEnqueueUnmapMemObject(
-            queues[0],
-            buffers[0],
-            mapPtr,
-            0,
-            NULL,
-            NULL);
-
-        clFinish(queues[0]);
-    }
-    else
-    {
-        // Read back computed data
-        clEnqueueReadBuffer(
-            queues[0],
-            buffers[0],
-            CL_TRUE,
-            0,
-            sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices,
-            (void*)inputOutput,
-            0,
-            NULL,
-            NULL);
-    }
-
-    // Display output in rows
-    for (unsigned i = 0; i < numDevices; i++)
-    {
-        for (unsigned elems = i * NUM_BUFFER_ELEMENTS; elems < ((i+1) * NUM_BUFFER_ELEMENTS); elems++)
-        {
-            std::cout << " " << inputOutput[elems];
-        }
-
-        std::cout << std::endl;
-    }
+    display_output(inputOutput, numDevices);
 
     std::cout << "Program completed successfully" << std::endl;
 
