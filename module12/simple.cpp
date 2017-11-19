@@ -56,7 +56,7 @@ cl_platform_id *get_platform_ids()
 
 	errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
-
+	printf("returning from inside get_platform_ids\n")
 	return platformIDs;
 }
 
@@ -73,6 +73,8 @@ cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out
 	if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND) {
 		checkErr(errNum, "clGetDeviceIDs");
 	}
+
+	std::cout << "Number of devices: \t" << numDevices << std::endl;
 
 	deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
 	errNum = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_ALL, numDevices, &deviceIDs[0], NULL);
@@ -128,7 +130,7 @@ int main(int argc, char** argv)
 
 	// Read in the kernl file
 	platformIDs = get_platform_ids();
-
+	printf("back from get platform ids\n" );
 	std::ifstream srcFile("simple.cl");
 	checkErr(srcFile.is_open() ? CL_SUCCESS : -1, "reading simple.cl");
 
