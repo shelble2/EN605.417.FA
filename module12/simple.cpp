@@ -60,7 +60,7 @@ cl_platform_id *get_platform_ids()
 	return platformIDs;
 }
 
-cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out)
+cl_device_id *get_device_ids(cl_platform_id *platform_id, cl_uint *numDevices_out)
 {
 	printf("inside get_device_ids\n");
 	cl_int errNum;
@@ -68,7 +68,7 @@ cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out
 	cl_device_id *deviceIDs = NULL;
 
 	DisplayPlatformInfo( platform_id, CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
-
+	prinf("after display platform info\n");
 	errNum = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
 
 	if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND) {
@@ -131,7 +131,6 @@ int main(int argc, char** argv)
 
 	// Read in the kernl file
 	platformIDs = get_platform_ids();
-	printf("back from get platform ids\n" );
 	std::ifstream srcFile("simple.cl");
 	checkErr(srcFile.is_open() ? CL_SUCCESS : -1, "reading simple.cl");
 
@@ -140,9 +139,8 @@ int main(int argc, char** argv)
 	const char * src = srcProg.c_str();
 	size_t length = srcProg.length();
 
-	printf("calling get_device_ids\n");
 	deviceIDs = get_device_ids(platformIDs[platform], &numDevices);
-
+	printf("back from get_device_ids\n");
 	cl_context_properties contextProperties[] = {
 		CL_CONTEXT_PLATFORM,
 		(cl_context_properties)platformIDs[platform],
