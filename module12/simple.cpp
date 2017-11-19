@@ -40,31 +40,6 @@ checkErr(cl_int err, const char * name)
 	}
 }
 
-cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out)
-{
-	printf("inside get_device_ids\n");
-	cl_int errNum;
-	cl_uint numDevices;
-	cl_device_id *deviceIDs = NULL;
-
-	DisplayPlatformInfo( platform_id, CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
-	printf("after display platform info\n");
-	errNum = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
-
-	if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND) {
-		checkErr(errNum, "clGetDeviceIDs");
-	}
-
-	std::cout << "Number of devices: \t" << numDevices << std::endl;
-
-	deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
-	errNum = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_ALL, numDevices, &deviceIDs[0], NULL);
-	checkErr(errNum, "clGetDeviceIDs");
-
-	*numDevices_out = numDevices;
-	return deviceIDs;
-}
-
 // Display ouyput in rows
 void display_output(int *inputOutput, cl_uint numDevices)
 {
@@ -121,12 +96,7 @@ int main(int argc, char** argv)
 	errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
 
-	////// Can get rid of this ///
-	printf("attempt to display platform id in main\n");
-	DisplayPlatformInfo( platformIDs[DEFAULT_PLATFORM], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
-	printf("done\n");
-	//////////////////////////////
-
+	// Load the kernel file to source string
 	std::ifstream srcFile("simple.cl");
 	checkErr(srcFile.is_open() ? CL_SUCCESS : -1, "reading simple.cl");
 
@@ -135,11 +105,21 @@ int main(int argc, char** argv)
 	const char * src = srcProg.c_str();
 	size_t length = srcProg.length();
 
+	// Display info of the platform we're using
+	DisplayPlatformInfo( platform_id, CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
 
-	printf("Calling get_device_ids\n");
+	// Get device information
+	errNum = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
+	if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND) {
+		checkErr(errNum, "clGetDeviceIDs");
+	}
+	std::cout << "Number of devices: \t" << numDevices << std::endl;
 
-	deviceIDs = get_device_ids(platformIDs[platform], &numDevices);
-	printf("back from get_device_ids\n");
+	deviceIDs = (cl_device_id *)alloca(sizeof(cl_device_id) * numDevices);
+	errNum = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_ALL, numDevices, &deviceIDs[0], NULL);
+	checkErr(errNum, "clGetDeviceIDs");
+
+	// make the context
 	cl_context_properties contextProperties[] = {
 		CL_CONTEXT_PLATFORM,
 		(cl_context_properties)platformIDs[platform],
