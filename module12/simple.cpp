@@ -40,11 +40,11 @@ checkErr(cl_int err, const char * name)
 	}
 }
 
-cl_platform_id *get_platform_ids()
+void get_platform_ids(cl_platform_id **out)
 {
 	cl_int errNum;
 	cl_uint numPlatforms;
-	cl_platform_id *platformIDs;
+	cl_platform_id *tmp;
 
 	// First, select an OpenCL platform to run on.
 	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
@@ -57,10 +57,10 @@ cl_platform_id *get_platform_ids()
 	errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
 
-	return platformIDs;
+	*out = tmp;
 }
 
-cl_device_id *get_device_ids(cl_platform_id *platform_id, cl_uint *numDevices_out)
+cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out)
 {
 	printf("inside get_device_ids\n");
 	cl_int errNum;
@@ -68,7 +68,7 @@ cl_device_id *get_device_ids(cl_platform_id *platform_id, cl_uint *numDevices_ou
 	cl_device_id *deviceIDs = NULL;
 
 	DisplayPlatformInfo( platform_id, CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
-	prinf("after display platform info\n");
+	printf("after display platform info\n");
 	errNum = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
 
 	if (errNum != CL_SUCCESS && errNum != CL_DEVICE_NOT_FOUND) {
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
 	}
 
 	// Read in the kernl file
-	platformIDs = get_platform_ids();
+	get_platform_ids(&platformIDs);
 	std::ifstream srcFile("simple.cl");
 	checkErr(srcFile.is_open() ? CL_SUCCESS : -1, "reading simple.cl");
 
