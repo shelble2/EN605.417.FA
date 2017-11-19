@@ -40,28 +40,6 @@ checkErr(cl_int err, const char * name)
 	}
 }
 
-void get_platform_ids(cl_platform_id **out)
-{
-	cl_int errNum;
-	cl_uint numPlatforms;
-	cl_platform_id *tmp;
-
-	// First, select an OpenCL platform to run on.
-	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
-	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
-
-	tmp = (cl_platform_id *)alloca(sizeof(cl_platform_id) * numPlatforms);
-
-	std::cout << "Number of platforms: \t" << numPlatforms << std::endl;
-
-	errNum = clGetPlatformIDs(numPlatforms, tmp, NULL);
-	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
-
-	*out = tmp;
-
-	return;
-}
-
 cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out)
 {
 	printf("inside get_device_ids\n");
@@ -105,6 +83,7 @@ int main(int argc, char** argv)
 {
 	cl_int errNum;
 	cl_uint numDevices;
+	cl_uint numPlatforms;
 	cl_platform_id * platformIDs;
 	cl_device_id * deviceIDs;
 	cl_context context;
@@ -131,12 +110,22 @@ int main(int argc, char** argv)
 		}
 	}
 
-	// Read in the kernl file
-	get_platform_ids(&platformIDs);
+	// First, select an OpenCL platform to run on.
+	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
+	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
 
+	platformIDs = (cl_platform_id *)alloca(sizeof(cl_platform_id) * numPlatforms);
+
+	std::cout << "Number of platforms: \t" << numPlatforms << std::endl;
+
+	errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
+	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
+
+	////// Can get rid of this ///
 	printf("attempt to display platform id in main\n");
 	DisplayPlatformInfo( platformIDs[DEFAULT_PLATFORM], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
 	printf("done\n");
+	//////////////////////////////
 
 	std::ifstream srcFile("simple.cl");
 	checkErr(srcFile.is_open() ? CL_SUCCESS : -1, "reading simple.cl");
