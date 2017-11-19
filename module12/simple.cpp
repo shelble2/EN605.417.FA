@@ -56,12 +56,13 @@ cl_platform_id *get_platform_ids()
 
 	errNum = clGetPlatformIDs(numPlatforms, platformIDs, NULL);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
-	printf("returning from inside get_platform_ids\n")
+
 	return platformIDs;
 }
 
 cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out)
 {
+	printf("inside get_device_ids\n");
 	cl_int errNum;
 	cl_uint numDevices;
 	cl_device_id *deviceIDs = NULL;
@@ -139,6 +140,7 @@ int main(int argc, char** argv)
 	const char * src = srcProg.c_str();
 	size_t length = srcProg.length();
 
+	printf("calling get_device_ids\n");
 	deviceIDs = get_device_ids(platformIDs[platform], &numDevices);
 
 	cl_context_properties contextProperties[] = {
