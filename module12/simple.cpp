@@ -57,10 +57,13 @@ void get_platform_ids(cl_platform_id **out)
 	errNum = clGetPlatformIDs(numPlatforms, tmp, NULL);
 	checkErr((errNum != CL_SUCCESS) ? errNum : (numPlatforms <= 0 ? -1 : CL_SUCCESS), "clGetPlatformIDs");
 
-	printf("attempt to display platform id inside of get_platform_ids\n");
-	DisplayPlatformInfo( tmp[DEFAULT_PLATFORM], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
-	printf("returning to main\n");
+
 	*out = tmp;
+
+	printf("attempt to display platform id inside of get_platform_ids\n");
+	DisplayPlatformInfo( *out[DEFAULT_PLATFORM], CL_PLATFORM_VENDOR, "CL_PLATFORM_VENDOR");
+	printf("returning to main\n");
+	return;
 }
 
 cl_device_id *get_device_ids(cl_platform_id platform_id, cl_uint *numDevices_out)
