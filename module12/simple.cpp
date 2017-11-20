@@ -205,14 +205,27 @@ int main(int argc, char** argv)
 			globalWorkSize, localWorkSize, 0, NULL, events[i]);
 		checkErr(errNum, "clEnqueueNDRangeKernel");
 	}
-	printf("done enqueuing, waiting for results\n");
 	clWaitForEvents(NUM_SUB_BUF, events[0]);
-	printf("enqueuing reading back\n");
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
 		sizeof(int) * NUM_SUB_BUF, (void*)h_output,
 		0, NULL, NULL);
+
+	cl_ulong start, end;
+	double duration, duration_in_ms;
+
+	for(int i = 0; i < NUM_SUB_BUF; i++) {
+		errNum = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
+		checkErr(errNum, "clGetEventProfilingInfo: start");
+
+		errNum = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_END, sizeof(end), &end, NULL);
+		checkErr(errNum, "clGetEventProfilingInfo: end");
+
+		duration = end - start;  // duration is in nanoseconds
+		duration_in_ms = duration / 1000000;
+		printf("sub buffer %d took %0.3fms\n", i, duration_in_ms);
+	}
 
 	printf("Original Buffer:\n");
 	display_array(h_input, NUM_BUFFER_ELEMENTS);
