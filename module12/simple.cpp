@@ -44,15 +44,6 @@ checkErr(cl_int err, const char * name)
 }
 
 // Display ouyput in rows
-void display_array(int *array, int num_ele)
-{
-	for (unsigned elems = 0; elems < num_ele; elems++) {
-		std::cout << " " << array[elems];
-	}
-	std::cout << std::endl;
-}
-
-// Display ouyput in rows
 void display_arrayf(float *array, int num_ele)
 {
 	for (unsigned elems = 0; elems < num_ele; elems++) {
