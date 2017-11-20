@@ -159,11 +159,11 @@ int main(int argc, char** argv)
 	display_array(h_input, NUM_BUFFER_ELEMENTS);
 
 	// create a single device buffer to cover all the input data
-	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
+	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
 		sizeof(int) * NUM_BUFFER_ELEMENTS, h_input, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
-	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
 		sizeof(int) * NUM_SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 			i * SUB_BUF * sizeof(int),
 			SUB_BUF * sizeof(int) };
 		printf("Created sub input region with origin = %zu and size = %zu\n", region.origin, region.size);
-		input_bufs[i] = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
+		input_bufs[i] = clCreateSubBuffer(buffer, CL_MEM_READ_WRITE,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
 
@@ -190,7 +190,7 @@ int main(int argc, char** argv)
 
 		printf("Created sub output region with origin = %zu and size = %zu\n", output_region.origin, output_region.size);
 
-		output_bufs[i] = clCreateSubBuffer(output_buffer, CL_MEM_WRITE_ONLY,
+		output_bufs[i] = clCreateSubBuffer(output_buffer, CL_MEM_READ_WRITE,
 			CL_BUFFER_CREATE_TYPE_REGION, &output_region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
 
