@@ -55,7 +55,7 @@ void display_arrayf(float *array, int num_ele)
 //
 //	main_sub() for simple buffer and sub-buffer example
 //
-int main_sub(int argc, char** argv)
+int main_sub(int argc, char** argv, int seed)
 {
 	cl_int errNum;
 	cl_uint numDevices;
@@ -150,7 +150,7 @@ int main_sub(int argc, char** argv)
 	// create host buffer
 	h_input = new float[NUM_BUFFER_ELEMENTS];
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
-		h_input[i] = (float)i;
+		h_input[i] = (float)i + (float)seed;
 	}
 	float *h_output = new float[NUM_SUB_BUF];
 
@@ -246,10 +246,10 @@ int main_sub(int argc, char** argv)
 int main(int argc, char** argv)
 {
 	printf("First run\n");
-	main_sub(argc, argv);
+	main_sub(argc, argv, 0);
 
 	printf("\nSecond run\n");
-	main_sub(argc, argv);
+	main_sub(argc, argv, 1);
 
 	return 0;
 }
