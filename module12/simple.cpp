@@ -163,7 +163,7 @@ int main(int argc, char** argv)
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
 		h_input[i] = i;
 	}
-	int *h_output = new float[NUM_SUB_BUF];
+	float *h_output = new float[NUM_SUB_BUF];
 
 	// create a single device buffer to cover all the input data
 	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
