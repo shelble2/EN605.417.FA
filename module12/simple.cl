@@ -15,7 +15,7 @@
 //    This demonstrates taking an average of a subset of a buffer
 
 __kernel void sub_average(__global int* const input,
-						  __global float *const output,
+						  __global int *const output,
 						  const int sub_buf)
 {
 	printf("in kernel\n");
@@ -24,5 +24,6 @@ __kernel void sub_average(__global int* const input,
 		printf("\tinput[%d] is %d\n", i, input[i]);
 		sum = sum + input[i];
 	}
-	output[0] = sum / sub_buf;
+	output[0] = (int) (sum / sub_buf);
+	printf("set output to %d", output[0]);
 }

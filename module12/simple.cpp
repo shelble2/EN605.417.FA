@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-		sizeof(float) * NUM_SUB_BUF, NULL, &errNum);
+		sizeof(int) * NUM_SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_int sub_buf_sz = SUB_BUF;
@@ -178,15 +178,17 @@ int main(int argc, char** argv)
 		cl_buffer_region region = {
 			i * SUB_BUF * sizeof(int),
 			SUB_BUF * sizeof(int) };
-		printf("Created region with origin = %zu and size = %zu\n", i*SUB_BUF*sizeof(int), SUB_BUF*sizeof(int));
+		printf("Created sub input region with origin = %zu and size = %zu\n", region.origin, region.size);
 		cl_mem sub_buffer = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
 
 		cl_buffer_region output_region = {
-			i * sizeof(float),
-			sizeof(float),
+			i * sizeof(int),
+			sizeof(int),
 		};
+
+		printf("Created sub output region with origin = %zu and size = %zu\n", output_region.origin, output_region.size);
 
 		cl_mem output_sub_buffer = clCreateSubBuffer(output_buffer, CL_MEM_WRITE_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &output_region, &errNum);
@@ -213,7 +215,7 @@ int main(int argc, char** argv)
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
-		sizeof(float) * NUM_SUB_BUF, (void*)h_output,
+		sizeof(int) * NUM_SUB_BUF, (void*)h_output,
 		0, NULL, NULL);
 	printf("calling display_output\n");
 	display_array(h_output, NUM_SUB_BUF);
