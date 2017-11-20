@@ -62,8 +62,6 @@ int main(int argc, char** argv)
 	cl_device_id * deviceIDs;
 	cl_context context;
 	cl_program program;
-	std::vector<cl_mem> buffers;
-	std::vector<cl_mem> output_buffers;
 	int * inputOutput;
 
 	int platform = DEFAULT_PLATFORM;
@@ -168,6 +166,9 @@ int main(int argc, char** argv)
 		sizeof(float) * SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
+	cl_int sub_buf_sz = SUB_BUF;
+	cl_event *events[SUB_BUF];
+
 	// create a sub buffer and output sub buffer for each region of data
 	for (unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		cl_buffer_region region = {
@@ -177,7 +178,6 @@ int main(int argc, char** argv)
 		cl_mem sub_buffer = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
-		buffers.push_back(sub_buffer);
 
 		cl_buffer_region output_region = {
 			i * sizeof(float),
@@ -187,18 +187,11 @@ int main(int argc, char** argv)
 		cl_mem output_sub_buffer = clCreateSubBuffer(output_buffer, CL_MEM_WRITE_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &output_region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
-		output_buffers.push_back(output_sub_buffer);
-	}
 
-	cl_int sub_buf_sz = SUB_BUF;
-	cl_event *events[SUB_BUF];
-
-	//Now enqueue all the kernels
-	for(unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		printf("making round %d\n", i);
-		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
+		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&sub_buffer);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
-		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_buffers[i]);
+		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_sub_buffer);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
 		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
