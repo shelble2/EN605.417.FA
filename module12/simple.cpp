@@ -191,6 +191,8 @@ int main(int argc, char** argv)
 	}
 
 	cl_int sub_buf_sz = SUB_BUF;
+	cl_event *events[SUB_BUF];
+
 	//Now enqueue all the kernels
 	for(unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
@@ -201,15 +203,12 @@ int main(int argc, char** argv)
 
 		const size_t globalWorkSize[1] = { NUM_BUFFER_ELEMENTS };
 	    const size_t localWorkSize[1]  = { SUB_BUF };
-		cl_event event;
 
 		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, &event);
+			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, &events[i]);
 		checkErr(errNum, "clEnqueueNDRangeKernel");
 	}
 
-	// Technically don't need this as we are doing a blocking read
-	// with in-order queue.
 	clWaitForEvents(events.size(), &events[0]);
 
 	// Read back computed data
