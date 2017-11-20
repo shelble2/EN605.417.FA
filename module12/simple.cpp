@@ -209,7 +209,7 @@ int main(int argc, char** argv)
 		checkErr(errNum, "clEnqueueNDRangeKernel");
 	}
 
-	clWaitForEvents(events.size(), events[0]);
+	clWaitForEvents(SUB_BUF, events[0]);
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
