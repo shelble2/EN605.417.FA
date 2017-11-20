@@ -42,9 +42,9 @@ checkErr(cl_int err, const char * name)
 }
 
 // Display ouyput in rows
-void display_output(int *output)
+void display_output(int *inputOutput)
 {
-	for (unsigned elems = i * NUM_BUFFER_ELEMENTS; elems < ((i+1) * NUM_BUFFER_ELEMENTS); elems++) {
+	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
 	}
 	std::cout << std::endl;
@@ -62,8 +62,6 @@ int main(int argc, char** argv)
 	cl_device_id * deviceIDs;
 	cl_context context;
 	cl_program program;
-	cl_kernel kernel;
-	cl_command_queue queue;
 	std::vector<cl_mem> buffers;
 	std::vector<cl_mem> output_buffers;
 	int * inputOutput;
@@ -166,7 +164,7 @@ int main(int argc, char** argv)
 		static_cast<void *>(inputOutput), &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
-	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY.
+	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
 		sizeof(float) * SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
@@ -192,14 +190,14 @@ int main(int argc, char** argv)
 		output_buffers.push_back(output_sub_buffer);
 	}
 
+	cl_int sub_buf_sz = SUB_BUF;
 	//Now enqueue all the kernels
 	for(unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
 		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_buffers[i]);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
-		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &SUB_BUF);
-
+		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
 		const size_t globalWorkSize[1] = { NUM_BUFFER_ELEMENTS };
 	    const size_t localWorkSize[1]  = { SUB_BUF };
