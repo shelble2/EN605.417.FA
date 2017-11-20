@@ -3,6 +3,7 @@
 //
 //TODO: should be 2x2, not 4x1
 
+// Original work, but heavily Modified:
 //
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
@@ -12,11 +13,6 @@
 // URLs:      http://safari.informit.com/9780132488006/
 //            http://www.openclprogrammingguide.com
 //
-
-// raytracer.cpp
-//
-//    This is a (very) simple raytracer that is intended to demonstrate
-//    using OpenCL buffers.
 
 #include <iostream>
 #include <fstream>
@@ -174,7 +170,7 @@ int main_sub(int argc, char** argv, int seed)
 		cl_buffer_region region = {
 			i * SUB_BUF * sizeof(float),
 			SUB_BUF * sizeof(float) };
-//		printf("Created sub input region with origin = %zu and size = %zu\n", region.origin, region.size);
+
 		input_bufs[i] = clCreateSubBuffer(buffer, CL_MEM_READ_WRITE,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
@@ -183,8 +179,6 @@ int main_sub(int argc, char** argv, int seed)
 			i * sizeof(float),
 			sizeof(float),
 		};
-
-//		printf("Created sub output region with origin = %zu and size = %zu\n", output_region.origin, output_region.size);
 
 		output_bufs[i] = clCreateSubBuffer(output_buffer, CL_MEM_READ_WRITE,
 			CL_BUFFER_CREATE_TYPE_REGION, &output_region, &errNum);
