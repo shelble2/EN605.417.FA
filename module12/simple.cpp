@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_int sub_buf_sz = SUB_BUF;
-	cl_event *events[NUM_SUB_BUF];
+	cl_event events[NUM_SUB_BUF];
 
 	cl_mem input_bufs[NUM_SUB_BUF];
 	cl_mem output_bufs[NUM_SUB_BUF];
@@ -202,10 +202,10 @@ int main(int argc, char** argv)
 		const size_t localWorkSize[1]  = { 1 };
 
 		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-			globalWorkSize, localWorkSize, 0, NULL, events[i]);
+			globalWorkSize, localWorkSize, 0, NULL, &events[i]);
 		checkErr(errNum, "clEnqueueNDRangeKernel");
 	}
-	clWaitForEvents(NUM_SUB_BUF, events[0]);
+	clWaitForEvents(NUM_SUB_BUF, &events[0]);
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
