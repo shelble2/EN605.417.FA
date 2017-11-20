@@ -1,7 +1,6 @@
 //
 // Modified by Sarah Helble for Module 12 Assignment 11.19.2017
 //
-//TODO: should be 2x2, not 4x1
 
 // Original work, but heavily Modified:
 //
@@ -26,7 +25,9 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
-#define SUB_BUF 4
+#define SUB_BUF_X 2
+#define SUB_BUF_Y 2
+#define SUB_BUF SUB_BUF_X * SUB_BUF_Y
 #define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
