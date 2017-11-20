@@ -20,9 +20,7 @@ __kernel void sub_average(__global int* const input,
 {
 	int sum = 0;
 	for(int i = 0; i < sub_buf; i++) {
-		printf("\tinput[%d] is %d\n", i, input[i]);
 		sum = sum + input[i];
 	}
 	output[0] = (int) (sum / sub_buf);
-	printf("set output to %d\n", output[0]);
 }
