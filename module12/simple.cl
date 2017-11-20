@@ -12,12 +12,15 @@
 
 // simple.cl
 //
-//    This is a simple example demonstrating buffers and sub-buffer usage
+//    This demonstrates taking an average of a subset of a buffer
 
-__kernel void sub_average(__global * buffer)
+__kernel void sub_average(__global int* const input,
+						  __global float *const output
+						  const int sub_buf)
 {
-	size_t id = get_global_id(0);
-	//TODO: this is doing the average, but bad on the last and I don't think this
-	// is how he wants it
-	buffer[id] = (buffer[id] * buffer[id+1]) / 2;
+	cl_int sum = 0;
+	for(int i = 0; i < sub_buf; i++) {
+		sum = sum + input[i];
+	}
+	output[0] = sum / sub_buf;
 }

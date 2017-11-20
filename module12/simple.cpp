@@ -29,6 +29,7 @@
 
 #define NUM_BUFFER_ELEMENTS 16
 #define SUB_BUF 4
+#define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
 inline void
@@ -41,14 +42,12 @@ checkErr(cl_int err, const char * name)
 }
 
 // Display ouyput in rows
-void display_output(int *inputOutput, cl_uint numDevices)
+void display_output(int *output)
 {
-	for (unsigned i = 0; i < numDevices; i++) {
-		for (unsigned elems = i * NUM_BUFFER_ELEMENTS; elems < ((i+1) * NUM_BUFFER_ELEMENTS); elems++) {
-			std::cout << " " << inputOutput[elems];
-		}
-		std::cout << std::endl;
+	for (unsigned elems = i * NUM_BUFFER_ELEMENTS; elems < ((i+1) * NUM_BUFFER_ELEMENTS); elems++) {
+		std::cout << " " << inputOutput[elems];
 	}
+	std::cout << std::endl;
 }
 
 //
@@ -63,9 +62,10 @@ int main(int argc, char** argv)
 	cl_device_id * deviceIDs;
 	cl_context context;
 	cl_program program;
-	std::vector<cl_kernel> kernels;
-	std::vector<cl_command_queue> queues;
+	cl_kernel kernel;
+	cl_command_queue queue;
 	std::vector<cl_mem> buffers;
+	std::vector<cl_mem> output_buffers;
 	int * inputOutput;
 
 	int platform = DEFAULT_PLATFORM;
@@ -144,68 +144,70 @@ int main(int argc, char** argv)
 		checkErr(errNum, "clBuildProgram");
 	}
 
+	cl_kernel kernel = clCreateKernel( program, "sub_average", &errNum);
+	checkErr(errNum, "clCreateKernel(sub_average)");
+
+	// Use the first device
+	cl_command_queue queue = clCreateCommandQueue(context, deviceIDs[0], CL_QUEUE_PROFILING_ENABLE, &errNum);
+	checkErr(errNum, "clCreateCommandQueue");
+
 	// create host buffer
 	inputOutput = new int[NUM_BUFFER_ELEMENTS * numDevices];
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS * numDevices; i++) {
 		inputOutput[i] = i;
 	}
 
-	// create a single device buffer to cover all the input data
-	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
-		sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices,
-		NULL, &errNum);
-	checkErr(errNum, "clCreateBuffer");
-	buffers.push_back(buffer);
+	//TODO: timing, and should really be 2x2, not 4x1
 
-	printf("Num devices : %d\n", numDevices);
-	// now for all devices other than the first create a sub-buffer
-	//TODO: why not the first?
-	for (unsigned int i = 1; i < numDevices; i++) {
+
+	// create a single device buffer to cover all the input data
+	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
+		sizeof(int) * NUM_BUFFER_ELEMENTS,
+		static_cast<void *>(inputOutput), &errNum);
+	checkErr(errNum, "clCreateBuffer");
+
+	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY.
+		sizeof(float) * SUB_BUF, NULL, &errNum);
+	checkErr(errNum, "clCreateBuffer");
+
+	// create a sub buffer and output sub buffer for each region of data
+	for (unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		cl_buffer_region region = {
 			i * SUB_BUF * sizeof(int),
 			SUB_BUF * sizeof(int) };
 
-		buffer = clCreateSubBuffer(buffers[0], CL_MEM_READ_WRITE,
+		cl_mem sub_buffer = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
+		buffers.push_back(sub_buffer);
 
-		buffers.push_back(buffer);
+		cl_buffer_region output_region = {
+			i * sizeof(float),
+			sizeof(float),
+		};
+
+		cl_mem output_sub_buffer = clCreateSubBuffer(output_buffer, CL_MEM_WRITE_ONLY,
+			CL_BUFFER_CREATE_TYPE_REGION, &output_region, &errNum);
+		checkErr(errNum, "clCreateSubBuffer");
+		output_buffers.push_back(output_sub_buffer);
 	}
 
-	// Create command queues
-	for (unsigned int i = 0; i < numDevices; i++) {
-		InfoDevice<cl_device_type>::display(deviceIDs[i], CL_DEVICE_TYPE, "CL_DEVICE_TYPE");
-
-		cl_command_queue queue = clCreateCommandQueue(context, deviceIDs[i], 0, &errNum);
-		checkErr(errNum, "clCreateCommandQueue");
-
-		queues.push_back(queue);
-
-		cl_kernel kernel = clCreateKernel( program, "sub_average", &errNum);
-		checkErr(errNum, "clCreateKernel(sub_average)");
-
+	//Now enqueue all the kernels
+	for(unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
+		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_buffers[i]);
+		checkErr(errNum, "clSetKernelArg(sub_average)");
+		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &SUB_BUF);
 
-		kernels.push_back(kernel);
-	}
 
-	// Write input data
-	errNum = clEnqueueWriteBuffer(queues[0], buffers[0], CL_TRUE, 0,
-		sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices, (void*)inputOutput,
-		0, NULL, NULL);
-
-	std::vector<cl_event> events;
-	// call kernel for each device
-	for (unsigned int i = 0; i < queues.size(); i++) {
+		const size_t globalWorkSize[1] = { NUM_BUFFER_ELEMENTS };
+	    const size_t localWorkSize[1]  = { SUB_BUF };
 		cl_event event;
 
-		size_t gWI = NUM_BUFFER_ELEMENTS;
-
-		errNum = clEnqueueNDRangeKernel(queues[i], kernels[i], 1, NULL,
-			(const size_t*)&gWI, (const size_t*)NULL, 0, 0, &event);
-
-		events.push_back(event);
+		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
+			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, &event);
+		checkErr(errNum, "clEnqueueNDRangeKernel");
 	}
 
 	// Technically don't need this as we are doing a blocking read
@@ -213,11 +215,11 @@ int main(int argc, char** argv)
 	clWaitForEvents(events.size(), &events[0]);
 
 	// Read back computed data
-	clEnqueueReadBuffer(queues[0], buffers[0], CL_TRUE, 0,
-		sizeof(int) * NUM_BUFFER_ELEMENTS * numDevices, (void*)inputOutput,
+	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
+		sizeof(float) * SUB_BUF, (void*)inputOutput,
 		0, NULL, NULL);
 
-	display_output(inputOutput, numDevices);
+	display_output(inputOutput);
 
 	std::cout << "Program completed successfully" << std::endl;
 
