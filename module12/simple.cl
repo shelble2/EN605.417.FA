@@ -22,5 +22,5 @@ __kernel void sub_average(__global int* const input,
 	for(int i = 0; i < sub_buf; i++) {
 		sum = sum + input[i];
 	}
-	output[0] = (int) (sum / sub_buf);
+	output[0] = (float) ((float)sum / (float)sub_buf);
 }

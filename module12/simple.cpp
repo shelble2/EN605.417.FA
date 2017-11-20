@@ -52,6 +52,15 @@ void display_array(int *array, int num_ele)
 	std::cout << std::endl;
 }
 
+// Display ouyput in rows
+void display_arrayf(float *array, int num_ele)
+{
+	for (unsigned elems = 0; elems < num_ele; elems++) {
+		std::cout << " " << array[elems];
+	}
+	std::cout << std::endl;
+}
+
 //
 //	main() for simple buffer and sub-buffer example
 //
@@ -154,7 +163,7 @@ int main(int argc, char** argv)
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
 		h_input[i] = i;
 	}
-	int *h_output = new int[NUM_SUB_BUF];
+	int *h_output = new float[NUM_SUB_BUF];
 
 	// create a single device buffer to cover all the input data
 	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
@@ -162,7 +171,7 @@ int main(int argc, char** argv)
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
-		sizeof(int) * NUM_SUB_BUF, NULL, &errNum);
+		sizeof(float) * NUM_SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_int sub_buf_sz = SUB_BUF;
@@ -182,8 +191,8 @@ int main(int argc, char** argv)
 		checkErr(errNum, "clCreateSubBuffer");
 
 		cl_buffer_region output_region = {
-			i * sizeof(int),
-			sizeof(int),
+			i * sizeof(float),
+			sizeof(float),
 		};
 
 //		printf("Created sub output region with origin = %zu and size = %zu\n", output_region.origin, output_region.size);
@@ -209,7 +218,7 @@ int main(int argc, char** argv)
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
-		sizeof(int) * NUM_SUB_BUF, (void*)h_output,
+		sizeof(float) * NUM_SUB_BUF, (void*)h_output,
 		0, NULL, NULL);
 
 	cl_ulong start, end;
@@ -230,7 +239,7 @@ int main(int argc, char** argv)
 	printf("Original Buffer:\n");
 	display_array(h_input, NUM_BUFFER_ELEMENTS);
 	printf("Output:\n");
-	display_array(h_output, NUM_SUB_BUF);
+	display_arrayf(h_output, NUM_SUB_BUF);
 
 	std::cout << "Program completed successfully" << std::endl;
 
