@@ -173,13 +173,16 @@ int main(int argc, char** argv)
 	cl_int sub_buf_sz = SUB_BUF;
 	cl_event *events[NUM_SUB_BUF];
 
+	cl_mem *input_bufs[NUM_SUB_BUF];
+	cl_mem *output_bufs[NUM_SUB_BUF];
+
 	// create a sub buffer and output sub buffer for each region of data
 	for (unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		cl_buffer_region region = {
 			i * SUB_BUF * sizeof(int),
 			SUB_BUF * sizeof(int) };
 		printf("Created sub input region with origin = %zu and size = %zu\n", region.origin, region.size);
-		cl_mem sub_buffer = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
+		input_bufs[i] = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
 
@@ -190,14 +193,14 @@ int main(int argc, char** argv)
 
 		printf("Created sub output region with origin = %zu and size = %zu\n", output_region.origin, output_region.size);
 
-		cl_mem output_sub_buffer = clCreateSubBuffer(output_buffer, CL_MEM_WRITE_ONLY,
+		output_bufs[i] = clCreateSubBuffer(output_buffer, CL_MEM_WRITE_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &output_region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
 
 		printf("making round %d\n", i);
-		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&sub_buffer);
+		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&input_bufs[i]);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
-		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_sub_buffer);
+		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_bufs[i]);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
 		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
