@@ -208,14 +208,15 @@ int main(int argc, char** argv)
 			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, events[i]);
 		checkErr(errNum, "clEnqueueNDRangeKernel");
 	}
-
+	printf("done enqueuing, waiting for results\n");
 	clWaitForEvents(SUB_BUF, events[0]);
+	printf("enqueuing reading back\n");
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
 		sizeof(float) * SUB_BUF, (void*)inputOutput,
 		0, NULL, NULL);
-
+	printf("calling display_output\n");
 	display_output(inputOutput);
 
 	std::cout << "Program completed successfully" << std::endl;
