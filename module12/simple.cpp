@@ -30,7 +30,7 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
-#define SUB_BUF 8
+#define SUB_BUF 4
 #define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
@@ -152,7 +152,6 @@ int main(int argc, char** argv)
 	// create host buffer
 	h_input = new int[NUM_BUFFER_ELEMENTS];
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
-		h_input[i] = i;
 	}
 	int *h_output = new int[NUM_SUB_BUF];
 
@@ -195,7 +194,6 @@ int main(int argc, char** argv)
 			CL_BUFFER_CREATE_TYPE_REGION, &output_region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
 
-		printf("making round %d\n", i);
 		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&input_bufs[i]);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
 		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_bufs[i]);
