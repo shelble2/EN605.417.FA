@@ -1,7 +1,7 @@
 //
 // Modified by Sarah Helble for Module 12 Assignment 11.19.2017
 //
-//TODO: timing, and should really be 2x2, not 4x1, multiple runs
+//TODO: should be 2x2, not 4x1
 
 //
 // Book:      OpenCL(R) Programming Guide
@@ -53,9 +53,9 @@ void display_arrayf(float *array, int num_ele)
 }
 
 //
-//	main() for simple buffer and sub-buffer example
+//	main_sub() for simple buffer and sub-buffer example
 //
-int main(int argc, char** argv)
+int main_sub(int argc, char** argv)
 {
 	cl_int errNum;
 	cl_uint numDevices;
@@ -240,6 +240,18 @@ int main(int argc, char** argv)
 	clReleaseCommandQueue(queue);
 	clReleaseMemObject(buffer);
 	clReleaseMemObject(output_buffer);
+
+	return 0;
+}
+
+// wrapper Main function to test multiple runs of main_sub()
+int main(int argc, char** argv)
+{
+	printf("First run\n");
+	main_sub(argc, argv);
+
+	printf("Second run\n");
+	main_sub(argc, argv);
 
 	return 0;
 }
