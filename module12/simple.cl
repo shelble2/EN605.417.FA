@@ -25,5 +25,5 @@ __kernel void sub_average(__global int* const input,
 		sum = sum + input[i];
 	}
 	output[0] = (int) (sum / sub_buf);
-	printf("set output to %d", output[0]);
+	printf("set output to %d\n", output[0]);
 }

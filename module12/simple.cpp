@@ -28,7 +28,7 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
-#define SUB_BUF 16
+#define SUB_BUF 8
 #define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
