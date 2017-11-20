@@ -178,9 +178,9 @@ errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
 const size_t globalWorkSize[1] = { 1 };
 const size_t localWorkSize[1]  = { 1 };
-
+cl_event event;
 errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-	globalWorkSize, localWorkSize, 0, NULL, events[i]);
+	globalWorkSize, localWorkSize, 0, NULL, event);
 	////////////////////////
 /*
 
