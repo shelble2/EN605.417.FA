@@ -18,8 +18,10 @@ __kernel void sub_average(__global int* const input,
 						  __global float *const output,
 						  const int sub_buf)
 {
+	printf("in kernel\n");
 	int sum = 0;
 	for(int i = 0; i < sub_buf; i++) {
+		printf("\tinput[%d] is %d\n", i, input[i]);
 		sum = sum + input[i];
 	}
 	output[0] = sum / sub_buf;

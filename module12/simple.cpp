@@ -195,8 +195,8 @@ int main(int argc, char** argv)
 		checkErr(errNum, "clSetKernelArg(sub_average)");
 		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
-		const size_t globalWorkSize[1] = { NUM_BUFFER_ELEMENTS };
-		const size_t localWorkSize[1]  = { SUB_BUF };
+		const size_t globalWorkSize[1] = { SUB_BUF };
+		const size_t localWorkSize[1]  = { 1 };
 
 		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 			globalWorkSize, localWorkSize, 0, NULL, events[i]);
