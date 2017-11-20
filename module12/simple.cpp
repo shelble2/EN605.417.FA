@@ -162,8 +162,7 @@ int main(int argc, char** argv)
 
 	// create a single device buffer to cover all the input data
 	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
-		sizeof(int) * NUM_BUFFER_ELEMENTS,
-		static_cast<void *>(h_input), &errNum);
+		sizeof(int) * NUM_BUFFER_ELEMENTS, h_input, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
@@ -173,8 +172,8 @@ int main(int argc, char** argv)
 	cl_int sub_buf_sz = SUB_BUF;
 	cl_event *events[NUM_SUB_BUF];
 
-	cl_mem *input_bufs[NUM_SUB_BUF];
-	cl_mem *output_bufs[NUM_SUB_BUF];
+	cl_mem input_bufs[NUM_SUB_BUF];
+	cl_mem output_bufs[NUM_SUB_BUF];
 
 	// create a sub buffer and output sub buffer for each region of data
 	for (unsigned int i = 0; i < NUM_SUB_BUF; i++) {
