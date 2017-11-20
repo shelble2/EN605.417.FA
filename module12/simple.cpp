@@ -153,6 +153,9 @@ int main(int argc, char** argv)
 		inputOutput[i] = i;
 	}
 
+	printf("Original buffer:\n");
+	display_output(inputOutput);
+
 	//TODO: timing, and should really be 2x2, not 4x1
 
 
@@ -195,7 +198,7 @@ int main(int argc, char** argv)
 		checkErr(errNum, "clSetKernelArg(sub_average)");
 		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
-		const size_t globalWorkSize[1] = { SUB_BUF };
+		const size_t globalWorkSize[1] = { 1 };
 		const size_t localWorkSize[1]  = { 1 };
 
 		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
