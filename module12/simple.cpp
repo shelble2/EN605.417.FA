@@ -1,6 +1,8 @@
 //
 // Modified by Sarah Helble for Module 12 Assignment 11.19.2017
 //
+//TODO: timing, and should really be 2x2, not 4x1
+
 //
 // Book:      OpenCL(R) Programming Guide
 // Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
@@ -28,7 +30,7 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
-#define SUB_BUF 8
+#define SUB_BUF 16
 #define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
@@ -156,9 +158,6 @@ int main(int argc, char** argv)
 
 	printf("Original buffer:\n");
 	display_array(h_input, NUM_BUFFER_ELEMENTS);
-
-	//TODO: timing, and should really be 2x2, not 4x1
-
 
 	// create a single device buffer to cover all the input data
 	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
