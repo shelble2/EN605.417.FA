@@ -15,7 +15,7 @@
 //    This demonstrates taking an average of a subset of a buffer
 
 __kernel void sub_average(__global int* const input,
-						  __global float *const output
+						  __global float *const output,
 						  const int sub_buf)
 {
 	int sum = 0;
