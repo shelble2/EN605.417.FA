@@ -174,13 +174,15 @@ errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
 checkErr(errNum, "clSetKernelArg(sub_average)");
 errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_buffer);
 checkErr(errNum, "clSetKernelArg(sub_average)");
+cl_int sub_buf_sz = SUB_BUF;
+
 errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
 const size_t globalWorkSize[1] = { 1 };
 const size_t localWorkSize[1]  = { 1 };
 cl_event event;
 errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-	globalWorkSize, localWorkSize, 0, NULL, event);
+	globalWorkSize, localWorkSize, 0, NULL, &event);
 	////////////////////////
 /*
 
