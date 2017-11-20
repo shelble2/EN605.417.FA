@@ -28,7 +28,7 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
-#define SUB_BUF 4
+#define SUB_BUF 16
 #define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
 		h_input[i] = i;
 	}
-	int *h_output = new int[SUB_BUF];
+	int *h_output = new int[NUM_SUB_BUF];
 
 	printf("Original buffer:\n");
 	display_array(h_input, NUM_BUFFER_ELEMENTS);
@@ -167,18 +167,18 @@ int main(int argc, char** argv)
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-		sizeof(float) * SUB_BUF, NULL, &errNum);
+		sizeof(float) * NUM_SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_int sub_buf_sz = SUB_BUF;
-	cl_event *events[SUB_BUF];
+	cl_event *events[NUM_SUB_BUF];
 
 	// create a sub buffer and output sub buffer for each region of data
 	for (unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		cl_buffer_region region = {
 			i * SUB_BUF * sizeof(int),
 			SUB_BUF * sizeof(int) };
-
+		printf("Created region with %d")
 		cl_mem sub_buffer = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
@@ -208,15 +208,15 @@ int main(int argc, char** argv)
 		printf("done making round %d\n", i);
 	}
 	printf("done enqueuing, waiting for results\n");
-	clWaitForEvents(SUB_BUF, events[0]);
+	clWaitForEvents(NUM_SUB_BUF, events[0]);
 	printf("enqueuing reading back\n");
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
-		sizeof(float) * SUB_BUF, (void*)h_output,
+		sizeof(float) * NUM_SUB_BUF, (void*)h_output,
 		0, NULL, NULL);
 	printf("calling display_output\n");
-	display_array(h_output, SUB_BUF);
+	display_array(h_output, NUM_SUB_BUF);
 
 	std::cout << "Program completed successfully" << std::endl;
 
