@@ -195,6 +195,7 @@ int main(int argc, char** argv)
 
 	//Now enqueue all the kernels
 	for(unsigned int i = 0; i < NUM_SUB_BUF; i++) {
+		printf("making round %d\n", i);
 		errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
 		checkErr(errNum, "clSetKernelArg(sub_average)");
 		errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_buffers[i]);
@@ -207,6 +208,7 @@ int main(int argc, char** argv)
 		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, events[i]);
 		checkErr(errNum, "clEnqueueNDRangeKernel");
+		printf("done making round %d\n", i);
 	}
 	printf("done enqueuing, waiting for results\n");
 	clWaitForEvents(SUB_BUF, events[0]);
