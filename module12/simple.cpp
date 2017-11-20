@@ -196,10 +196,10 @@ int main(int argc, char** argv)
 		errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
 
 		const size_t globalWorkSize[1] = { NUM_BUFFER_ELEMENTS };
-	    const size_t localWorkSize[1]  = { SUB_BUF };
+		const size_t localWorkSize[1]  = { SUB_BUF };
 
 		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, events[i]);
+			globalWorkSize, localWorkSize, 0, NULL, events[i]);
 		checkErr(errNum, "clEnqueueNDRangeKernel");
 		printf("done making round %d\n", i);
 	}
