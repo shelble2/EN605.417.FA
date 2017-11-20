@@ -205,11 +205,11 @@ int main(int argc, char** argv)
 	    const size_t localWorkSize[1]  = { SUB_BUF };
 
 		errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, &events[i]);
+			(const size_t*)NUM_BUFFER_ELEMENTS, (const size_t*)NULL, 0, 0, events[i]);
 		checkErr(errNum, "clEnqueueNDRangeKernel");
 	}
 
-	clWaitForEvents(events.size(), &events[0]);
+	clWaitForEvents(events.size(), events[0]);
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
