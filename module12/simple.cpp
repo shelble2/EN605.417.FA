@@ -1,7 +1,7 @@
 //
 // Modified by Sarah Helble for Module 12 Assignment 11.19.2017
 //
-//TODO: timing, and should really be 2x2, not 4x1, needs to clean up
+//TODO: timing, and should really be 2x2, not 4x1, multiple runs
 
 //
 // Book:      OpenCL(R) Programming Guide
@@ -30,7 +30,7 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
-#define SUB_BUF 16
+#define SUB_BUF 8
 #define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
@@ -218,7 +218,10 @@ int main(int argc, char** argv)
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
 		sizeof(int) * NUM_SUB_BUF, (void*)h_output,
 		0, NULL, NULL);
-	printf("calling display_output\n");
+
+	printf("Original Buffer:\n");
+	display_array(h_input, NUM_BUFFER_ELEMENTS);
+	printf("Output:\n");
 	display_array(h_output, NUM_SUB_BUF);
 
 	std::cout << "Program completed successfully" << std::endl;
