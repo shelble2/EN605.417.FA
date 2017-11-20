@@ -169,6 +169,21 @@ int main(int argc, char** argv)
 		sizeof(int) * NUM_SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
+///////////
+errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
+checkErr(errNum, "clSetKernelArg(sub_average)");
+errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_buffer);
+checkErr(errNum, "clSetKernelArg(sub_average)");
+errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
+
+const size_t globalWorkSize[1] = { 1 };
+const size_t localWorkSize[1]  = { 1 };
+
+errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
+	globalWorkSize, localWorkSize, 0, NULL, events[i]);
+	////////////////////////
+/*
+
 	cl_int sub_buf_sz = SUB_BUF;
 	cl_event *events[NUM_SUB_BUF];
 
@@ -214,7 +229,7 @@ int main(int argc, char** argv)
 	printf("done enqueuing, waiting for results\n");
 	clWaitForEvents(NUM_SUB_BUF, events[0]);
 	printf("enqueuing reading back\n");
-
+*/
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
 		sizeof(int) * NUM_SUB_BUF, (void*)h_output,
