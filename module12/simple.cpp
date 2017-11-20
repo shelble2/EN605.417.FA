@@ -42,10 +42,10 @@ checkErr(cl_int err, const char * name)
 }
 
 // Display ouyput in rows
-void display_output(int *inputOutput)
+void display_array(int *array, int num_ele)
 {
-	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
-		std::cout << " " << inputOutput[elems];
+	for (unsigned elems = 0; elems < num_ele; elems++) {
+		std::cout << " " << array[elems];
 	}
 	std::cout << std::endl;
 }
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 	cl_device_id * deviceIDs;
 	cl_context context;
 	cl_program program;
-	int * inputOutput;
+	int * h_input;
 
 	int platform = DEFAULT_PLATFORM;
 
@@ -148,13 +148,14 @@ int main(int argc, char** argv)
 	checkErr(errNum, "clCreateCommandQueue");
 
 	// create host buffer
-	inputOutput = new int[NUM_BUFFER_ELEMENTS * numDevices];
-	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS * numDevices; i++) {
-		inputOutput[i] = i;
+	h_input = new int[NUM_BUFFER_ELEMENTS];
+	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
+		h_input[i] = i;
 	}
+	int *h_output = new int[SUB_BUF];
 
 	printf("Original buffer:\n");
-	display_output(inputOutput);
+	display_array(h_input, NUM_BUFFER_ELEMENTS);
 
 	//TODO: timing, and should really be 2x2, not 4x1
 
@@ -162,7 +163,7 @@ int main(int argc, char** argv)
 	// create a single device buffer to cover all the input data
 	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
 		sizeof(int) * NUM_BUFFER_ELEMENTS,
-		static_cast<void *>(inputOutput), &errNum);
+		static_cast<void *>(h_input), &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
@@ -212,10 +213,10 @@ int main(int argc, char** argv)
 
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
-		sizeof(float) * SUB_BUF, (void*)inputOutput,
+		sizeof(float) * SUB_BUF, (void*)h_output,
 		0, NULL, NULL);
 	printf("calling display_output\n");
-	display_output(inputOutput);
+	display_array(h_output, SUB_BUF);
 
 	std::cout << "Program completed successfully" << std::endl;
 
