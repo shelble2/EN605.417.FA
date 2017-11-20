@@ -152,6 +152,7 @@ int main(int argc, char** argv)
 	// create host buffer
 	h_input = new int[NUM_BUFFER_ELEMENTS];
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
+		h_input[i] = 10;
 	}
 	int *h_output = new int[NUM_SUB_BUF];
 
