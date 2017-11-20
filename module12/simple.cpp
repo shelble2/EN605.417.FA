@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 		cl_buffer_region region = {
 			i * SUB_BUF * sizeof(int),
 			SUB_BUF * sizeof(int) };
-		printf("Created region with %d")
+		printf("Created region with origin = %zu and size = %zu\n", i*SUB_BUF*sizeof(int), SUB_BUF*sizeof(int));
 		cl_mem sub_buffer = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
 		checkErr(errNum, "clCreateSubBuffer");
