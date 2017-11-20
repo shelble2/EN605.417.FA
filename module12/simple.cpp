@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 	cl_device_id * deviceIDs;
 	cl_context context;
 	cl_program program;
-	int * h_input;
+	float * h_input;
 
 	int platform = DEFAULT_PLATFORM;
 
@@ -159,15 +159,15 @@ int main(int argc, char** argv)
 	checkErr(errNum, "clCreateCommandQueue");
 
 	// create host buffer
-	h_input = new int[NUM_BUFFER_ELEMENTS];
+	h_input = new float[NUM_BUFFER_ELEMENTS];
 	for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
-		h_input[i] = i;
+		h_input[i] = (float)i;
 	}
 	float *h_output = new float[NUM_SUB_BUF];
 
 	// create a single device buffer to cover all the input data
 	cl_mem buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-		sizeof(int) * NUM_BUFFER_ELEMENTS, h_input, &errNum);
+		sizeof(float) * NUM_BUFFER_ELEMENTS, h_input, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
 	cl_mem output_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
@@ -183,8 +183,8 @@ int main(int argc, char** argv)
 	// create a sub buffer and output sub buffer for each region of data
 	for (unsigned int i = 0; i < NUM_SUB_BUF; i++) {
 		cl_buffer_region region = {
-			i * SUB_BUF * sizeof(int),
-			SUB_BUF * sizeof(int) };
+			i * SUB_BUF * sizeof(float),
+			SUB_BUF * sizeof(float) };
 //		printf("Created sub input region with origin = %zu and size = %zu\n", region.origin, region.size);
 		input_bufs[i] = clCreateSubBuffer(buffer, CL_MEM_READ_WRITE,
 			CL_BUFFER_CREATE_TYPE_REGION, &region, &errNum);
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 	}
 
 	printf("Original Buffer:\n");
-	display_array(h_input, NUM_BUFFER_ELEMENTS);
+	display_arrayf(h_input, NUM_BUFFER_ELEMENTS);
 	printf("Output:\n");
 	display_arrayf(h_output, NUM_SUB_BUF);
 

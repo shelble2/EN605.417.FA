@@ -14,13 +14,13 @@
 //
 //    This demonstrates taking an average of a subset of a buffer
 
-__kernel void sub_average(__global int* const input,
+__kernel void sub_average(__global float* const input,
 						  __global float *const output,
 						  const int sub_buf)
 {
-	int sum = 0;
+	float sum = 0;
 	for(int i = 0; i < sub_buf; i++) {
 		sum = sum + input[i];
 	}
-	output[0] = (float) ((float)sum / (float)sub_buf);
+	output[0] = sum / (float) sub_buf;
 }
