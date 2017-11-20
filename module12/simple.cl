@@ -18,7 +18,7 @@ __kernel void sub_average(__global int* const input,
 						  __global float *const output
 						  const int sub_buf)
 {
-	cl_int sum = 0;
+	int sum = 0;
 	for(int i = 0; i < sub_buf; i++) {
 		sum = sum + input[i];
 	}
