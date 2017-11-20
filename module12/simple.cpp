@@ -1,7 +1,7 @@
 //
 // Modified by Sarah Helble for Module 12 Assignment 11.19.2017
 //
-//TODO: timing, and should really be 2x2, not 4x1
+//TODO: timing, and should really be 2x2, not 4x1, needs to clean up
 
 //
 // Book:      OpenCL(R) Programming Guide
@@ -168,23 +168,6 @@ int main(int argc, char** argv)
 		sizeof(int) * NUM_SUB_BUF, NULL, &errNum);
 	checkErr(errNum, "clCreateBuffer");
 
-///////////
-errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
-checkErr(errNum, "clSetKernelArg(sub_average)");
-errNum = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&output_buffer);
-checkErr(errNum, "clSetKernelArg(sub_average)");
-cl_int sub_buf_sz = SUB_BUF;
-
-errNum |= clSetKernelArg(kernel, 2, sizeof(cl_int), &sub_buf_sz);
-
-const size_t globalWorkSize[1] = { 1 };
-const size_t localWorkSize[1]  = { 1 };
-cl_event event;
-errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-	globalWorkSize, localWorkSize, 0, NULL, &event);
-	////////////////////////
-/*
-
 	cl_int sub_buf_sz = SUB_BUF;
 	cl_event *events[NUM_SUB_BUF];
 
@@ -230,7 +213,7 @@ errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 	printf("done enqueuing, waiting for results\n");
 	clWaitForEvents(NUM_SUB_BUF, events[0]);
 	printf("enqueuing reading back\n");
-*/
+
 	// Read back computed data
 	clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
 		sizeof(int) * NUM_SUB_BUF, (void*)h_output,
@@ -239,6 +222,13 @@ errNum = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 	display_array(h_output, NUM_SUB_BUF);
 
 	std::cout << "Program completed successfully" << std::endl;
+
+	clReleaseContext(context);
+	clReleaseProgram(program);
+	clReleaseKernel(kernel);
+	clReleaseCommandQueue(queue);
+	clReleaseMemObject(buffer);
+	clReleaseMemObject(output_buffer);
 
 	return 0;
 }
