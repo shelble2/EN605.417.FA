@@ -68,8 +68,6 @@ int main_sub(int argc, char** argv)
 
 	int platform = DEFAULT_PLATFORM;
 
-	std::cout << "Buffer and sub-buffer Example for averaging" << std::endl;
-
 	for (int i = 1; i < argc; i++) {
 		std::string input(argv[i]);
 
@@ -250,7 +248,7 @@ int main(int argc, char** argv)
 	printf("First run\n");
 	main_sub(argc, argv);
 
-	printf("Second run\n");
+	printf("\nSecond run\n");
 	main_sub(argc, argv);
 
 	return 0;
