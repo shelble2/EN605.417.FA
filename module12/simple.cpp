@@ -26,7 +26,9 @@
 #define DEFAULT_USE_MAP false
 
 #define NUM_BUFFER_ELEMENTS 16
-#define SUB_BUF 4
+#define SUB_BUF_X 2
+#define SUB_BUF_Y 2
+#define SUB_BUF (SUB_BUF_X * SUB_BUF_Y)
 #define NUM_SUB_BUF NUM_BUFFER_ELEMENTS / SUB_BUF
 
 // Function to check and handle OpenCL errors
@@ -239,10 +241,10 @@ int main_sub(int argc, char** argv, int seed)
 // wrapper Main function to test multiple runs of main_sub()
 int main(int argc, char** argv)
 {
-	printf("First run\n");
+	printf("*************** First run **************\n");
 	main_sub(argc, argv, 0);
 
-	printf("\nSecond run\n");
+	printf("\n*************** Second run *******************\n");
 	main_sub(argc, argv, 1);
 
 	return 0;
