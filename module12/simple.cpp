@@ -1,7 +1,6 @@
 //
 // Modified by Sarah Helble for Module 12 Assignment 11.19.2017
 //
-//TODO: should be 2x2, not 4x1
 
 // Original work, but heavily Modified:
 //
