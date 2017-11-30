@@ -164,13 +164,9 @@ void main_sub()
 		0,0,3,5,0,8,6,9,0,
 		0,4,2,9,1,0,3,0,0};
 	unsigned int *h_pinned_puzzle;
-	unsigned int *h_solution;
 
-	//pin it
+	//pin it and copy to pinned memory
 	cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
-	cudaMallocHost((void **)&h_solution, array_size_in_bytes);
-
-	// Copy it to pinned memory
 	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
 	/* Declare and allocate pointers for GPU based parameters */
@@ -207,7 +203,7 @@ void main_sub()
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
 	printf("Solution:\n");
-	sudoku_print(h_solution);
+	sudoku_print(h_pinned_puzzle);
 
 	printf("\tSolved in %d increments and %fms\n", count, duration);
 
