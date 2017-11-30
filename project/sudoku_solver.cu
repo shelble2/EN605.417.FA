@@ -139,7 +139,7 @@ void sudoku_print(unsigned int* numbers)
  * puzzle- sudoku puzzle array
  * Returns 0 if done, 1 if not
  */
-int check_if_done(unsigned int puzzle)
+int check_if_done(unsigned int *puzzle)
 {
 	for(int i = 0; i < CELLS; i++) {
 		if(puzzle[i] == 0) {
