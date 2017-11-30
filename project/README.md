@@ -25,27 +25,19 @@ the hardcoded one, and needs to be able to identify when its finished.
 
 BUT major success that its actually solving the puzzle! All should go smoothly from here.
 
-Todo
-----
-
 ### Required
 - ingest sudoku puzzles from site
 - solve a given sudoku puzzle
-  - in the website I found [1], it's just a string of numbers, where 0 is empty cell
-  - how to actually solve
-    /- could have one kernel solve by cell (check a cell for values it can hold. If only one, that's it)
-    - and one kernel that solves by dimension (check a row for last values to fill)
-    - another kernel or host code to check if you're done
-    W- cycle through these until last returns success
-- solve a lot of sudoku puzzles
+  - another kernel that solves by dimension (check a row for last values to fill)
+  - switch to solving by constraint
+  - hard sudokus sometimes require guessing between two options for a cell - how to handle?
+- solve a lot of sudoku puzzles at once
   - how does this change the blocks/threading. One puzzle per block? would that work?
   - make things asnychronous
 - simple program: check if the answer is correct
   - could either double-check that all rules are followed, or
   - simply check against the answer in the database
-/- timing data
-
- - hard sudokus sometimes require guessing between two options for a cell
+- speed - is the copying back and forth really bad? Can it be async?
 
 ### Optional
 - larger puzzles going > single digits
