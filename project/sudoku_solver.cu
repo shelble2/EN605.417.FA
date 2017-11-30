@@ -180,13 +180,6 @@ void main_sub()
 	cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
 	cudaMalloc((void **)&d_solution, array_size_in_bytes);
 
-	/* Copy the CPU memory to the GPU memory */
-	cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
-
-	/* Designate the number of blocks and threads */
-	const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
-	const unsigned int num_threads = CELLS/num_blocks;
-
 	printf("Puzzle:\n");
 	sudoku_print(h_puzzle);
 
@@ -195,52 +188,33 @@ void main_sub()
 
 	cudaEvent_t start_time = get_time();
 
-	//SCH: used to be num_blocks, num_threads, but think all has to be on same block to share
+	/* Copy the CPU memory to the GPU memory */
+	cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
+
 	solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
+
+	/* Copy the changed GPU memory back to the CPU */
+	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+
+	int count = 1;
+	while(!check_if_done(h_solution)) {
+		count = count + 1;
+		cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
+
+		solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
+
+		cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+	}
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
 
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
-	/* Copy the changed GPU memory back to the CPU */
-	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
-
-	printf("Increment 1:\n");
-	sudoku_print(h_solution);
-
-	cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
-
-	solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
-
-	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
-
-	printf("Increment 2:\n");
-	sudoku_print(h_solution);
-
-	cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
-
-	solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
-
-	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
-
-	printf("Increment 3:\n");
-	sudoku_print(h_solution);
-
-	cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
-
-	solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
-
-	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
-
-	int done = check_if_done(h_solution);
-
-	printf("DONE STATUS: %d\n", done);
-
 	printf("Solution:\n");
 	sudoku_print(h_solution);
 
-	printf("\tSolved in: %fmsn\n", duration);
+	printf("\tSolved in %d increments and %fms\n", count, duration);
 
 	/* Free the GPU memory */
 	cudaFree(d_puzzle);
