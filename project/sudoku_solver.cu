@@ -104,33 +104,33 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
  * Prints the passed array like a sudoku puzzle in ascii art
  * @numbers array to print
  */
- void sudoku_print(unsigned int* numbers)
+void sudoku_print(unsigned int* numbers)
 {
-  int i;
-  int j;
-  int block_dim = round(sqrt(DIM));
+	int i;
+	int j;
+	int block_dim = round(sqrt(DIM));
 
-  printf("\n_________________________________________\n");
+	printf("\n_________________________________________\n");
 
-  for (i = 0; i < DIM; i++) {
+	for (i = 0; i < DIM; i++) {
 
-    printf("||");
-    for (j = 0; j < DIM; j++) {
-      printf(" %u |", numbers[ ( (i*DIM) + j ) ]);
-      if((j+1) % block_dim == 0) {
-          printf("|");
-      }
-    }
+		printf("||");
+		for (j = 0; j < DIM; j++) {
+			printf(" %u |", numbers[ ( (i*DIM) + j ) ]);
+			if((j+1) % block_dim == 0) {
+				printf("|");
+			}
+		}
 
-    j = 0;
-    //Breaks between each row
-    if( ((i+1) % block_dim) == 0) {
-      printf("\n||___|___|___||___|___|___||___|___|___||\n");
-    } else {
-      //TODO:make this able to handle other sizes prettily
-      printf("\n||---|---|---||---|---|---||---|---|---||\n");
-    }
- }
+		j = 0;
+		//Breaks between each row
+		if( ((i+1) % block_dim) == 0) {
+			printf("\n||___|___|___||___|___|___||___|___|___||\n");
+		} else {
+			//TODO:make this able to handle other sizes prettily
+			printf("\n||---|---|---||---|---|---||---|---|---||\n");
+		}
+	}
 }
 
 /**
@@ -142,7 +142,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 int check_if_done(unsigned int puzzle)
 {
 	for(int i = 0; i < CELLS; i++) {
-		if(puzzle[i] == 0){
+		if(puzzle[i] == 0) {
 			return 1;
 		}
 	}
@@ -151,104 +151,104 @@ int check_if_done(unsigned int puzzle)
 
 void main_sub()
 {
-  /* Calculate the size of the array */
-  int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
+	/* Calculate the size of the array */
+	int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
 
-  unsigned int h_puzzle[CELLS] = {0,0,4,3,0,0,2,0,9,
-								  0,0,5,0,0,9,0,0,1,
-								  0,7,0,0,6,0,0,4,3,
-								  0,0,6,0,0,2,0,8,7,
-								  1,9,0,0,0,7,4,0,0,
-								  0,5,0,0,8,3,0,0,0,
-								  6,0,0,0,0,0,1,0,5,
-								  0,0,3,5,0,8,6,9,0,
-								  0,4,2,9,1,0,3,0,0};
-  unsigned int *h_pinned_puzzle;
-  unsigned int *h_solution;
+	unsigned int h_puzzle[CELLS] = {0,0,4,3,0,0,2,0,9,
+		0,0,5,0,0,9,0,0,1,
+		0,7,0,0,6,0,0,4,3,
+		0,0,6,0,0,2,0,8,7,
+		1,9,0,0,0,7,4,0,0,
+		0,5,0,0,8,3,0,0,0,
+		6,0,0,0,0,0,1,0,5,
+		0,0,3,5,0,8,6,9,0,
+		0,4,2,9,1,0,3,0,0};
+	unsigned int *h_pinned_puzzle;
+	unsigned int *h_solution;
 
-  //pin it
-  cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
-  cudaMallocHost((void **)&h_solution, array_size_in_bytes);
+	//pin it
+	cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
+	cudaMallocHost((void **)&h_solution, array_size_in_bytes);
 
-  // Copy it to pinned memory
-  memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
+	// Copy it to pinned memory
+	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
-  /* Declare and allocate pointers for GPU based parameters */
-  unsigned int *d_puzzle;
-  unsigned int *d_solution;
+	/* Declare and allocate pointers for GPU based parameters */
+	unsigned int *d_puzzle;
+	unsigned int *d_solution;
 
-  cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
-  cudaMalloc((void **)&d_solution, array_size_in_bytes);
+	cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
+	cudaMalloc((void **)&d_solution, array_size_in_bytes);
 
-  /* Copy the CPU memory to the GPU memory */
-  cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
+	/* Copy the CPU memory to the GPU memory */
+	cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
 
-  /* Designate the number of blocks and threads */
-  const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
-  const unsigned int num_threads = CELLS/num_blocks;
+	/* Designate the number of blocks and threads */
+	const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
+	const unsigned int num_threads = CELLS/num_blocks;
 
-  printf("Puzzle:\n");
-  sudoku_print(h_puzzle);
+	printf("Puzzle:\n");
+	sudoku_print(h_puzzle);
 
-  /* Execute the kernel and keep track of start and end time for duration */
-  float duration = 0;
+	/* Execute the kernel and keep track of start and end time for duration */
+	float duration = 0;
 
-  cudaEvent_t start_time = get_time();
+	cudaEvent_t start_time = get_time();
 
-  //SCH: used to be num_blocks, num_threads, but think all has to be on same block to share
-  solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
+	//SCH: used to be num_blocks, num_threads, but think all has to be on same block to share
+	solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
 
-  cudaEvent_t end_time = get_time();
-  cudaEventSynchronize(end_time);
+	cudaEvent_t end_time = get_time();
+	cudaEventSynchronize(end_time);
 
-  cudaEventElapsedTime(&duration, start_time, end_time);
+	cudaEventElapsedTime(&duration, start_time, end_time);
 
-  /* Copy the changed GPU memory back to the CPU */
-  cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+	/* Copy the changed GPU memory back to the CPU */
+	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  printf("Increment 1:\n");
-  sudoku_print(h_solution);
+	printf("Increment 1:\n");
+	sudoku_print(h_solution);
 
-  cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
 
-  solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
+	solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
 
-  cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  printf("Increment 2:\n");
-  sudoku_print(h_solution);
+	printf("Increment 2:\n");
+	sudoku_print(h_solution);
 
-  cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
 
-  solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
+	solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
 
-  cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  printf("Increment 3:\n");
-  sudoku_print(h_solution);
+	printf("Increment 3:\n");
+	sudoku_print(h_solution);
 
-  cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
 
-  solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
+	solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
 
-  cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-  int done = check_if_done(h_solution);
+	int done = check_if_done(h_solution);
 
-  printf("DONE STATUS: %d\n", done);
+	printf("DONE STATUS: %d\n", done);
 
-  printf("Solution:\n");
-  sudoku_print(h_solution);
+	printf("Solution:\n");
+	sudoku_print(h_solution);
 
-  printf("\tSolved in: %fmsn\n", duration);
+	printf("\tSolved in: %fmsn\n", duration);
 
-  /* Free the GPU memory */
-  cudaFree(d_puzzle);
-  cudaFree(d_solution);
+	/* Free the GPU memory */
+	cudaFree(d_puzzle);
+	cudaFree(d_solution);
 
-  /* Free the pinned CPU memory */
-  cudaFreeHost(h_pinned_puzzle);
-  cudaFreeHost(h_solution);
+	/* Free the pinned CPU memory */
+	cudaFreeHost(h_pinned_puzzle);
+	cudaFreeHost(h_solution);
 }
 
 /**
@@ -257,7 +257,7 @@ void main_sub()
  */
 void print_usage(char *name)
 {
-  printf("Usage: %s \n", name);
+	printf("Usage: %s \n", name);
 }
 
 /**
@@ -266,16 +266,16 @@ void print_usage(char *name)
  */
 int main(int argc, char *argv[])
 {
-  /* Check the number of arguments, print usage if wrong */
-  if(argc != 1) {
-    printf("Error: Incorrect number of command line arguments\n");
-    print_usage(argv[0]);
-    exit(-1);
-  }
+	/* Check the number of arguments, print usage if wrong */
+	if(argc != 1) {
+		printf("Error: Incorrect number of command line arguments\n");
+		print_usage(argv[0]);
+		exit(-1);
+	}
 
-  printf("\n");
+	printf("\n");
 
-  main_sub();
+	main_sub();
 
-  return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }

@@ -45,6 +45,8 @@ Todo
   - simply check against the answer in the database
 /- timing data
 
+ - hard sudokus sometimes require guessing between two options for a cell
+
 ### Optional
 - larger puzzles going > single digits
 - generate a sudoku puzzle
