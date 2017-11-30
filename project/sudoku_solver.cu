@@ -188,23 +188,18 @@ void main_sub()
 
 	cudaEvent_t start_time = get_time();
 
-	/* Copy the CPU memory to the GPU memory */
-	cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
+	int count = 0;
+	do {
+		/* Copy the CPU memory to the GPU memory */
+		cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
 
-	solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
+		solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
 
-	/* Copy the changed GPU memory back to the CPU */
-	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+		/* Copy the changed GPU memory back to the CPU */
+		cudaMemcpy(h_pinned_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	int count = 1;
-	while(check_if_done(h_solution) == 1) {
 		count = count + 1;
-		cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
-
-		solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
-
-		cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
-	}
+	} while (check_if_done(h_pinned_puzzle) == 1);
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
