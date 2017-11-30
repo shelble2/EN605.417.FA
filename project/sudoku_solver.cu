@@ -213,7 +213,6 @@ void main_sub()
 
 	/* Free the pinned CPU memory */
 	cudaFreeHost(h_pinned_puzzle);
-	cudaFreeHost(h_solution);
 }
 
 /**
