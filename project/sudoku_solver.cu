@@ -197,7 +197,7 @@ void main_sub()
 	cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
 	int count = 1;
-	while(!check_if_done(h_solution)) {
+	while(check_if_done(h_solution) == 1) {
 		count = count + 1;
 		cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
 
