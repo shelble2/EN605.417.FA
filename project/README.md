@@ -14,18 +14,14 @@ Extras that I also want to include:
 Current Status Summary
 ----------------------
 Currently, this program solves a hardcoded sudoku puzzle (the first from [1])
-and solves it by calling the solve_by_possibility kernel function 4x. It doesn't
-stop because it knows it's done, it stops because I hardcoded it to 4 knowing
-that that's how many it takes. It only uses the solve_by_possibility kernel. In
-my TODO, I identify other approaches that could be alternated to achieve a
-faster solution.
+and solves it by calling the solve_by_possibility kernel function until a host
+function determines that the puzzle has been solved. It only uses the solve_by_possibility kernel. In my TODO, I identify other approaches that could
+be alternated to achieve a faster solution.
 
 It also needs to ingest the sudoku puzzle(s) from a file or [1] instead of using
-the hardcoded one, and needs to be able to identify when its finished.
+the hardcoded one.
 
-BUT major success that its actually solving the puzzle! All should go smoothly from here.
-
-### Required
+### TODO
 - ingest sudoku puzzles from site
 - solve a given sudoku puzzle
   - another kernel that solves by dimension (check a row for last values to fill)
@@ -39,7 +35,7 @@ BUT major success that its actually solving the puzzle! All should go smoothly f
   - simply check against the answer in the database
 - speed - is the copying back and forth really bad? Can it be async?
 
-### Optional
+### Optional Extras
 - larger puzzles going > single digits
 - generate a sudoku puzzle
   - started in module 8 work. Generates a grid of the appropriate size filled with
