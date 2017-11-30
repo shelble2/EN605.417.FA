@@ -133,7 +133,21 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
  }
 }
 
-int check_if_done()
+/**
+ * Goes through the puzzle and makes sure each cell block has
+ * been filled.
+ * puzzle- sudoku puzzle array
+ * Returns 0 if done, 1 if not
+ */
+int check_if_done(unsigned int puzzle)
+{
+	for(int i = 0; i < CELLS; i++) {
+		if(puzzle[i] == 0){
+			return 1;
+		}
+	}
+	return 0;
+}
 
 void main_sub()
 {
@@ -218,6 +232,10 @@ void main_sub()
   solve_by_possibility<<<1,CELLS>>>(d_puzzle, d_solution);
 
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+
+  int done = check_if_done(h_solution);
+
+  printf("DONE STATUS: %d\n", done);
 
   printf("Solution:\n");
   sudoku_print(h_solution);
