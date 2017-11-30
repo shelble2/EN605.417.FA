@@ -133,29 +133,31 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
  }
 }
 
+int check_if_done()
+
 void main_sub()
 {
   /* Calculate the size of the array */
   int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
 
   unsigned int h_puzzle[CELLS] = {0,0,4,3,0,0,2,0,9,
-																0,0,5,0,0,9,0,0,1,
-																0,7,0,0,6,0,0,4,3,
-																0,0,6,0,0,2,0,8,7,
-																1,9,0,0,0,7,4,0,0,
-																0,5,0,0,8,3,0,0,0,
-																6,0,0,0,0,0,1,0,5,
-																0,0,3,5,0,8,6,9,0,
-																0,4,2,9,1,0,3,0,0};
-	unsigned int *h_pinned_puzzle;
+								  0,0,5,0,0,9,0,0,1,
+								  0,7,0,0,6,0,0,4,3,
+								  0,0,6,0,0,2,0,8,7,
+								  1,9,0,0,0,7,4,0,0,
+								  0,5,0,0,8,3,0,0,0,
+								  6,0,0,0,0,0,1,0,5,
+								  0,0,3,5,0,8,6,9,0,
+								  0,4,2,9,1,0,3,0,0};
+  unsigned int *h_pinned_puzzle;
   unsigned int *h_solution;
 
   //pin it
   cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
   cudaMallocHost((void **)&h_solution, array_size_in_bytes);
 
-	// Copy it to pinned memory
-	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
+  // Copy it to pinned memory
+  memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
   /* Declare and allocate pointers for GPU based parameters */
   unsigned int *d_puzzle;
@@ -171,16 +173,16 @@ void main_sub()
   const unsigned int num_blocks = CELLS/THREADS_PER_BLOCK;
   const unsigned int num_threads = CELLS/num_blocks;
 
-	printf("Puzzle:\n");
-	sudoku_print(h_puzzle);
+  printf("Puzzle:\n");
+  sudoku_print(h_puzzle);
 
   /* Execute the kernel and keep track of start and end time for duration */
   float duration = 0;
 
   cudaEvent_t start_time = get_time();
 
-	//SCH: used to be num_blocks, num_threads, but think all has to be on same block to share
-	solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
+  //SCH: used to be num_blocks, num_threads, but think all has to be on same block to share
+  solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
 
   cudaEvent_t end_time = get_time();
   cudaEventSynchronize(end_time);
@@ -190,8 +192,8 @@ void main_sub()
   /* Copy the changed GPU memory back to the CPU */
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	printf("Increment 1:\n");
-	sudoku_print(h_solution);
+  printf("Increment 1:\n");
+  sudoku_print(h_solution);
 
   cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
 
@@ -199,8 +201,8 @@ void main_sub()
 
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	printf("Increment 2:\n");
-	sudoku_print(h_solution);
+  printf("Increment 2:\n");
+  sudoku_print(h_solution);
 
   cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
 
@@ -208,8 +210,8 @@ void main_sub()
 
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	printf("Increment 3:\n");
-	sudoku_print(h_solution);
+  printf("Increment 3:\n");
+  sudoku_print(h_solution);
 
   cudaMemcpy(d_puzzle, h_solution, array_size_in_bytes, cudaMemcpyHostToDevice);
 
@@ -217,10 +219,10 @@ void main_sub()
 
   cudaMemcpy(h_solution, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
-	printf("Solution:\n");
-  	sudoku_print(h_solution);
+  printf("Solution:\n");
+  sudoku_print(h_solution);
 
-	printf("\tSolved in: %fmsn\n", duration);
+  printf("\tSolved in: %fmsn\n", duration);
 
   /* Free the GPU memory */
   cudaFree(d_puzzle);
@@ -228,7 +230,7 @@ void main_sub()
 
   /* Free the pinned CPU memory */
   cudaFreeHost(h_pinned_puzzle);
-	cudaFreeHost(h_solution);
+  cudaFreeHost(h_solution);
 }
 
 /**
