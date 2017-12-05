@@ -29,6 +29,8 @@
 
 /**
  * Function to check and handle OpenCL errors
+ * err is the returned status value to check
+ * name is the name of the function, for printing to user
  */
 inline void checkErr(cl_int err, const char * name)
 {
@@ -39,8 +41,8 @@ inline void checkErr(cl_int err, const char * name)
 }
 
 /**
- * Create an OpenCL context on the first available platform using
- * either a GPU or CPU depending on what is available.
+ * Create an OpenCL context
+ * Returns the created context. Exits program if failure
  */
 cl_context CreateContext()
 {
@@ -80,8 +82,9 @@ cl_context CreateContext()
 }
 
 /**
- *  Create a command queue on the first device available on the
- *  context
+ * Creates a command queue with the passed context.
+ * Returns the command queue created, and sets device to the device used
+ * Exits on failure
  */
 cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
 {
@@ -116,7 +119,10 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
 }
 
 /**
- *  Create an OpenCL program from the kernel source file
+ * Create an OpenCL program from the passed kernel source file named in @filename,
+ * using the passed context and device
+ * Returns the program.
+ * Exits on failure.
  */
 cl_program CreateProgram(cl_context context, cl_device_id device, const char* fileName)
 {
@@ -154,6 +160,9 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
     return program;
 }
 
+/**
+ * Main program for driving the module 13 assignment Program
+ */
 int main(int argc, char** argv)
 {
     cl_context context     = 0;
