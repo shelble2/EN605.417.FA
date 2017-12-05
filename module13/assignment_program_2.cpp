@@ -163,7 +163,7 @@ int main(int argc, char** argv)
     cl_kernel kernel       = 0;
     cl_int errno;
 
-	int *inputOutput1;
+	int *inputOutput;
 
     if (argc != 1) {
         std::cerr << "USAGE: " << argv[0] << std::endl;
