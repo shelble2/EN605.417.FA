@@ -53,7 +53,7 @@ checkErr(cl_int err, const char * name)
      errno = clGetPlatformIDs(0, NULL, &num_platforms);
      checkErr(errno, "clGetPlatformIDs");
 	 if(num_platforms <= 0) {
-		 checkErr(-1, "Invalid Number of Platforms")
+		 checkErr(-1, "Invalid Number of Platforms");
 	 }
 
      platform_ids = (cl_platform_id *)alloca(sizeof(cl_platform_id) * num_platforms);
@@ -83,7 +83,7 @@ checkErr(cl_int err, const char * name)
 	checkErr(errno, "clGetDeviceIDs");
 
 	cl_context context = clCreateContext(contextProperties, num_devices, device_ids, NULL, NULL, &errno);
-	checkErr(errno "clCreateContext");
+	checkErr(errno, "clCreateContext");
 
 	return context;
  }
