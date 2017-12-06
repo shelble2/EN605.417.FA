@@ -189,6 +189,24 @@ cl_kernel create_kernel_for_command(int command, cl_program program)
 	return kernel;
 }
 
+void display_timing_data(cl_event *events)
+{
+	cl_ulong start, end;
+	double duration, duration_in_ms;
+
+	for(int i = 0; i < argc - 1; i++) {
+		errno = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
+		checkErr(errno, "clGetEventProfilingInfo: start");
+
+		errno = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_END, sizeof(end), &end, NULL);
+		checkErr(errno, "clGetEventProfilingInfo: end");
+
+		duration = end - start;  // duration is in nanoseconds
+		duration_in_ms = duration / 1000000;
+		printf("command %d took %0.3fms\n", i+1, duration_in_ms);
+	}
+}
+
 /**
  * Main program for driving the module 13 assignment Program
  */
@@ -270,20 +288,7 @@ int main(int argc, char** argv)
 		clEnqueueMarker(queue, &copy_back_marker_event);
 	}
 
-	cl_ulong start, end;
-	double duration, duration_in_ms;
-
-	for(int i = 0; i < argc - 1; i++) {
-		errno = clGetEventProfilingInfo(command_events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
-		checkErr(errno, "clGetEventProfilingInfo: start");
-
-		errno = clGetEventProfilingInfo(command_events[i], CL_PROFILING_COMMAND_END, sizeof(end), &end, NULL);
-		checkErr(errno, "clGetEventProfilingInfo: end");
-
-		duration = end - start;  // duration is in nanoseconds
-		duration_in_ms = duration / 1000000;
-		printf("command %d took %0.3fms\n", i+1, duration_in_ms);
-	}
+	display_timing_data(command_events);
 
 	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
