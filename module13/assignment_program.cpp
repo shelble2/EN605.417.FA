@@ -16,8 +16,6 @@
 #include <sstream>
 #include <string.h>
 
-#include "info.hpp"
-
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
@@ -230,7 +228,6 @@ int main(int argc, char** argv)
     program = CreateProgram(context, device, "assignment_kernels.cl");
 	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
-	std::vector<cl_event> events;
 	cl_event copy_back_marker_event = NULL;
 
 	for(int i = 1; i < argc; i++ ) {
@@ -244,7 +241,7 @@ int main(int argc, char** argv)
 
 		// writing is waiting for event of other queue to complete
 		errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
-		  sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, events, NULL);
+		  sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, NULL, NULL);
 
 		// Create the kernel for the passed command and set kernel args
 		int command = atoi(argv[i]);
