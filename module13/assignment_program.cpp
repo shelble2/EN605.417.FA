@@ -206,14 +206,19 @@ int main(int argc, char** argv)
 		switch(command) {
 			case ADD:
 				printf("Going to add\n");
+				break;
 			case SQUARE:
 				printf("Going to square\n");
+				break;
 			case TENFOLD:
 				printf("Going to x10\n");
+				break;
 			case NEGATE:
 				printf("Going to negate\n");
+				break;
 			case ADD_LEFT_PEER:
 				printf("Going to add left peer\n");
+				break;
 			default:
 				printf("Invalid command %d, ignoring\n", command);
 		}
