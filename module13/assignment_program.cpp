@@ -191,6 +191,7 @@ cl_kernel create_kernel_for_command(int command, cl_program program)
 
 void display_timing_data(cl_event *events)
 {
+	int errno;
 	cl_ulong start, end;
 	double duration, duration_in_ms;
 
