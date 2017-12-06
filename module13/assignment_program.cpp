@@ -198,6 +198,9 @@ int main(int argc, char** argv)
     // Create OpenCL program
     program = CreateProgram(context, device, "assignment_kernels.cl");
 
+	for(int i = 1; i < argc; i++ ) {
+		printf("command: %d\n", argv[i]);
+	}
     // Create OpenCL kernel
     kernel = clCreateKernel(program, "tenfold", NULL);
 
