@@ -196,6 +196,9 @@ int main(int argc, char** argv)
     // Create OpenCL program
     program = CreateProgram(context, device, "assignment_kernels.cl");
 
+	errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
+	  sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, NULL, NULL);
+
 	for(int i = 1; i < argc; i++ ) {
 
 		// Create the kernel for the passed command
@@ -229,8 +232,7 @@ int main(int argc, char** argv)
 		errno = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
 		checkErr(errno, "clSetKernelArg()");
 
-		errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
-	      sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, NULL, NULL);
+
 
 		cl_event event;
 		size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
@@ -239,10 +241,12 @@ int main(int argc, char** argv)
 		errno = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
 
-    	// Read the output buffer back to the Host
-		clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
-            (void*)inputOutput, 0, NULL, NULL);
+
 	}
+
+	// Read the output buffer back to the Host
+	clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
+		(void*)inputOutput, 0, NULL, NULL);
 
 	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
