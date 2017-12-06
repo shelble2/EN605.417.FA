@@ -228,6 +228,7 @@ int main(int argc, char** argv)
     program = CreateProgram(context, device, "assignment_kernels.cl");
 	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
+	std::vector<cl_event> events;
 	cl_event copy_back_marker_event = NULL;
 
 	for(int i = 1; i < argc; i++ ) {
@@ -236,7 +237,7 @@ int main(int argc, char** argv)
 		if(i % 2 == 0) queue = queue2;
 
 		if(copy_back_marker_event != NULL) {
-			clEnqueueWaitForEvents(queue, copy_back_marker_event);
+			clEnqueueWaitForEvents(queue, 1, &copy_back_marker_event);
 		}
 
 		// writing is waiting for event of other queue to complete
