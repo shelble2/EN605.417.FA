@@ -24,6 +24,8 @@
 
 #define NUM_BUFFER_ELEMENTS 16
 
+enum command {ADD=1, SQUARE, TENFOLD, NEGATE, ADD_LEFT_PEER};
+
 /**
  * Function to check and handle OpenCL errors
  * err is the returned status value to check
@@ -199,7 +201,22 @@ int main(int argc, char** argv)
     program = CreateProgram(context, device, "assignment_kernels.cl");
 
 	for(int i = 1; i < argc; i++ ) {
-		printf("command: %d\n", argv[i]);
+		int command = atoi(argv[i]);
+		printf("Executing command: %d\n", command);
+		switch(command) {
+			case ADD:
+				printf("Going to add\n");
+			case SQUARE:
+				printf("Going to square\n");
+			case TENFOLD:
+				printf("Going to x10\n");
+			case NEGATE:
+				printf("Going to negate\n");
+			case ADD_LEFT_PEER:
+				printf("Going to add left peer\n");
+			default:
+				printf("Invalid command %d, ignoring\n", command);
+		}
 	}
     // Create OpenCL kernel
     kernel = clCreateKernel(program, "tenfold", NULL);
