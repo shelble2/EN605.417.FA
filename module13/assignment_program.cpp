@@ -315,7 +315,8 @@ int main(int argc, char** argv)
 		std::cerr << "Since no options given, executing Test Harness >>" << std::endl;
 
 		printf("Test 1: %s 1\n", argv[0]);
-		main_sub(2, [argv[0], "1"]);
+		char *test1_argv[2] = {argv[0], "1"};
+		main_sub(2, test1_argv);
 
 		return 0;
 	} else {
