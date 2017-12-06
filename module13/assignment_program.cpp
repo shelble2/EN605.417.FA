@@ -189,13 +189,13 @@ cl_kernel create_kernel_for_command(int command, cl_program program)
 	return kernel;
 }
 
-void display_timing_data(cl_event *events)
+void display_timing_data(cl_event *events, int num_events)
 {
 	int errno;
 	cl_ulong start, end;
 	double duration, duration_in_ms;
 
-	for(int i = 0; i < argc - 1; i++) {
+	for(int i = 0; i < num_events; i++) {
 		errno = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
 		checkErr(errno, "clGetEventProfilingInfo: start");
 
@@ -289,7 +289,7 @@ int main(int argc, char** argv)
 		clEnqueueMarker(queue, &copy_back_marker_event);
 	}
 
-	display_timing_data(command_events);
+	display_timing_data(command_events, argc-1);
 
 	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
