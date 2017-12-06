@@ -167,8 +167,12 @@ int main(int argc, char** argv)
 
 	int *inputOutput;
 
-    if (argc != 1) {
-        std::cerr << "USAGE: " << argv[0] << std::endl;
+    if (argc == 1) {
+        std::cerr << "USAGE: " << argv[0] " [execution_options]+ " << std::endl;
+		std::cerr << "Execution options can be one or more of the following: " << std::endl;
+		std::cerr << "\t1: add\n\t2: square\n\t3: tenfold (x10)" << std::endl;
+		std::cerr << "\t4: negate\n\t5: add left peer" << std::endl;
+		
         return 1;
     }
 
