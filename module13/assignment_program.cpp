@@ -3,15 +3,12 @@
 // Assigment 13 Program
 // 5 December 2017
 //
-// Boilerplate code in part from:
-//
-// Book:      OpenCL(R) Programming Guide
-// Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
+// Pieces of boilerplate code adapted from:
 // ISBN-10:   0-321-74964-2
 // ISBN-13:   978-0-321-74964-2
-// Publisher: Addison-Wesley Professional
-// URLs:      http://safari.informit.com/9780132488006/
-//            http://www.openclprogrammingguide.com
+// and
+// ISBN-10:   0-321-74964-2
+// ISBN-13:   978-0-321-74964-2
 //
 
 #include <iostream>
@@ -195,10 +192,10 @@ int main(int argc, char** argv)
    checkErr(errno, "clCreateBuffer");
 
     // Create OpenCL program
-    program = CreateProgram(context, device, "simple.cl");
+    program = CreateProgram(context, device, "assignment_kernels.cl");
 
     // Create OpenCL kernel
-    kernel = clCreateKernel(program, "cube", NULL);
+    kernel = clCreateKernel(program, "tenfold", NULL);
 
 	errno = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
     checkErr(errno, "clSetKernelArg(cube)");
