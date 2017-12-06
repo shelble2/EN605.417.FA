@@ -99,13 +99,9 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
     errno = clGetContextInfo(context, CL_CONTEXT_DEVICES, deviceBufferSize, devices, NULL);
     checkErr(errno, "clGetContextInfo");
 
-    // In this example, we just choose the first available device.  In a
-    // real program, you would likely use all available devices or choose
-    // the highest performance device based on OpenCL device queries
-    queue = clCreateCommandQueue(context, devices[0], 0, NULL);
-    if (queue == NULL) {
-		checkErr(-1, "clCreateCommandQueue");
-    }
+    // Choose the first available device
+    queue = clCreateCommandQueue(context, devices[0], CL_QUEUE_PROFILING_ENABLE, &errno);
+	checkErr(errno, "clCreateCommandQueue");
 
     *device = devices[0];
     delete [] devices;
@@ -154,16 +150,50 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
     return program;
 }
 
+cl_kernel create_kernel_for_command(int command, cl_program program)
+{
+	cl_kernel kernel;
+
+	switch(command) {
+		case ADD:
+			printf("Adding\n");
+			kernel = clCreateKernel(program, "add", NULL);
+			break;
+		case SQUARE:
+			printf("Squarin\n");
+			kernel = clCreateKernel(program, "square", NULL);
+			break;
+		case TENFOLD:
+			printf("Calculating x10\n");
+			kernel = clCreateKernel(program, "tenfold", NULL);
+			break;
+		case NEGATE:
+			printf("Negating\n");
+			kernel = clCreateKernel(program, "negate", NULL);
+			break;
+		case ADD_LEFT_PEER:
+			printf("Adding left peer\n");
+			kernel = clCreateKernel(program, "add_left_peer", NULL);
+			break;
+		default:
+			printf("Invalid command %d, ignoring\n", command);
+			return NULL;
+	}
+	return kernel;
+}
+
 /**
  * Main program for driving the module 13 assignment Program
  */
 int main(int argc, char** argv)
 {
-    cl_context context     = 0;
-    cl_command_queue queue = 0;
-    cl_program program     = 0;
-    cl_device_id device    = 0;
-    cl_kernel kernel       = 0;
+    cl_context context      = 0;
+	cl_command_queue queue1 = 0;
+	cl_command_queue queue2 = 0;
+    cl_command_queue queue  = 0;
+    cl_program program      = 0;
+    cl_device_id device     = 0;
+    cl_kernel kernel        = 0;
     cl_int errno;
 
 	int *inputOutput;
@@ -180,8 +210,9 @@ int main(int argc, char** argv)
     // Create an OpenCL context on first available platform
     context = CreateContext();
 
-    // Create a queues on the first device available on the created context
-    queue = CreateCommandQueue(context, &device);
+    // Create queues on the first device available on the created context
+    queue1 = CreateCommandQueue(context, &device);
+	queue2 = CreateCommandQueue(context, &device);
 
 	inputOutput = new int[NUM_BUFFER_ELEMENTS];
     for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
@@ -199,49 +230,28 @@ int main(int argc, char** argv)
 	errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
 	  sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, NULL, NULL);
 
+	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
+
+	cl_event prev_event = NULL;
+
 	for(int i = 1; i < argc; i++ ) {
+		cl_event event;
+
+		queue = queue1;
+		//divide onto separate queues fr experiment
+	//	if(i % 2 == 0) queue = queue2;
 
 		// Create the kernel for the passed command
 		int command = atoi(argv[i]);
-		switch(command) {
-			case ADD:
-				printf("Going to add\n");
-				kernel = clCreateKernel(program, "add", NULL);
-				break;
-			case SQUARE:
-				printf("Going to square\n");
-				kernel = clCreateKernel(program, "square", NULL);
-				break;
-			case TENFOLD:
-				printf("Going to x10\n");
-				kernel = clCreateKernel(program, "tenfold", NULL);
-				break;
-			case NEGATE:
-				printf("Going to negate\n");
-				kernel = clCreateKernel(program, "negate", NULL);
-				break;
-			case ADD_LEFT_PEER:
-				printf("Going to add left peer\n");
-				kernel = clCreateKernel(program, "add_left_peer", NULL);
-				break;
-			default:
-				printf("Invalid command %d, ignoring\n", command);
-		}
+		kernel = create_kernel_for_command(command, program);
 
 		// Set the kernel args
 		errno = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
 		checkErr(errno, "clSetKernelArg()");
 
-
-
-		cl_event event;
-		size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
-
     	// Queue the kernel up for execution
 		errno = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
-
-
 	}
 
 	// Read the output buffer back to the Host
