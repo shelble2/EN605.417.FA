@@ -236,11 +236,11 @@ int main(int argc, char** argv)
 		size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
     	// Queue the kernel up for execution
-		errno = clEnqueueNDRangeKernel(queue1, kernel, 1, NULL,
+		errno = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
 
     	// Read the output buffer back to the Host
-		clEnqueueReadBuffer(queue1, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
+		clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
             (void*)inputOutput, 0, NULL, NULL);
 	}
 
