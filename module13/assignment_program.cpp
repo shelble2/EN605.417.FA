@@ -226,37 +226,42 @@ int main(int argc, char** argv)
 
     // Create OpenCL program
     program = CreateProgram(context, device, "assignment_kernels.cl");
-
-	errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
-	  sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, NULL, NULL);
-
 	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
-	cl_event prev_event = NULL;
+	cl_event copy_back_marker_event = NULL;
 
 	for(int i = 1; i < argc; i++ ) {
-		cl_event event;
-
+		//divide onto separate queues for experiment
 		queue = queue1;
-		//divide onto separate queues fr experiment
-	//	if(i % 2 == 0) queue = queue2;
+		if(i % 2 == 0) queue = queue2;
 
-		// Create the kernel for the passed command
+		if(copy_back_marker_event != NULL) {
+			clEnqueueWaitForEvents(copy_back_marker_event);
+		}
+		
+		// writing is waiting for event of other queue to complete
+		errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
+		  sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, events, NULL);
+
+		// Create the kernel for the passed command and set kernel args
 		int command = atoi(argv[i]);
 		kernel = create_kernel_for_command(command, program);
-
-		// Set the kernel args
 		errno = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
 		checkErr(errno, "clSetKernelArg()");
 
     	// Queue the kernel up for execution
 		errno = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
+		clEnqueueBarrier(queue);
+
+		// Read the output buffer back to the Host
+		clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
+			(void*)inputOutput, 0, NULL, NULL);
+
+		clEnqueueMarker(&copy_back_marker_event);
 	}
 
-	// Read the output buffer back to the Host
-	clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
-		(void*)inputOutput, 0, NULL, NULL);
+
 
 	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
@@ -264,5 +269,6 @@ int main(int argc, char** argv)
 	std::cout << std::endl;
 	std::cout << "Program completed successfully" << std::endl;
 
+	//TODO: cleanup
     return 0;
 }
