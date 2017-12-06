@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
 	cl_event copy_back_marker_event = NULL;
-	cl_event command_events[argc-1] = NULL;
+	cl_event command_events[argc-1];
 
 	for(int i = 1; i < argc; i++ ) {
 		//divide onto separate queues for experiment
