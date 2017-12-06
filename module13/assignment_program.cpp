@@ -236,7 +236,7 @@ int main(int argc, char** argv)
 		if(i % 2 == 0) queue = queue2;
 
 		if(copy_back_marker_event != NULL) {
-			clEnqueueWaitForEvents(copy_back_marker_event);
+			clEnqueueWaitForEvents(queue, copy_back_marker_event);
 		}
 
 		// writing is waiting for event of other queue to complete
@@ -250,6 +250,7 @@ int main(int argc, char** argv)
 		checkErr(errno, "clSetKernelArg()");
 
     	// Queue the kernel up for execution
+		cl_event event;
 		errno = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
 			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
 		clEnqueueBarrier(queue);
