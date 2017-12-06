@@ -211,7 +211,7 @@ void display_timing_data(cl_event *events, int num_events)
 /**
  * Main program for driving the module 13 assignment Program
  */
-int main(int argc, char** argv)
+int main_sub(int argc, char** argv)
 {
     cl_context context      = 0;
 	cl_command_queue queue1 = 0;
@@ -225,7 +225,7 @@ int main(int argc, char** argv)
 	int *inputOutput;
 
     if (argc == 1) {
-        std::cerr << "USAGE: " << argv[0] << " [execution_options]+ " << std::endl;
+        std::cerr << "USAGE: " << argv[0] << " (test | [execution_options]+ ) " << std::endl;
 		std::cerr << "Execution options can be one or more of the following: " << std::endl;
 		std::cerr << "\t1: add\n\t2: square\n\t3: tenfold (x10)" << std::endl;
 		std::cerr << "\t4: negate\n\t5: add left peer" << std::endl;
@@ -291,6 +291,7 @@ int main(int argc, char** argv)
 
 	display_timing_data(command_events, argc-1);
 
+	std::cout << "Final Result: " << std::endl;
 	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
 	}
@@ -298,4 +299,27 @@ int main(int argc, char** argv)
 	std::cout << "Program completed successfully" << std::endl;
 
     return 0;
+}
+
+//
+// Higher-level main to implement test harness
+//
+int main(int argc, char** argv)
+{
+	if (argc == 1) {
+		std::cerr << "USAGE: " << argv[0] << " [execution_options]+ " << std::endl;
+		std::cerr << "Execution options can be one or more of the following: " << std::endl;
+		std::cerr << "\t1: add\n\t2: square\n\t3: tenfold (x10)" << std::endl;
+		std::cerr << "\t4: negate\n\t5: add left peer" << std::endl;
+
+		std::cerr << "Since no options given, executing Test Harness >>" << std::endl;
+
+		printf("Test 1: %s 1\n", argv[0]);
+		main_sub(2, [argv[0], "1"]);
+
+		return 0;
+	} else {
+		return main_sub(argc, argv);
+	}
+
 }
