@@ -270,7 +270,7 @@ int main(int argc, char** argv)
 		clEnqueueMarker(queue, &copy_back_marker_event);
 	}
 
-	clWaitForEvents(argc-1, &command_events[0]);
+	clWaitForEvents(argc-1, &command_events);
 	cl_ulong start, end;
 	double duration, duration_in_ms;
 
@@ -278,7 +278,7 @@ int main(int argc, char** argv)
 		errno = clGetEventProfilingInfo(command_events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
 		checkErr(errno, "clGetEventProfilingInfo: start");
 
-		errNum = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_END, sizeof(end), &end, NULL);
+		errno = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_END, sizeof(end), &end, NULL);
 		checkErr(errno, "clGetEventProfilingInfo: end");
 
 		duration = end - start;  // duration is in nanoseconds
