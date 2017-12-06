@@ -23,7 +23,7 @@ __kernel void tenfold(__global int *buffer)
 __kernel void add(__global int *buffer)
 {
 	size_t id = get_global_id(0);
-	buffer[id] = buffer[id] + buffer[id]
+	buffer[id] = buffer[id] + buffer[id];
 }
 
 __kernel void negative(__global int *buffer)
@@ -36,7 +36,7 @@ __kernel void add_left_peer(__global int *buffer)
 {
 	size_t id = get_global_id(0);
 	if(id == 0) {
-		buffer[id] = buffer[id]
+		buffer[id] = buffer[id];
 	} else {
 		buffer[id] = buffer[id] + buffer[id - 1];
 	}
