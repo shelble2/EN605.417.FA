@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
 	cl_event copy_back_marker_event = NULL;
-	cl_events command_events[argc-1];
+	cl_events command_events[argc-1] = NULL;
 
 	for(int i = 1; i < argc; i++ ) {
 		//divide onto separate queues for experiment
@@ -272,7 +272,7 @@ int main(int argc, char** argv)
 
 	clWaitForEvents(argc-1, &command_events[0]);
 	cl_ulong start, end;
-	double duration, duration_in_ms
+	double duration, duration_in_ms;
 
 	for(int i = 0; i < argc - 1; i++) {
 		errno = clGetEventProfilingInfo(command_events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
