@@ -270,7 +270,6 @@ int main(int argc, char** argv)
 		clEnqueueMarker(queue, &copy_back_marker_event);
 	}
 
-	clWaitForEvents(argc-1, command_events);
 	cl_ulong start, end;
 	double duration, duration_in_ms;
 
