@@ -318,19 +318,19 @@ int main(int argc, char** argv)
 		char *test1_argv[2] = {argv[0], "1"};
 		main_sub(2, test1_argv);
 
-		printf("Test 2: %s 4 1", argv[0]);
+		printf("\nTest 2: %s 4 1\n", argv[0]);
 		char *test2_argv[3] = {argv[0], "4", "1"};
 		main_sub(3, test2_argv);
 
-		printf("Test 3: %s 5 3", argv[0]);
+		printf("\nTest 3: %s 5 3\n", argv[0]);
 		char *test3_argv[3] = {argv[0], "5", "3"};
 		main_sub(3, test3_argv);
 
-		printf("Test 4: %s 3 1 2", argv[0]);
+		printf("\nTest 4: %s 3 1 2\n", argv[0]);
 		char *test4_argv[4] = {argv[0], "3", "1", "2"};
 		main_sub(4, test4_argv);
 
-		printf("Test 5: %s 1 2 3 5", argv[0]);
+		printf("\nTest 5: %s 1 2 3 5\n", argv[0]);
 		char *test5_argv[5] = {argv[0], "1", "2", "3", "5"};
 		main_sub(5, test5_argv);
 
