@@ -16,6 +16,8 @@
 #include <sstream>
 #include <string.h>
 
+#include "info.hpp"
+
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
