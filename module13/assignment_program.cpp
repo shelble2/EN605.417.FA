@@ -237,6 +237,7 @@ int main(int argc, char** argv)
 	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
 	cl_event copy_back_marker_event = NULL;
+	cl_events command_events[argc-1];
 
 	for(int i = 1; i < argc; i++ ) {
 		//divide onto separate queues for experiment
@@ -258,9 +259,8 @@ int main(int argc, char** argv)
 		checkErr(errno, "clSetKernelArg()");
 
     	// Queue the kernel up for execution
-		cl_event event;
 		errno = clEnqueueNDRangeKernel(queue, kernel, 1, NULL,
-			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
+			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &command_events[i-1]);
 		clEnqueueBarrier(queue);
 
 		// Read the output buffer back to the Host
@@ -270,7 +270,21 @@ int main(int argc, char** argv)
 		clEnqueueMarker(queue, &copy_back_marker_event);
 	}
 
+	clWaitForEvents(argc-1, &command_events[0]);
+	cl_ulong start, end;
+	double duration, duration_in_ms
 
+	for(int i = 0; i < argc - 1; i++) {
+		errno = clGetEventProfilingInfo(command_events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
+		checkErr(errno, "clGetEventProfilingInfo: start");
+
+		errNum = clGetEventProfilingInfo(events[i], CL_PROFILING_COMMAND_END, sizeof(end), &end, NULL);
+		checkErr(errno, "clGetEventProfilingInfo: end");
+
+		duration = end - start;  // duration is in nanoseconds
+		duration_in_ms = duration / 1000000;
+		printf("command %d took %0.3fms\n", i+1, duration_in_ms);
+	}
 
 	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
@@ -278,6 +292,5 @@ int main(int argc, char** argv)
 	std::cout << std::endl;
 	std::cout << "Program completed successfully" << std::endl;
 
-	//TODO: cleanup
     return 0;
 }
