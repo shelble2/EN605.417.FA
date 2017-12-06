@@ -3,6 +3,13 @@
 // Assigment 13 Program
 // 5 December 2017
 //
+// This program allows the user to enter a series of commands to be executed on
+// an array of integers (initially filled with the value of their indices)
+// The execution of the commands is alternated between two command queues, and
+// events are used in order to guarantee that the commands are executed in the
+// correct order, without one queue proceeding before the other is finished.
+// Execute the program without any input to see usage.
+//
 // Pieces of boilerplate code adapted from:
 // ISBN-10:   0-321-74964-2
 // ISBN-13:   978-0-321-74964-2
@@ -203,6 +210,7 @@ int main(int argc, char** argv)
 		std::cerr << "Execution options can be one or more of the following: " << std::endl;
 		std::cerr << "\t1: add\n\t2: square\n\t3: tenfold (x10)" << std::endl;
 		std::cerr << "\t4: negate\n\t5: add left peer" << std::endl;
+		std::cerr << "\nFor example, '" << argv[0] << " 1 4 ' will result in the addition of each value to itself, followed by negation of the resultant value" << std::endl;
 
         return 1;
     }
