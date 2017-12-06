@@ -159,12 +159,11 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
  */
 int main(int argc, char** argv)
 {
-    cl_context context      = 0;
-    cl_command_queue queue1 = 0;
-	cl_command_queue queue2 = 0;
-    cl_program program      = 0;
-    cl_device_id device     = 0;
-    cl_kernel kernel        = 0;
+    cl_context context     = 0;
+    cl_command_queue queue = 0;
+    cl_program program     = 0;
+    cl_device_id device    = 0;
+    cl_kernel kernel       = 0;
     cl_int errno;
 
 	int *inputOutput;
@@ -181,11 +180,8 @@ int main(int argc, char** argv)
     // Create an OpenCL context on first available platform
     context = CreateContext();
 
-    // Create two queues on the first device available
-    // on the created context
-    queue1 = CreateCommandQueue(context, &device);
-
-	queue2 = CreateCommandQueue(context, &device);
+    // Create a queues on the first device available on the created context
+    queue = CreateCommandQueue(context, &device);
 
 	inputOutput = new int[NUM_BUFFER_ELEMENTS];
     for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++) {
@@ -201,47 +197,52 @@ int main(int argc, char** argv)
     program = CreateProgram(context, device, "assignment_kernels.cl");
 
 	for(int i = 1; i < argc; i++ ) {
+
+		// Create the kernel for the passed command
 		int command = atoi(argv[i]);
-		printf("Executing command: %d\n", command);
 		switch(command) {
 			case ADD:
 				printf("Going to add\n");
+				kernel = clCreateKernel(program, "add", NULL);
 				break;
 			case SQUARE:
 				printf("Going to square\n");
+				kernel = clCreateKernel(program, "square", NULL);
 				break;
 			case TENFOLD:
 				printf("Going to x10\n");
+				kernel = clCreateKernel(program, "tenfold", NULL);
 				break;
 			case NEGATE:
 				printf("Going to negate\n");
+				kernel = clCreateKernel(program, "negate", NULL);
 				break;
 			case ADD_LEFT_PEER:
 				printf("Going to add left peer\n");
+				kernel = clCreateKernel(program, "add_left_peer", NULL);
 				break;
 			default:
 				printf("Invalid command %d, ignoring\n", command);
 		}
-	}
-    // Create OpenCL kernel
-    kernel = clCreateKernel(program, "tenfold", NULL);
 
-	errno = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
-    checkErr(errno, "clSetKernelArg(cube)");
+		// Set the kernel args
+		errno = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffer);
+		checkErr(errno, "clSetKernelArg()");
 
-	errno = clEnqueueWriteBuffer(queue1, buffer, CL_TRUE, 0,
-      sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, NULL, NULL);
+		errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
+	      sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, NULL, NULL);
 
-	cl_event event;
-	size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
+		cl_event event;
+		size_t globalWorkSize = NUM_BUFFER_ELEMENTS;
 
-    // Queue the kernel up for execution
-	errno = clEnqueueNDRangeKernel(queue1, kernel, 1, NULL,
-		(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
+    	// Queue the kernel up for execution
+		errno = clEnqueueNDRangeKernel(queue1, kernel, 1, NULL,
+			(const size_t*)&globalWorkSize, (const size_t*)NULL, 0, 0, &event);
 
-    // Read the output buffer back to the Host
-	clEnqueueReadBuffer(queue1, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
+    	// Read the output buffer back to the Host
+		clEnqueueReadBuffer(queue1, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
             (void*)inputOutput, 0, NULL, NULL);
+	}
 
 	for (unsigned elems = 0; elems < NUM_BUFFER_ELEMENTS; elems++) {
 		std::cout << " " << inputOutput[elems];
