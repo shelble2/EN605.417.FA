@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 		if(copy_back_marker_event != NULL) {
 			clEnqueueWaitForEvents(copy_back_marker_event);
 		}
-		
+
 		// writing is waiting for event of other queue to complete
 		errno = clEnqueueWriteBuffer(queue, buffer, CL_TRUE, 0,
 		  sizeof(int) * NUM_BUFFER_ELEMENTS, (void*)inputOutput, 0, events, NULL);
@@ -258,7 +258,7 @@ int main(int argc, char** argv)
 		clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof(int) * NUM_BUFFER_ELEMENTS,
 			(void*)inputOutput, 0, NULL, NULL);
 
-		clEnqueueMarker(&copy_back_marker_event);
+		clEnqueueMarker(queue, &copy_back_marker_event);
 	}
 
 
