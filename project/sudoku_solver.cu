@@ -20,6 +20,7 @@
 #define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
 
 #define LOOP_LIMIT 20  // Just in case we hit one that needs a guess to finish
+#define ASCII_TO_INT 48
 
 /**
  * Returns the current time
@@ -153,26 +154,31 @@ int check_if_done(unsigned int *puzzle)
 unsigned int *load_puzzle(char *puzzle, int cells)
 {
 	int i;
-/*	unsigned int hardcoded_sudoku[CELLS] = {0,0,4,3,0,0,2,0,9,
-		0,0,5,0,0,9,0,0,1,
-		0,7,0,0,6,0,0,4,3,
-		0,0,6,0,0,2,0,8,7,
-		1,9,0,0,0,7,4,0,0,
-		0,5,0,0,8,3,0,0,0,
-		6,0,0,0,0,0,1,0,5,
-		0,0,3,5,0,8,6,9,0,
-		0,4,2,9,1,0,3,0,0};*/
 	unsigned int *out = (unsigned int *) malloc(cells *sizeof(unsigned int));
 	for (i = 0; i < cells; i++) {
-	    out[i] = puzzle[i] - 48;
+	    out[i] = puzzle[i] - ASCII_TO_INT;
 	}
 	return out;
+}
+
+void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
+	unsigned int *solution, int count, float duration)
+{
+	int i = 0;
+	for(i = 0; i < CELLS; i++){
+		fprintf(out_fd, "%c", (char)puzzle[i] + ASCII_TO_INT);
+	}
+	fprintf(out_fd, ",");
+	for(i = 0; i< CELLS; i++){
+		fprintf(out_fd, "%c", (char)solution[i] + ASCII_TO_INT);
+	}
+	fprintf(out_fd, ",%d,%0.3f\n", count, duration);
 }
 
 /**
  * Solves the passed puzzle
  */
-int solve_puzzle(unsigned int *h_puzzle, int cells)
+int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 {
 	int ret = 0;
 	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
@@ -223,6 +229,10 @@ int solve_puzzle(unsigned int *h_puzzle, int cells)
 
 	printf("\tSolved in %d increments and %fms\n", count, duration);
 
+	if(metrics_fd != NULL) {
+		output_metrics_to_file(metrics_fd, h_puzzle, h_pinned_puzzle, count, duration);
+	}
+
 	/* Free the GPU memory */
 	cudaFree(d_puzzle);
 	cudaFree(d_solution);
@@ -253,15 +263,27 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	//TODO: make this a command line option instead of Hardcoded
+	char *metrics_fn = "metrics.csv";
+	FILE *metrics_fp = fopen(metrics_fn, "w");
+	if(metrics_fp == NULL) {
+		printf("Failed to open metrics file for writing\n");
+		close(input_fp)
+		return -1;
+	}
+
 	// Solve each puzzle in the input file
 	char *line = NULL;
 	size_t len = 0;
 	while(getline(&line, &len, input_fp) != -1) {
 		unsigned int *h_puzzle = load_puzzle(line, CELLS);
-		solve_puzzle(h_puzzle, CELLS);
+		solve_puzzle(h_puzzle, CELLS, metrics_fp);
 		//TODO: Maybe would be better if it returned the result and
 		// it's saved in file.
 	}
+
+	close(input_fp);
+	close(metrics_fp);
 
 	return EXIT_SUCCESS;
 }
