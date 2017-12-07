@@ -21,8 +21,14 @@ be alternated to achieve a faster solution.
 It also needs to ingest the sudoku puzzle(s) from a file or [1] instead of using
 the hardcoded one.
 
+Lessons so far
+--------------
+- sharing across blocks
+- debug prints
+- better algorithms
+
 ### TODO
-- ingest sudoku puzzles from site
+- ingest sudoku puzzles from site/file
 - solve a given sudoku puzzle
   - another kernel that solves by dimension (check a row for last values to fill)
   - switch to solving by constraint

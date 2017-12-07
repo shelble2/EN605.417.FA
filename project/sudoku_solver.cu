@@ -10,11 +10,6 @@
  * Should compile with `$ nvcc sudoku_solver.cu -o sudoku_solver` and run with
  * `$ ./sudoku_solver`
  */
-/*
-Lessons so far
-- sharing accross blocks
-- debug prints
-*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +18,8 @@ Lessons so far
 #define B_DIM 3           // dimension of one sudoku block
 #define CELLS DIM * DIM   // 81
 #define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
+
+#define LOOP_LIMIT 20  // Just in case we hit one that needs a guess to finish
 
 /**
  * Returns the current time
@@ -149,12 +146,13 @@ int check_if_done(unsigned int *puzzle)
 	return 0;
 }
 
-void main_sub()
+/**
+ * Function to load the puzzle into the array of ints
+ * Hardcoded to this puzzle for now
+ */
+unsigned int *load_puzzle()
 {
-	/* Calculate the size of the array */
-	int array_size_in_bytes = (sizeof(unsigned int) * (CELLS));
-
-	unsigned int h_puzzle[CELLS] = {0,0,4,3,0,0,2,0,9,
+	return {0,0,4,3,0,0,2,0,9,
 		0,0,5,0,0,9,0,0,1,
 		0,7,0,0,6,0,0,4,3,
 		0,0,6,0,0,2,0,8,7,
@@ -163,16 +161,23 @@ void main_sub()
 		6,0,0,0,0,0,1,0,5,
 		0,0,3,5,0,8,6,9,0,
 		0,4,2,9,1,0,3,0,0};
-	unsigned int *h_pinned_puzzle;
+}
+
+/**
+ * Solves the passed puzzle
+ */
+int solve_puzzle(unsigned int *h_puzzle, int cells)
+{
+	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
 
 	//pin it and copy to pinned memory
+	unsigned int *h_pinned_puzzle;
 	cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
 	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
 	/* Declare and allocate pointers for GPU based parameters */
 	unsigned int *d_puzzle;
 	unsigned int *d_solution;
-
 	cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
 	cudaMalloc((void **)&d_solution, array_size_in_bytes);
 
@@ -181,7 +186,6 @@ void main_sub()
 
 	/* Execute the kernel and keep track of start and end time for duration */
 	float duration = 0;
-
 	cudaEvent_t start_time = get_time();
 
 	int count = 0;
@@ -195,7 +199,7 @@ void main_sub()
 		cudaMemcpy(h_pinned_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
 		count = count + 1;
-	} while (check_if_done(h_pinned_puzzle) == 1);
+	} while ((check_if_done(h_pinned_puzzle) == 1) && (count < LOOP_LIMIT));
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
@@ -216,30 +220,22 @@ void main_sub()
 }
 
 /**
- * Prints the correct usage of this file
- * @name is the name of the executable (argv[0])
- */
-void print_usage(char *name)
-{
-	printf("Usage: %s \n", name);
-}
-
-/**
  * Entry point for execution. Checks command line arguments
  * then passes execution to subordinate function
  */
 int main(int argc, char *argv[])
 {
-	/* Check the number of arguments, print usage if wrong */
 	if(argc != 1) {
 		printf("Error: Incorrect number of command line arguments\n");
-		print_usage(argv[0]);
+		printf("Usage: %s \n", argv[0]);
 		exit(-1);
 	}
-
 	printf("\n");
 
-	main_sub();
+	/* Calculate the size of the array */
+	unsigned int h_puzzle[CELLS] = load_puzzle();
 
-	return EXIT_SUCCESS;
+	int ret = solve_puzzle(h_puzzle, CELLS);
+
+	return ret;
 }
