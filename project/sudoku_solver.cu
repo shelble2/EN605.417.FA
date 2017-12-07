@@ -150,7 +150,7 @@ int check_if_done(unsigned int *puzzle)
  * Function to load the puzzle into the array of ints
  * Hardcoded to this puzzle for now
  */
-unsigned int *load_puzzle(int cells)
+unsigned int *load_puzzle(char *puzzle, int cells)
 {
 	int i;
 	unsigned int hardcoded_sudoku[CELLS] = {0,0,4,3,0,0,2,0,9,
@@ -164,7 +164,7 @@ unsigned int *load_puzzle(int cells)
 		0,4,2,9,1,0,3,0,0};
 	unsigned int *out = (unsigned int *) malloc(cells *sizeof(unsigned int));
 	for (i = 0; i < cells; i++) {
-	    out[i] = hardcoded_sudoku[i];
+	    out[i] = puzzle[i];
 	}
 	return out;
 }
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 	char *line = NULL;
 	size_t len = 0;
 	while(getline(&line, &len, input_fp) != -1) {
-		unsigned int *h_puzzle = load_puzzle(CELLS);
+		unsigned int *h_puzzle = load_puzzle(line, CELLS);
 		solve_puzzle(h_puzzle, CELLS);
 		//TODO: Maybe would be better if it returned the result and
 		// it's saved in file.
