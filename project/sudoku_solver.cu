@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 	printf("\n");
 
 	/* Calculate the size of the array */
-	unsigned int h_puzzle[CELLS] = load_puzzle(CELLS);
+	unsigned int *h_puzzle = load_puzzle(CELLS);
 
 	int ret = solve_puzzle(h_puzzle, CELLS);
 
