@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
 	FILE *metrics_fp = fopen(metrics_fn, "w");
 	if(metrics_fp == NULL) {
 		printf("Failed to open metrics file for writing\n");
-		close(input_fp)
+		fclose(input_fp);
 		return -1;
 	}
 
@@ -282,8 +282,8 @@ int main(int argc, char *argv[])
 		// it's saved in file.
 	}
 
-	close(input_fp);
-	close(metrics_fp);
+	fclose(input_fp);
+	fclose(metrics_fp);
 
 	return EXIT_SUCCESS;
 }
