@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 #define DIM 9             // Customary sudoku
 #define B_DIM 3           // dimension of one sudoku block
@@ -256,10 +257,9 @@ int main(int argc, char *argv[])
 	// Solve each puzzle in the input file
 	char *line = NULL;
 	size_t len = 0;
-	ssize_t read = 0;
-	while(read = getline(&line, &len, input_fp) != -1) {
+	while(getline(&line, &len, input_fp) != -1) {
 		unsigned int *h_puzzle = load_puzzle(CELLS);
-		ret = solve_puzzle(h_puzzle, CELLS);
+		solve_puzzle(h_puzzle, CELLS);
 		//TODO: Maybe would be better if it returned the result and
 		// it's saved in file.
 	}
