@@ -153,7 +153,7 @@ int check_if_done(unsigned int *puzzle)
 unsigned int *load_puzzle(char *puzzle, int cells)
 {
 	int i;
-	unsigned int hardcoded_sudoku[CELLS] = {0,0,4,3,0,0,2,0,9,
+/*	unsigned int hardcoded_sudoku[CELLS] = {0,0,4,3,0,0,2,0,9,
 		0,0,5,0,0,9,0,0,1,
 		0,7,0,0,6,0,0,4,3,
 		0,0,6,0,0,2,0,8,7,
@@ -161,10 +161,10 @@ unsigned int *load_puzzle(char *puzzle, int cells)
 		0,5,0,0,8,3,0,0,0,
 		6,0,0,0,0,0,1,0,5,
 		0,0,3,5,0,8,6,9,0,
-		0,4,2,9,1,0,3,0,0};
+		0,4,2,9,1,0,3,0,0};*/
 	unsigned int *out = (unsigned int *) malloc(cells *sizeof(unsigned int));
 	for (i = 0; i < cells; i++) {
-	    out[i] = puzzle[i];
+	    out[i] = puzzle[i] - 48;
 	}
 	return out;
 }
