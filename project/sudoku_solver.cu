@@ -239,17 +239,30 @@ int solve_puzzle(unsigned int *h_puzzle, int cells)
  */
 int main(int argc, char *argv[])
 {
-	if(argc != 1) {
+	if(argc != 2) {
 		printf("Error: Incorrect number of command line arguments\n");
-		printf("Usage: %s \n", argv[0]);
+		printf("Usage: %s [input_file]\n", argv[0]);
 		exit(-1);
 	}
 	printf("\n");
 
-	/* Calculate the size of the array */
-	unsigned int *h_puzzle = load_puzzle(CELLS);
+	char *input_fn = argv[1];
+	FILE *input_fp = open(input_fn, "r");
+	if(input_fp == NULL) {
+		printf("Failed to open input file %s\n", input_fn);
+		return -1;
+	}
 
-	int ret = solve_puzzle(h_puzzle, CELLS);
+	// Solve each puzzle in the input file
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t read = 0;
+	while(read = getline(&line, &len, input_fp) != -1) {
+		unsigned int *h_puzzle = load_puzzle(CELLS);
+		ret = solve_puzzle(h_puzzle, CELLS);
+		//TODO: Maybe would be better if it returned the result and
+		// it's saved in file.
+	}
 
-	return ret;
+	return EXIT_SUCCESS;
 }
