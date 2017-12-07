@@ -13,7 +13,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 
 #define DIM 9             // Customary sudoku
 #define B_DIM 3           // dimension of one sudoku block
@@ -248,7 +247,7 @@ int main(int argc, char *argv[])
 	printf("\n");
 
 	char *input_fn = argv[1];
-	FILE *input_fp = open(input_fn, "r");
+	FILE *input_fp = fopen(input_fn, "r");
 	if(input_fp == NULL) {
 		printf("Failed to open input file %s\n", input_fn);
 		return -1;
