@@ -152,7 +152,8 @@ int check_if_done(unsigned int *puzzle)
  */
 unsigned int *load_puzzle(int cells)
 {
-	unsigned int out[cells] = {0,0,4,3,0,0,2,0,9,
+	int i;
+	unsigned int hardcoded_sudoku[CELLS] = {0,0,4,3,0,0,2,0,9,
 		0,0,5,0,0,9,0,0,1,
 		0,7,0,0,6,0,0,4,3,
 		0,0,6,0,0,2,0,8,7,
@@ -161,6 +162,10 @@ unsigned int *load_puzzle(int cells)
 		6,0,0,0,0,0,1,0,5,
 		0,0,3,5,0,8,6,9,0,
 		0,4,2,9,1,0,3,0,0};
+	unsigned int *out = (unsigned int *) malloc(cells *sizeof(unsigned int));
+	for (i = 0; i < cells; i++) {
+	    out[i] = hardcoded_sudoku[i];
+	}
 	return out;
 }
 
@@ -205,7 +210,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells)
 
 	if(count == LOOP_LIMIT) {
 		ret = -1;
-		printf("Could not find a solution within %d iterations. Here's as far as we got..\n");
+		printf("Could not find a solution within %d iterations. Here's as far as we got..\n", LOOP_LIMIT);
 	}
 
 	cudaEvent_t end_time = get_time();
