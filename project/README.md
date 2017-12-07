@@ -16,16 +16,22 @@ Current Status Summary
 Currently, this program solves sudoku puzzles contained in a passed input file,
 (The file included is the first hundred puzzles from [1]) by calling the solve_by_possibility kernel function until a host function determines that the puzzle has been solved. It only uses the solve_by_possibility kernel. In my
 TODO, I identify other approaches that could be alternated to achieve a faster
-solution.
+solution. Output is also placed in a metrics.csv file, in the format: puzzle,
+solution, iterations, duration(ms). Sudoku-style output is sent to STDOUT.
 
 Lessons so far
 --------------
 - sharing across blocks
 - debug prints
 - first hundred are solvable
-- better algorithms
+- output to csv easier than expected
 
 ### TODO
+- make command line args more usable (optparse or like)
+  - verbosity flag?
+  - could also have flags for which kernel(s) to run
+- clean up code by splitting into files
+- REMEMBER to gather metrics at various stages for final report and presentation
 - different algorithms
   - another kernel that solves by dimension (check a row for last values to fill)
   - switch to solving by constraint
@@ -33,14 +39,8 @@ Lessons so far
   - how does this change the blocks/threading. One puzzle per block? would that
     work?
   - make sure things are properly asnychronous
-- simple program: check if the answer is correct
-  - could either double-check that all rules are followed, or
-  - simply check against the answer in the database
 - speed - is the copying back and forth really bad? Can it be async?
-- output metrics to csv
-- make command line args more usable (optparse or like)
-  - verbosity flag? 
-- clean up code by splitting into files
+
 
 ### Optional Extras
 - larger puzzles going > single digits
@@ -49,5 +49,6 @@ Lessons so far
   - started in module 8 work. Generates a grid of the appropriate size filled with
     ints in the right range, but it doesn't follow the rules of sudoku
 - CI
+- check that the answer is correct. For now, just checking against answer in db
 
 [1] https://www.kaggle.com/bryanpark/sudoku/kernels
