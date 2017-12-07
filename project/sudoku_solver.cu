@@ -150,9 +150,9 @@ int check_if_done(unsigned int *puzzle)
  * Function to load the puzzle into the array of ints
  * Hardcoded to this puzzle for now
  */
-unsigned int *load_puzzle()
+unsigned int *load_puzzle(int cells)
 {
-	return {0,0,4,3,0,0,2,0,9,
+	unsigned int out[cells] = {0,0,4,3,0,0,2,0,9,
 		0,0,5,0,0,9,0,0,1,
 		0,7,0,0,6,0,0,4,3,
 		0,0,6,0,0,2,0,8,7,
@@ -161,6 +161,7 @@ unsigned int *load_puzzle()
 		6,0,0,0,0,0,1,0,5,
 		0,0,3,5,0,8,6,9,0,
 		0,4,2,9,1,0,3,0,0};
+	return out;
 }
 
 /**
@@ -168,6 +169,7 @@ unsigned int *load_puzzle()
  */
 int solve_puzzle(unsigned int *h_puzzle, int cells)
 {
+	int ret = 0;
 	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
 
 	//pin it and copy to pinned memory
@@ -199,7 +201,12 @@ int solve_puzzle(unsigned int *h_puzzle, int cells)
 		cudaMemcpy(h_pinned_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
 		count = count + 1;
-	} while ((check_if_done(h_pinned_puzzle) == 1) && (count < LOOP_LIMIT));
+	} while ((check_if_done(h_pinned_puzzle) == 1) && (count <= LOOP_LIMIT));
+
+	if(count == LOOP_LIMIT) {
+		ret = -1;
+		printf("Could not find a solution within %d iterations. Here's as far as we got..\n");
+	}
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
@@ -217,6 +224,8 @@ int solve_puzzle(unsigned int *h_puzzle, int cells)
 
 	/* Free the pinned CPU memory */
 	cudaFreeHost(h_pinned_puzzle);
+
+	return ret;
 }
 
 /**
@@ -233,7 +242,7 @@ int main(int argc, char *argv[])
 	printf("\n");
 
 	/* Calculate the size of the array */
-	unsigned int h_puzzle[CELLS] = load_puzzle();
+	unsigned int h_puzzle[CELLS] = load_puzzle(CELLS);
 
 	int ret = solve_puzzle(h_puzzle, CELLS);
 
