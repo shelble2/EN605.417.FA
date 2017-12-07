@@ -37,15 +37,15 @@ __host__ cudaEvent_t get_time(void)
  * can fit in a given cell, based on the contents of its row, column, and block;
  * then fill the cell with that value.
  */
-__global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved)
+__global__ void solve_by_possibility(int *ordered, int *solved)
 {
-	__shared__ unsigned int tmp[CELLS];
+	__shared__ int tmp[CELLS];
 
-	const unsigned int my_cell_id = threadIdx.x;
-	const unsigned int col = my_cell_id % DIM;
-	const unsigned int row = (my_cell_id - col) / DIM;
+	const int my_cell_id = threadIdx.x;
+	const int col = my_cell_id % DIM;
+	const int row = (my_cell_id - col) / DIM;
 
-	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
+	int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
 	tmp[my_cell_id] = ordered[my_cell_id];
 
@@ -101,7 +101,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
  * Prints the passed array like a sudoku puzzle in ascii art
  * @numbers array to print
  */
-void sudoku_print(unsigned int* numbers)
+void sudoku_print(int* numbers)
 {
 	int i;
 	int j;
@@ -136,7 +136,7 @@ void sudoku_print(unsigned int* numbers)
  * puzzle- sudoku puzzle array
  * Returns 0 if done, 1 if not
  */
-int check_if_done(unsigned int *puzzle)
+int check_if_done(int *puzzle)
 {
 	for(int i = 0; i < CELLS; i++) {
 		if(puzzle[i] == 0) {
@@ -150,10 +150,10 @@ int check_if_done(unsigned int *puzzle)
  * Function to load the puzzle into the array of ints
  * Hardcoded to this puzzle for now
  */
-unsigned int *load_puzzle(char *puzzle, int cells)
+int *load_puzzle(char *puzzle, int cells)
 {
 	int i;
-	unsigned int hardcoded_sudoku[CELLS] = {0,0,4,3,0,0,2,0,9,
+/*	unsigned int hardcoded_sudoku[CELLS] = {0,0,4,3,0,0,2,0,9,
 		0,0,5,0,0,9,0,0,1,
 		0,7,0,0,6,0,0,4,3,
 		0,0,6,0,0,2,0,8,7,
@@ -161,10 +161,10 @@ unsigned int *load_puzzle(char *puzzle, int cells)
 		0,5,0,0,8,3,0,0,0,
 		6,0,0,0,0,0,1,0,5,
 		0,0,3,5,0,8,6,9,0,
-		0,4,2,9,1,0,3,0,0};
-	unsigned int *out = (unsigned int *) malloc(cells *sizeof(unsigned int));
+		0,4,2,9,1,0,3,0,0};*/
+	int *out = (int *) malloc(cells *sizeof(int));
 	for (i = 0; i < cells; i++) {
-	    out[i] = puzzle[i];
+	    out[i] = atoi(puzzle[i]);
 	}
 	return out;
 }
@@ -172,19 +172,19 @@ unsigned int *load_puzzle(char *puzzle, int cells)
 /**
  * Solves the passed puzzle
  */
-int solve_puzzle(unsigned int *h_puzzle, int cells)
+int solve_puzzle(int *h_puzzle, int cells)
 {
 	int ret = 0;
-	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
+	int array_size_in_bytes = (sizeof(int) * (cells));
 
 	//pin it and copy to pinned memory
-	unsigned int *h_pinned_puzzle;
+	int *h_pinned_puzzle;
 	cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
 	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
 	/* Declare and allocate pointers for GPU based parameters */
-	unsigned int *d_puzzle;
-	unsigned int *d_solution;
+	int *d_puzzle;
+	int *d_solution;
 	cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
 	cudaMalloc((void **)&d_solution, array_size_in_bytes);
 
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 	char *line = NULL;
 	size_t len = 0;
 	while(getline(&line, &len, input_fp) != -1) {
-		unsigned int *h_puzzle = load_puzzle(line, CELLS);
+		int *h_puzzle = load_puzzle(line, CELLS);
 		solve_puzzle(h_puzzle, CELLS);
 		//TODO: Maybe would be better if it returned the result and
 		// it's saved in file.
