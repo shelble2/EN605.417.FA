@@ -40,6 +40,7 @@ __global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved
 		}
 
 		//Go through all in the same block
+		// TODO: these could just be integer division instead?
 		int s_row = row - (row % B_DIM);
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + B_DIM); i++) {

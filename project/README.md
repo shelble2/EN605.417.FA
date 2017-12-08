@@ -24,17 +24,23 @@ Lessons so far
 - debug prints
 - first hundred are solvable
 - output to csv easier than expected
+- makefiles are hard
+- code review thanks
+- online strategies (naked pair, solve by constraint)
 
 ### TODO
-- incorporate code review comments
 - make command line args more usable (optparse or like)
   - verbosity flag?
   - could also have flags for which kernel(s) to run
-- clean up code by splitting into files
+- error check on memory alloc calls
+- TODO's in code
 - REMEMBER to gather metrics at various stages for final report and presentation
 - different algorithms
   - another kernel that solves by dimension (check a row for last values to fill)
   - switch to solving by constraint
+  - 'naked pairs' - if two cells both are between a pair, you can't tell which
+  	has which, but you can tell that they contain both. So can eliminate from
+	other dependencies.
 - Perfect solving a lot of sudoku puzzles at once
   - how does this change the blocks/threading. One puzzle per block? would that
     work?

@@ -40,6 +40,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 	float duration = 0;
 	cudaEvent_t start_time = get_time();
 
+	//TODO: make this a separate function
 	int count = 0;
 	do {
 		/* Copy the CPU memory to the GPU memory */
