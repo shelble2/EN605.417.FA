@@ -6,13 +6,8 @@
  * This file contains all of the kernels for the sudoku solver project.
  */
 
- #define DIM 9             // Customary sudoku
- #define B_DIM 3           // dimension of one sudoku block
- #define CELLS DIM * DIM   // 81
- #define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
+ #include "sudoku_utils.h"
 
- #define LOOP_LIMIT 20  // Just in case we hit one that needs a guess to finish
- #define ASCII_TO_INT 48
 
 /**
  * Kernel function that solves based on last available. If only one number

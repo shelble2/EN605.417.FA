@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "sudoku_utils.h"
+#include "solver_kernels.h"
+
 /**
  * Solves the passed puzzle
  */

@@ -7,6 +7,9 @@
  * functions for the sudoku solver project.
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #define DIM 9             // Customary sudoku
 #define B_DIM 3           // dimension of one sudoku block
 #define CELLS DIM * DIM   // 81
@@ -52,5 +55,4 @@ unsigned int *load_puzzle(char *puzzle, int cells);
  * outputs to the csv file in the format
  * puzzle,solution,count,duration
  */
-void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
-	unsigned int *solution, int count, float duration);
+void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle, unsigned int *solution, int count, float duration);
