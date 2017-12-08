@@ -193,7 +193,8 @@ int main(int argc, char *argv[])
 	cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
-	printf("Solved %d puzzles, partially solved %d puzzles, and encountered %d errors in %0.3f\n", solved, unsolvable, errors, duration);
+	printf("\nFrom a dataset of %d puzzles,\n", solved + unsolvable + errors);
+	printf("Solved %d, partially solved %d, and encountered %d errors in %0.3fms\n\n", solved, unsolvable, errors, duration);
 
 	fclose(input_fp);
 	fclose(metrics_fp);
