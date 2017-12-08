@@ -176,7 +176,6 @@ int main(int argc, char *argv[])
 	int errors = 0;
 	int unsolvable = 0;
 	while(getline(&line, &len, input_fp) != -1) {
-		count = count + 1;
 		unsigned int *h_puzzle = load_puzzle(line, CELLS);
 		ret = solve_puzzle(h_puzzle, CELLS, metrics_fp);
 
@@ -184,7 +183,7 @@ int main(int argc, char *argv[])
 		if(ret == -1) {
 			errors = errors + 1;
 		} else if(ret == LOOP_LIMIT) {
-			unsolvable = unsolvale + 1;
+			unsolvable = unsolvable + 1;
 		} else {
 			solved = solved + 1;
 		}
