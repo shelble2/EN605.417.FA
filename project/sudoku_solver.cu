@@ -15,17 +15,16 @@
 #include "solver_kernels.cuh"
 
 /**
- * Solves the passed puzzle
+ * Loops over the kernel until the puzzle is solved or LOOP_LIMIT is reached
+ * Returns the number of iterations performed, and **solution is set to the
+ * end result.
+ * hp_puzzle is the host-pinned puzzle of unsigned ints
+ * cells is the number of cells in the puzzle
  */
-int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
+int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solution)
 {
-	int ret = 0;
+	int count = 0;
 	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
-
-	//pin it and copy to pinned memory
-	unsigned int *h_pinned_puzzle;
-	cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
-	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
 	/* Declare and allocate pointers for GPU based parameters */
 	unsigned int *d_puzzle;
@@ -33,20 +32,12 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 	cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
 	cudaMalloc((void **)&d_solution, array_size_in_bytes);
 
-	printf("Puzzle:\n");
-	sudoku_print(h_puzzle);
-
-	/* Execute the kernel and keep track of start and end time for duration */
-	float duration = 0;
-	cudaEvent_t start_time = get_time();
-
-	//TODO: make this a separate function
-	int count = 0;
+	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
 		cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
 
-		solve_by_possibility<<<1, CELLS>>>(d_puzzle, d_solution);
+		solve_by_possibility<<<1, cells>>>(d_puzzle, d_solution);
 
 		/* Copy the changed GPU memory back to the CPU */
 		cudaMemcpy(h_pinned_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
@@ -55,13 +46,44 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 	} while ((check_if_done(h_pinned_puzzle) == 1) && (count <= LOOP_LIMIT));
 
 	if(count == LOOP_LIMIT) {
-		ret = -1;
-		printf("Could not find a solution within %d iterations. Here's as far as we got..\n", LOOP_LIMIT);
+		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
 	}
+
+	*solution = h_pinned_puzzle;
+	/* Free the GPU memory */
+	cudaFree(d_puzzle);
+	cudaFree(d_solution);
+	return count;
+}
+
+/**
+ * Solves the passed puzzle
+ * h_puzzle is the host array of ints that form the puzzle,
+ * cells is the number of cells in the puzzle
+ * metrics_fd is an open file descriptor to the output file
+ */
+int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
+{
+	int ret = 0;
+	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
+
+	//pin it and copy to pinned memory
+	unsigned int *h_pinned_puzzle;
+	unsigned int *solution;
+	cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
+	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
+
+	printf("Puzzle:\n");
+	sudoku_print(h_puzzle);
+
+	/* Execute the kernel and keep track of start and end time for duration */
+	float duration = 0;
+	cudaEvent_t start_time = get_time();
+
+	count = execute_kernel_loop(h_pinned_puzzle, cells, &solution);
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
-
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
 	printf("Solution:\n");
@@ -73,13 +95,8 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 		output_metrics_to_file(metrics_fd, h_puzzle, h_pinned_puzzle, count, duration);
 	}
 
-	/* Free the GPU memory */
-	cudaFree(d_puzzle);
-	cudaFree(d_solution);
-
 	/* Free the pinned CPU memory */
 	cudaFreeHost(h_pinned_puzzle);
-
 	return ret;
 }
 
@@ -118,8 +135,6 @@ int main(int argc, char *argv[])
 	while(getline(&line, &len, input_fp) != -1) {
 		unsigned int *h_puzzle = load_puzzle(line, CELLS);
 		solve_puzzle(h_puzzle, CELLS, metrics_fp);
-		//TODO: Maybe would be better if it returned the result and
-		// it's saved in file.
 	}
 
 	fclose(input_fp);
