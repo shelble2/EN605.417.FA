@@ -141,6 +141,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
  */
 int main(int argc, char *argv[])
 {
+	int ret = 0;
 	if(argc != 2) {
 		printf("Error: Incorrect number of command line arguments\n");
 		printf("Usage: %s [input_file]\n", argv[0]);
@@ -164,13 +165,36 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	/* Keep track of total duration */
+	float duration = 0;
+	cudaEvent_t start_time = get_time();
+
 	// Solve each puzzle in the input file
 	char *line = NULL;
 	size_t len = 0;
+	int solved = 0;
+	int errors = 0;
+	int unsolvable = 0;
 	while(getline(&line, &len, input_fp) != -1) {
+		count = count + 1;
 		unsigned int *h_puzzle = load_puzzle(line, CELLS);
-		solve_puzzle(h_puzzle, CELLS, metrics_fp);
+		ret = solve_puzzle(h_puzzle, CELLS, metrics_fp);
+
+		// Keep track of the statuses coming out
+		if(ret == -1) {
+			errors = errors + 1;
+		} else if(ret == LOOP_LIMIT) {
+			unsolvable = unsolvale + 1;
+		} else {
+			solved = solved + 1;
+		}
 	}
+
+	cudaEvent_t end_time = get_time();
+	cudaEventSynchronize(end_time);
+	cudaEventElapsedTime(&duration, start_time, end_time);
+
+	printf("Solved %d puzzles, partially solved %d puzzles, and encountered %d errors in %0.3f\n", solved, unsolvable, errors, duration);
 
 	fclose(input_fp);
 	fclose(metrics_fp);
