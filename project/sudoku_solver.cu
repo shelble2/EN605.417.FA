@@ -16,8 +16,8 @@
 
 /**
  * Loops over the kernel until the puzzle is solved or LOOP_LIMIT is reached
- * Returns the number of iterations performed, and **solution is set to the
- * end result.
+ * On success, returns the number of iterations performed, and **solution is
+ * set to the end result. Returns -1 on failure.
  * hp_puzzle is the host-pinned puzzle of unsigned ints
  * cells is the number of cells in the puzzle
  */
@@ -25,22 +25,44 @@ int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solut
 {
 	int count = 0;
 	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
+	cudaError cuda_ret;
+	*solution = NULL;
 
 	/* Declare and allocate pointers for GPU based parameters */
 	unsigned int *d_puzzle;
 	unsigned int *d_solution;
-	cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
-	cudaMalloc((void **)&d_solution, array_size_in_bytes);
+	cuda_ret = cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
+	if(cuda_ret != cudaSuccess) {
+		printf("ERROR in cudaMalloc for d_puzzle\n");
+		count = -1;
+		goto malloc_puzzle_error;
+	}
+	cuda_ret = cudaMalloc((void **)&d_solution, array_size_in_bytes);
+	if(cuda_ret != cudaSuccess) {
+		printf("ERROR in cudaMalloc for d_solution\n");
+		count = -1;
+		goto malloc_solution_error;
+	}
 
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
-		cudaMemcpy(d_puzzle, hp_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
+		cuda_ret = cudaMemcpy(d_puzzle, hp_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
+		if(cuda_ret != cudaSuccess) {
+			printf("ERROR memcpy host to device\n");
+			count = -1;
+			goto memcpy_error;
+		}
 
 		solve_by_possibility<<<1, cells>>>(d_puzzle, d_solution);
 
 		/* Copy the changed GPU memory back to the CPU */
 		cudaMemcpy(hp_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+		if(cuda_ret != cudaSuccess) {
+			printf("ERROR memcpy host to device\n");
+			count = -1;
+			goto memcpy_error;
+		}
 
 		count = count + 1;
 	} while ((check_if_done(hp_puzzle) == 1) && (count <= LOOP_LIMIT));
@@ -50,9 +72,12 @@ int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solut
 	}
 
 	*solution = hp_puzzle;
-	/* Free the GPU memory */
-	cudaFree(d_puzzle);
+
+memcpy_error:
 	cudaFree(d_solution);
+malloc_solution_error:
+	cudaFree(d_puzzle);
+malloc_puzzle_error:
 	return count;
 }
 
@@ -66,11 +91,16 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 {
 	int ret = 0;
 	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
+	cudaError cuda_ret;
 
 	//pin it and copy to pinned memory
 	unsigned int *h_pinned_puzzle;
 	unsigned int *solution;
-	cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
+	cuda_ret = cudaMallocHost((void **)&h_pinned_puzzle, array_size_in_bytes);
+	if(cuda_ret != cudaSuccess) {
+		printf("Error mallocing pinned host memory\n");
+		return -1;
+	}
 	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
 	printf("Puzzle:\n");
@@ -81,6 +111,11 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 	cudaEvent_t start_time = get_time();
 
 	int count = execute_kernel_loop(h_pinned_puzzle, cells, &solution);
+	if(count <= 0) {
+		printf("ERROR: returned %d from execute_kernel_loop\n");
+		cudaFreeHost(h_pinned_puzzle);
+		return -1;
+	}
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
