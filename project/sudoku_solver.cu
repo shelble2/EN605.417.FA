@@ -1,5 +1,5 @@
 /**
- * sudoku_solver.cpp
+ * sudoku_solver.cu
  * Sarah Helble
  * 2017-12-07
  *
@@ -10,8 +10,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <sudoku_utils.h>
 
 /**
  * Solves the passed puzzle

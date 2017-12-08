@@ -1,5 +1,5 @@
 /**
- * sudoku_utils.h
+ * sudoku_utils.cuh
  * Sarah Helble
  * 2017-12-07
  *
