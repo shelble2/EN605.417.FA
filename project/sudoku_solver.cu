@@ -112,7 +112,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 
 	int count = execute_kernel_loop(h_pinned_puzzle, cells, &solution);
 	if(count <= 0) {
-		printf("ERROR: returned %d from execute_kernel_loop\n");
+		printf("ERROR: returned %d from execute_kernel_loop\n", count);
 		cudaFreeHost(h_pinned_puzzle);
 		return -1;
 	}
