@@ -9,6 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define DIM 9             // Customary sudoku
+#define B_DIM 3           // dimension of one sudoku block
+#define CELLS DIM * DIM   // 81
+#define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
+
+#define LOOP_LIMIT 20  // Just in case we hit one that needs a guess to finish
+#define ASCII_TO_INT 48
+
 /**
  * Returns the current time
  */
