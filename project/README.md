@@ -1,6 +1,5 @@
 Class Project
 Sarah Helble
-14 Nov 2017
 
 Sudoku Solver
 -------------
@@ -27,6 +26,7 @@ Lessons so far
 - output to csv easier than expected
 
 ### TODO
+- incorporate code review comments
 - make command line args more usable (optparse or like)
   - verbosity flag?
   - could also have flags for which kernel(s) to run
@@ -41,7 +41,6 @@ Lessons so far
   - make sure things are properly asnychronous
 - speed - is the copying back and forth really bad? Can it be async?
 
-
 ### Optional Extras
 - larger puzzles going > single digits
 - hard sudokus sometimes require guessing between two options for a cell - how to handle?
@@ -50,5 +49,6 @@ Lessons so far
     ints in the right range, but it doesn't follow the rules of sudoku
 - CI
 - check that the answer is correct. For now, just checking against answer in db
+- compare to equivalent host-based algorithm?
 
 [1] https://www.kaggle.com/bryanpark/sudoku/kernels
