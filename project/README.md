@@ -29,7 +29,6 @@ Lessons so far
 - online strategies (naked pair, solve by constraint)
 
 ### TODO
-- error check on memory alloc calls
 - TODO's in code
 - different algorithms
   - another kernel that solves by dimension (check a row for last values to fill)

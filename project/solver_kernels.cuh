@@ -11,23 +11,26 @@
  * can fit in a given cell, based on the contents of its row, column, and block;
  * then fill the cell with that value.
  */
-__global__ void solve_by_possibility(unsigned int *ordered, unsigned int *solved)
+__global__ void solve_by_possibility(unsigned int *puzzle, unsigned int *solved)
 {
 	__shared__ unsigned int tmp[CELLS];
 
+	// Calculate our row and column
 	const unsigned int my_cell_id = threadIdx.x;
 	const unsigned int col = my_cell_id % DIM;
 	const unsigned int row = (my_cell_id - col) / DIM;
 
+	// Keep a list of possible values. The values are actually the indices here,
+	// a 0 indicates that that index value is no longer a possibility.
 	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
-	tmp[my_cell_id] = ordered[my_cell_id];
+	tmp[my_cell_id] = puzzle[my_cell_id];
 
 	// Only try to solve if cell is empty
 	if(tmp[my_cell_id] != 0 ) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
 	} else {
-		// Go through all in the same row
+		// Rule out all in the same row by changing their value in possibilities
 		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
 			int current = tmp[i];
 			possibilities[current] = 0;

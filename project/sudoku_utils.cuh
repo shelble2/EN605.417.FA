@@ -79,7 +79,9 @@ int check_if_done(unsigned int *puzzle)
 
 /**
  * Function to load the puzzle into the array of ints
- * Hardcoded to this puzzle for now
+ * puzzle is the string to load as a sudoku puzzle
+ * cells is the number of cells in the puzzles
+ * Returns the loaded unsigned int array puzzle
  */
 unsigned int *load_puzzle(char *puzzle, int cells)
 {
