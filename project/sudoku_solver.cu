@@ -35,21 +35,21 @@ int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solut
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
-		cudaMemcpy(d_puzzle, h_pinned_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_puzzle, hp_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
 
 		solve_by_possibility<<<1, cells>>>(d_puzzle, d_solution);
 
 		/* Copy the changed GPU memory back to the CPU */
-		cudaMemcpy(h_pinned_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+		cudaMemcpy(hp_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
 
 		count = count + 1;
-	} while ((check_if_done(h_pinned_puzzle) == 1) && (count <= LOOP_LIMIT));
+	} while ((check_if_done(hp_puzzle) == 1) && (count <= LOOP_LIMIT));
 
 	if(count == LOOP_LIMIT) {
 		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
 	}
 
-	*solution = h_pinned_puzzle;
+	*solution = hp_puzzle;
 	/* Free the GPU memory */
 	cudaFree(d_puzzle);
 	cudaFree(d_solution);
@@ -80,7 +80,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 	float duration = 0;
 	cudaEvent_t start_time = get_time();
 
-	count = execute_kernel_loop(h_pinned_puzzle, cells, &solution);
+	int count = execute_kernel_loop(h_pinned_puzzle, cells, &solution);
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
