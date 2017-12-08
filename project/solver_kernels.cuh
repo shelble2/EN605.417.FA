@@ -6,9 +6,6 @@
  * This file contains all of the kernels for the sudoku solver project.
  */
 
- #include "sudoku_utils.h"
-
-
 /**
  * Kernel function that solves based on last available. If only one number
  * can fit in a given cell, based on the contents of its row, column, and block;
