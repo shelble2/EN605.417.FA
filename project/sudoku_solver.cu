@@ -134,7 +134,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
 	cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
-	if(vebosity == 1) {
+	if(verbosity == 1) {
 		printf("Solution:\n");
 		sudoku_print(h_pinned_puzzle);
 		printf("\tSolved in %d increments and %fms\n", count, duration);
@@ -173,8 +173,8 @@ int main(int argc, char *argv[])
 	}
 
 	// TODO: this would be prettier if switched to optparse
-	if(strcmp(argv[2] == "-v")) {
-		vebosity = 1;
+	if(strcmp(argv[2], "-v") == 0) {
+		verbosity = 1;
 	}
 
 	//TODO: make this a command line option instead of Hardcoded
