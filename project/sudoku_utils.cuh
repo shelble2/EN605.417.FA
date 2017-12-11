@@ -14,7 +14,7 @@
 #define CELLS DIM * DIM   // 81
 #define THREADS_PER_BLOCK DIM // Seems like a nice way to split..
 
-#define LOOP_LIMIT 20  // Just in case we hit one that needs a guess to finish
+#define LOOP_LIMIT 40  // Just in case we hit one that needs a guess to finish
 #define ASCII_TO_INT 48
 
 /**
@@ -81,14 +81,12 @@ void sudoku_print_two(unsigned int* numbers)
  */
 int check_if_done(unsigned int *puzzle)
 {
-	printf("in check_if_done\n");
-	for(int i = 0; i < CELLS; i++) {
+	///TODO: needs to know how many
+	for(int i = 0; i < CELLS *2; i++) {
 		if(puzzle[i] == 0) {
-			printf("returning bad\n");
 			return 1;
 		}
 	}
-	printf("returning good \n");
 	return 0;
 }
 

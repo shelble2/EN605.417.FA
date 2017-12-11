@@ -85,7 +85,6 @@ __global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *so
 	const unsigned int col = my_cell_id % DIM;
 	const unsigned int row = (my_cell_id - col) / DIM;
 
-	printf("my id %d", my_cell_id);
 	// Keep a list of possible values. The values are actually the indices here,
 	// a 0 indicates that that index value is no longer a possibility.
 	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};

@@ -40,7 +40,6 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
-		printf("Copy to device next\n");
 
 		/* Copy the CPU memory to the GPU memory */
 		cuda_ret = cudaMemcpy(d_puzzles, hp_puzzles, array_size_in_bytes,
@@ -62,8 +61,6 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 			goto memcpy_error;
 		}
 
-		printf("Iteration %d complete \n", count);
-		sudoku_print_two(hp_puzzles);
 		count = count + 1;
 	} while ((check_if_done(hp_puzzles) == 1) && (count <= LOOP_LIMIT));
 
