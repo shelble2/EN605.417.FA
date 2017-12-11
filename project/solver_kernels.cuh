@@ -109,11 +109,11 @@ __global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *so
 		}
 
 
-		printf("cell %d. Looking at %d through %d\n", my_cell_id, col+(diff_due_to_block/DIM),
-														(DIM-1)*DIM+col+(diff_due_to_block/DIM));
+		printf("cell %d. Looking at %d through %d\n", my_cell_id, col+diff_due_to_block,
+														(DIM-1)*DIM+col+diff_due_to_block);
 		//Go through all in the same column
 		for(int i = 0; i < DIM ; i++) {
-			int current = tmp[(i*DIM)+col+(diff_due_to_block/DIM)];
+			int current = tmp[(i*DIM)+col+diff_due_to_block];
 			possibilities[current] = 0;
 		}
 
