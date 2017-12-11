@@ -70,7 +70,7 @@ int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solut
 		}
 
 		cudaStreamSynchronize(stream);
-		// XXX: sync outside loop? does that do anything better? 
+		// XXX: sync outside loop? does that do anything better?
 
 		count = count + 1;
 	} while ((check_if_done(hp_puzzle) == 1) && (count <= LOOP_LIMIT));
@@ -94,8 +94,11 @@ malloc_puzzle_error:
  * h_puzzle is the host array of ints that form the puzzle,
  * cells is the number of cells in the puzzle
  * metrics_fd is an open file descriptor to the output file
+ * verbosity is a flag for extra prints. If == 1, will print every puzzle and
+ * solution to STDOUT. Otherwise, will just print batch metrics. Either way,
+ * metrics for each specific puzzle can be found in output file
  */
-int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
+int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbosity)
 {
 	int ret = 0;
 	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
@@ -111,8 +114,10 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 	}
 	memcpy(h_pinned_puzzle, h_puzzle, array_size_in_bytes);
 
-	printf("Puzzle:\n");
-	sudoku_print(h_puzzle);
+	if(verbosity == 1) {
+		printf("Puzzle:\n");
+		sudoku_print(h_puzzle);
+	}
 
 	/* Execute the kernel and keep track of start and end time for duration */
 	float duration = 0;
@@ -129,11 +134,13 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
 	cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
-	printf("Solution:\n");
-	sudoku_print(h_pinned_puzzle);
+	if(vebosity == 1) {
+		printf("Solution:\n");
+		sudoku_print(h_pinned_puzzle);
+		printf("\tSolved in %d increments and %fms\n", count, duration);
+	}
 
-	printf("\tSolved in %d increments and %fms\n", count, duration);
-
+	//XXX: Could this print to file be a bottleneck?
 	if(metrics_fd != NULL) {
 		output_metrics_to_file(metrics_fd, h_puzzle, h_pinned_puzzle, count, duration);
 	}
@@ -149,8 +156,9 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd)
  */
 int main(int argc, char *argv[])
 {
+	int verbosity = 0;
 	int ret = 0;
-	if(argc != 2) {
+	if(argc != 2 || argc != 3) {
 		printf("Error: Incorrect number of command line arguments\n");
 		printf("Usage: %s [input_file]\n", argv[0]);
 		exit(-1);
@@ -162,6 +170,11 @@ int main(int argc, char *argv[])
 	if(input_fp == NULL) {
 		printf("Failed to open input file %s\n", input_fn);
 		return -1;
+	}
+
+	// TODO: this would be prettier if switched to optparse
+	if(strcmp(argv[2] == "-v")) {
+		vebosity = 1;
 	}
 
 	//TODO: make this a command line option instead of Hardcoded
@@ -185,7 +198,7 @@ int main(int argc, char *argv[])
 	int unsolvable = 0;
 	while(getline(&line, &len, input_fp) != -1) {
 		unsigned int *h_puzzle = load_puzzle(line, CELLS);
-		ret = solve_puzzle(h_puzzle, CELLS, metrics_fp);
+		ret = solve_puzzle(h_puzzle, CELLS, metrics_fp, verbosity);
 
 		// Keep track of the statuses coming out
 		if(ret == -1) {

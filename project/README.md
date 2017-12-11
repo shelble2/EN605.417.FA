@@ -28,6 +28,7 @@ Lessons so far
 - code review thanks
 - online strategies (naked pair, solve by constraint)
 - async cells, sure; async puzzles?
+- cudaStreamSynchronize() was necessary inside loop. Hurt time if not
 
 ### TODO
 - Solving a lot of sudoku puzzles at once
