@@ -176,10 +176,7 @@ malloc_puzzle_error:
  	memcpy(h_pinned_puzzles, h_puzzles, array_size_in_bytes);
 
  	if(verbosity == 1) {
- 		printf("Puzzle 1:\n");
- 		sudoku_print(h_puzzles);
-		printf("Puzzle 2:\n");
-		sudoku_print(&h_puzzles[CELLS]);
+ 		sudoku_print_two(h_puzzles);
  	}
 
  	/* Execute the kernel and keep track of start and end time for duration */
@@ -198,10 +195,7 @@ malloc_puzzle_error:
  	cudaEventElapsedTime(&duration, start_time, end_time);
 
  	if(verbosity == 1) {
- 		printf("Solution 1:\n");
- 		sudoku_print(h_pinned_puzzles);
-		printf("Solution 2: \n");
-		sudoku_print(&h_pinned_puzzles[cells]);
+ 		sudoku_print_two(h_pinned_puzzles);
  		printf("\tSolved in %d increments and %fms\n", count, duration);
  	}
 
@@ -242,7 +236,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
 
 	if(verbosity == 1) {
 		printf("Puzzle:\n");
-		sudoku_print(h_puzzle);
+		sudoku_print(h_puzzle,0);
 	}
 
 	/* Execute the kernel and keep track of start and end time for duration */
@@ -262,7 +256,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
 
 	if(verbosity == 1) {
 		printf("Solution:\n");
-		sudoku_print(h_pinned_puzzle);
+		sudoku_print(h_pinned_puzzle, 0);
 		printf("\tSolved in %d increments and %fms\n", count, duration);
 	}
 

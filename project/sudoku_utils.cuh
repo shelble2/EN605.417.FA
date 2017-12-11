@@ -32,7 +32,7 @@ __host__ cudaEvent_t get_time(void)
  * Prints the passed array like a sudoku puzzle in ascii art
  * @numbers array to print
  */
-void sudoku_print(unsigned int* numbers)
+void sudoku_print(unsigned int* numbers, int start)
 {
 	int i;
 	int j;
@@ -44,7 +44,7 @@ void sudoku_print(unsigned int* numbers)
 
 		printf("||");
 		for (j = 0; j < DIM; j++) {
-			printf(" %u |", numbers[ ( (i*DIM) + j ) ]);
+			printf(" %u |", numbers[ ( (i*DIM) + j ) + start]);
 			if((j+1) % block_dim == 0) {
 				printf("|");
 			}
@@ -59,6 +59,18 @@ void sudoku_print(unsigned int* numbers)
 			printf("\n||---|---|---||---|---|---||---|---|---||\n");
 		}
 	}
+}
+
+/**
+ * Prints the passed array like two sudoku puzzles in ascii art
+ * @numbers array to print
+ */
+void sudoku_print_two(unsigned int* numbers)
+{
+	printf("First Puzzle:\n");
+	sudoku_print(numbers, 0);
+	printf("\nSecond Puzzle:\n");
+	sudoku_print(numbers, CELLS);
 }
 
 /**
