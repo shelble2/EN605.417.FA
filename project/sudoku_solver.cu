@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 {
 	int verbosity = 0;
 	int ret = 0;
-	if(argc != 2 || argc != 3) {
+	if(argc != 2 && argc != 3) {
 		printf("Error: Incorrect number of command line arguments\n");
 		printf("Usage: %s [input_file]\n", argv[0]);
 		exit(-1);
