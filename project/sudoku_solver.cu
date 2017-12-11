@@ -187,12 +187,15 @@ void find_and_select_device()
 /**
  * Loads the lines from the open file descriptor one by one and solves them
  * input_fp is the open file descriptor to read from
+ * metrics_fp is an open file descriptor to write metrics to
  * Does not return a value, but sets solved to the number of puzzles
  * successfully finished, unsolved to the number that could not be Solved within
  * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
  * error
  */
-void solve_from_fp_one(FILE *input_fp, int *solved, int *unsolvable, int *errors)
+ // TODO: needs a better name
+void solve_from_fp_one(FILE *input_fp, FILE *metrics_fp, int verbosity,
+						int *solved, int *unsolvable, int *errors)
 {
 	char *line = NULL;
 	size_t len = 0;
@@ -266,7 +269,8 @@ int main(int argc, char *argv[])
 	int solved;
 	int unsolvable;
 	int errors;
-	solve_from_fp_one(input_fp, &solved, &unsolvable, &errors);
+	solve_from_fp_one(input_fp, metrics_fp, verbosity,
+						&solved, &unsolvable, &errors);
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
