@@ -50,7 +50,8 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 			goto memcpy_error;
 		}
 
-		solve_mult_by_possibility<<<2, cells>>>(d_puzzles, d_solutions);
+		int blocks = 2;
+		solve_mult_by_possibility<<<blocks, cells>>>(d_puzzles, d_solutions, cells, blocks);
 
 		/* Copy the changed GPU memory back to the CPU */
 		cuda_ret = cudaMemcpy(hp_puzzles, d_solutions, array_size_in_bytes,

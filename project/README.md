@@ -29,10 +29,18 @@ Lessons so far
 - online strategies (naked pair, solve by constraint)
 - async cells, sure; async puzzles?
 - cudaStreamSynchronize() was necessary inside loop. Hurt time if not
+- puzzle per block lessons and speedup
 
 ### TODO
+Shortlist: 1) get it to work with any number of blocks 2) gather metrics for that
+3) more algorithms 4) gather metrics for those 5) maybe more puzzles?
 - how does solving > 1 puzzle change the blocks/threading. One puzzle per block?
   would that work? How could you arrange that?
+  - have this working, but not ideal. I want to be able to specify number of
+  	blocks at run time, and metrics need to be fixed. Have all solutions getting
+	into output file, but duration and count are per pair, not individual.
+	Maybe that can't be helped. It is faster over all. Seems like it completely
+	cut in half.
 - different algorithms
   - host-based versions for comparison
   - another kernel that solves by dimension (check a row for last values to fill)

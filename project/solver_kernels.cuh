@@ -75,9 +75,9 @@ __global__ void solve_by_possibility(unsigned int *puzzle, unsigned int *solved)
 	solved[my_cell_id] = tmp[my_cell_id];
 }
 
-__global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *solved)
+__global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *solved, int blocks, int cells)
 {
-	__shared__ unsigned int tmp[CELLS * 2];
+	__shared__ unsigned int tmp[cells*blocks];
 
 	const unsigned int diff_due_to_block = (blockIdx.x * blockDim.x);
 	// Calculate our row and column
