@@ -78,6 +78,23 @@ int check_if_done(unsigned int *puzzle)
 }
 
 /**
+ * Function to load two puzzles into a single array of ints (one before the
+ * other). Puzzle1 is the first string to load, puzzle2 is the second
+ * cells is the nuber of cells in a single puzzle.
+ * Returns the loaded unsigned int puzzles array
+ */
+unsigned int *load_two_puzzles(char *puzzle1, char *puzzle2, int cells)
+{
+	int i;
+	unsigned int *out = (unsigned int *) malloc(cells * 2 * sizeof(unsigned int));
+	for(i = 0; i < cells; i++) {
+		out[i] = puzzle1[i] - ASCII_TO_INT;
+		out[cells+i] = puzzle2[i] - ASCII_TO_INT;
+	}
+	return out;
+}
+
+/**
  * Function to load the puzzle into the array of ints
  * puzzle is the string to load as a sudoku puzzle
  * cells is the number of cells in the puzzles

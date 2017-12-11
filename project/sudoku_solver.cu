@@ -14,6 +14,68 @@
 #include "sudoku_utils.cuh"
 #include "solver_kernels.cuh"
 
+int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **solutions)
+{
+	int count = 0;
+	int array_size_in_bytes = (sizeof(unsigned int) *cells *2);
+	cudaError cuda_ret;
+	*solutions = NULL;
+
+	unsigned int *d_puzzles;
+	unsigned int *d_solutions;
+	//XXX: could have just passed the right total number of cells, and used that
+	// to find the number of puzzles to pass as number of blocks
+	cuda_ret = cudaMalloc((void **)&d_puzzles, array_size_in_bytes);
+	if(cuda_ret != cudaSuccess) {
+		printf("ERROR in cudaMalloc for d_solution\n");
+		count = -1;
+		goto malloc_solution_error;
+	}
+
+	cudaStream_t stream;
+	cudaStreamCreate(&stream);
+
+	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
+	do {
+		/* Copy the CPU memory to the GPU memory */
+		cuda_ret = cudaMemcpyAsync(d_puzzle, hp_puzzle, array_size_in_bytes,
+									cudaMemcpyHostToDevice, stream);
+		if(cuda_ret != cudaSuccess) {
+			printf("ERROR memcpy host to device\n");
+			count = -1;
+			goto memcpy_error;
+		}
+
+		solve_by_possibility<<<2, cells>>>(d_puzzles, d_solutions);
+
+		/* Copy the changed GPU memory back to the CPU */
+		cuda_ret = cudaMemcpyAsync(hp_puzzles, d_solutions, array_size_in_bytes,
+						cudaMemcpyDeviceToHost, stream);
+		if(cuda_ret != cudaSuccess) {
+			printf("ERROR memcpy host to device\n");
+			count = -1;
+			goto memcpy_error;
+		}
+
+		cudaStreamSynchronize(stream);
+
+		count = count + 1;
+	} while ((check_if_done(hp_puzzles) == 1) && (count <= LOOP_LIMIT));
+
+	if(count == LOOP_LIMIT) {
+		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
+	}
+
+	*solutions = hp_puzzles;
+
+memcpy_error:
+	cudaFree(d_solutions);
+malloc_solution_error:
+	cudaFree(d_puzzles);
+malloc_puzzle_error:
+	return count;
+}
+
 /**
  * Loops over the kernel until the puzzle is solved or LOOP_LIMIT is reached
  * On success, returns the number of iterations performed, and **solution is
@@ -87,6 +149,65 @@ malloc_solution_error:
 malloc_puzzle_error:
 	return count;
 }
+
+/**
+ * Solves two puzzles at once (one per block)
+ */
+ int solve_two_puzzles(unsigned int *h_puzzles, int cells, FILE *metrics_fp, int verbosity)
+ {
+	 int ret = 0;
+	 int array_size_in_bytes = (sizeof(unsigned int) * (cells *2));
+	 cudaError cuda_ret;
+
+	 //pin it and copy to pinned memory
+	 unsigned int *h_pinned_puzzles;
+	 unsigned int *solutions;
+	 cuda_ret = cudaMallocHost((void **) &h_pinned_puzzles, array_size_in_bytes);
+	 if(cuda_ret != cudaSuccess) {
+ 		printf("Error mallocing pinned host memory\n");
+ 		return -1;
+ 	}
+ 	memcpy(h_pinned_puzzles, h_puzzles, array_size_in_bytes);
+
+ 	if(verbosity == 1) {
+ 		printf("Puzzle 1:\n");
+ 		sudoku_print(h_puzzles);
+		printf("Puzzle 2:\n");
+		sudoku_print(h_puzzles[CELLS]);
+ 	}
+
+ 	/* Execute the kernel and keep track of start and end time for duration */
+ 	float duration = 0;
+ 	cudaEvent_t start_time = get_time();
+
+ 	int count = execute_kernel_two_loop(h_pinned_puzzles, cells, &solutions);
+ 	if(count <= 0) {
+ 		printf("ERROR: returned %d from execute_kernel_loop\n", count);
+ 		cudaFreeHost(h_pinned_puzzles);
+ 		return -1;
+ 	}
+
+ 	cudaEvent_t end_time = get_time();
+ 	cudaEventSynchronize(end_time);
+ 	cudaEventElapsedTime(&duration, start_time, end_time);
+
+ 	if(verbosity == 1) {
+ 		printf("Solution 1:\n");
+ 		sudoku_print(h_pinned_puzzles);
+		printf("Solution 2: \n");
+		sudoku_print(h_pinned_puzzles[cells]);
+ 		printf("\tSolved in %d increments and %fms\n", count, duration);
+ 	}
+
+ 	//XXX: Could this print to file be a bottleneck?
+ 	if(metrics_fd != NULL) {
+ 		output_metrics_to_file(metrics_fd, h_puzzles, h_pinned_puzzles, count, duration);
+ 	}
+
+ 	/* Free the pinned CPU memory */
+ 	cudaFreeHost(h_pinned_puzzles);
+ 	return ret;
+ }
 
 /**
  * Solves the passed puzzle
@@ -184,6 +305,49 @@ void find_and_select_device()
 	printf("----------------------------------------------\n");
 }
 
+void solve_from_fp_two(FILE *input_fp, FILE *metrics_fp, int verbosity,
+						int *solved, int *unsolvable, int *errors)
+{
+	char *line1 = NULL;
+	char *line2 = NULL;
+	size_t len = 0;
+
+	int tmp_solved = 0;
+	int tmp_errors = 0;
+	int tmp_unsolvable = 0;
+	int ret;
+
+	while(getline(&line1, &len, input_fp) != -1) {
+		unsigned int *h_puzzle;
+
+		ret = getline(&line2, &len, input_fp);
+
+		// Cop out if another line's not there
+		if(ret == -1) {
+			h_puzzle = load_puzzle(line1, CELLS);
+			ret = solve_puzzle(h_puzzle, CELLS, metrics_fp, verbosity);
+			goto take_count;
+		}
+
+		unsigned int *h_puzzle = load_two_puzzles(line1, line2, CELLS);
+		ret = solve_two_puzzles(h_puzzle, CELLS, metrics_fp, verbosity);
+
+take_count:
+		// Keep track of the statuses coming out
+		if(ret == -1) {
+			tmp_errors = tmp_errors + 1;
+		} else if(ret == LOOP_LIMIT) {
+			tmp_unsolvable = tmp_unsolvable + 1;
+		} else {
+			tmp_solved = tmp_solved + 1;
+		}
+	}
+
+	*solved = tmp_solved;
+	*unsolvable = tmp_unsolvable;
+	*errors = tmp_errors;
+}
+
 /**
  * Loads the lines from the open file descriptor one by one and solves them
  * input_fp is the open file descriptor to read from
@@ -231,7 +395,6 @@ void solve_from_fp_one(FILE *input_fp, FILE *metrics_fp, int verbosity,
 int main(int argc, char *argv[])
 {
 	int verbosity = 1;
-	int ret = 0;
 	if(argc != 2 && argc != 3) {
 		printf("Error: Incorrect number of command line arguments\n");
 		printf("Usage: %s [input_file] (v=0)\n", argv[0]);
@@ -269,7 +432,10 @@ int main(int argc, char *argv[])
 	int solved;
 	int unsolvable;
 	int errors;
-	solve_from_fp_one(input_fp, metrics_fp, verbosity,
+/*	solve_from_fp_one(input_fp, metrics_fp, verbosity,
+						&solved, &unsolvable, &errors);
+*/
+	solve_from_fp_two(input_fp, metrics_fp, verbosity,
 						&solved, &unsolvable, &errors);
 
 	cudaEvent_t end_time = get_time();
