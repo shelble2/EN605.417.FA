@@ -90,12 +90,12 @@ malloc_puzzle_error:
 }
 
 /**
- * Solves two puzzles at once (one per block)
+ * Solves multiple puzzles at once (one per block)
  */
- int solve_two_puzzles(unsigned int *h_puzzles, int cells, FILE *metrics_fd, int verbosity)
+ int solve_puzzles(unsigned int *h_puzzles, int cells, int blocks, FILE *metrics_fd, int verbosity)
  {
 	 int ret = 0;
-	 int array_size_in_bytes = (sizeof(unsigned int) * (cells *2));
+	 int array_size_in_bytes = (sizeof(unsigned int) * (cells * blocks));
 	 cudaError cuda_ret;
 
 	 //pin it and copy to pinned memory
@@ -109,14 +109,14 @@ malloc_puzzle_error:
  	memcpy(h_pinned_puzzles, h_puzzles, array_size_in_bytes);
 
  	if(verbosity == 1) {
- 		sudoku_print_two(h_puzzles);
+ 		sudoku_print_puzzles(h_puzzles, blocks);
  	}
 
  	/* Execute the kernel and keep track of start and end time for duration */
  	float duration = 0;
  	cudaEvent_t start_time = get_time();
 
- 	int count = execute_kernel_loop(h_pinned_puzzles, cells, 2, &solutions);
+ 	int count = execute_kernel_loop(h_pinned_puzzles, cells, blocks, &solutions);
  	if(count <= 0) {
  		printf("ERROR: returned %d from execute_kernel_loop\n", count);
  		cudaFreeHost(h_pinned_puzzles);
@@ -128,13 +128,13 @@ malloc_puzzle_error:
  	cudaEventElapsedTime(&duration, start_time, end_time);
 
  	if(verbosity == 1) {
- 		sudoku_print_two(h_pinned_puzzles);
+ 		sudoku_print_puzzles(h_pinned_puzzles, blocks);
  		printf("\tSolved in %d increments and %fms\n", count, duration);
  	}
 
  	//XXX: Could this print to file be a bottleneck?
  	if(metrics_fd != NULL) {
- 		output_two_metrics_to_file(metrics_fd, h_puzzles, h_pinned_puzzles, count, duration);
+ 		output_mult_metrics_to_file(metrics_fd, blocks, h_puzzles, h_pinned_puzzles, count, duration);
  	}
 
  	/* Free the pinned CPU memory */
@@ -176,7 +176,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
 	float duration = 0;
 	cudaEvent_t start_time = get_time();
 
-	int count = execute_kernel_loop(h_pinned_puzzle, cells, &solution);
+	int count = execute_kernel_loop(h_pinned_puzzle, cells, 1, &solution);
 	if(count <= 0) {
 		printf("ERROR: returned %d from execute_kernel_loop\n", count);
 		cudaFreeHost(h_pinned_puzzle);
@@ -263,7 +263,7 @@ void solve_from_fp_two(FILE *input_fp, FILE *metrics_fp, int verbosity,
 		}
 
 		h_puzzle = load_two_puzzles(line1, line2, CELLS);
-		ret = solve_two_puzzles(h_puzzle, CELLS, metrics_fp, verbosity);
+		ret = solve_puzzles(h_puzzle, CELLS, 2, metrics_fp, verbosity);
 
 take_count:
 		// Keep track of the statuses coming out

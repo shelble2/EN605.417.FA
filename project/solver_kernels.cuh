@@ -16,7 +16,7 @@ __global__ void solve_by_possibility(unsigned int *puzzle, unsigned int *solved)
 	__shared__ unsigned int shared_puzzle[CELLS];
 
 	const unsigned int local_id = threadIdx.x;
-	const unsigned int id = my_local_cell_id + (blockIdx.x * blockDim.x);
+	const unsigned int id = local_id + (blockIdx.x * blockDim.x);
 
 	// copy to shared array
 	shared_puzzle[local_id] = puzzle[id];

@@ -64,13 +64,15 @@ void sudoku_print(unsigned int* numbers, int start)
 /**
  * Prints the passed array like two sudoku puzzles in ascii art
  * @numbers array to print
+ * @blocks the number of puzzles in the array of numbers
  */
-void sudoku_print_two(unsigned int* numbers)
+void sudoku_print_puzzles(unsigned int* numbers, int blocks)
 {
-	printf("First Puzzle:\n");
-	sudoku_print(numbers, 0);
-	printf("\nSecond Puzzle:\n");
-	sudoku_print(numbers, CELLS);
+	int i = 0;
+	for(i = 0; i < blocks, i++){
+		printf("Puzzle %d:\n", i);
+		sudoku_print(numbers, i*CELLS);
+	}
 }
 
 /**
@@ -148,10 +150,18 @@ void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
 	fprintf(out_fd, ",%d,%0.3f\n", count, duration);
 }
 
-void output_two_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
+/**
+ * Prints multiple puzzle's metrics to the passed FILE
+ * blocks is the number of puzzles held in puzzles, puzzles are the originals
+ * solutions are the end result, count is the number of iterations it took, and
+ * duration is the amount of time in ms
+ */
+//TODO: count and duration here are time for ALL in block
+void output_mult_metrics_to_file(FILE *out_fd, int blocks, unsigned int *puzzle,
 	unsigned int *solution, int count, float duration)
 {
-	//TODO: count and duration here are time for BOTH
-	output_metrics_to_file(out_fd, puzzle, solution, count, duration, 0);
-	output_metrics_to_file(out_fd, puzzle, solution, count, duration, CELLS);
+	int i = 0;
+	for (i = 0; i < blocks; i++){
+		output_metrics_to_file(out_fd, puzzle, solution, count, duration, i*CELLS);
+	}
 }
