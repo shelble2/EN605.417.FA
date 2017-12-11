@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 	}
 
 	// TODO: this would be prettier if switched to optparse
-	if(strcmp(argv[2], "-v") == 0) {
+	if((argc == 3) && (strcmp(argv[2], "-v") == 0)) {
 		verbosity = 1;
 	}
 
