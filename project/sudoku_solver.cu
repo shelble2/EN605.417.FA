@@ -57,7 +57,7 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 		cuda_ret = cudaMemcpy(hp_puzzles, d_solutions, array_size_in_bytes,
 						cudaMemcpyDeviceToHost);
 		if(cuda_ret != cudaSuccess) {
-			printf("ERROR memcpy host to device\n");
+			printf("ERROR memcpy device to host (%d)\n", cuda_ret);
 			count = -1;
 			goto memcpy_error;
 		}
