@@ -150,6 +150,40 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
 }
 
 /**
+ * Find the best available device for our use case and set it
+ * Right now, this just picks the one with the highest number of
+ * multiprocessors.
+ */
+void find_and_select_device()
+{
+	printf("-----------------------\nFinding the best device for the job\n");
+	int num_devices;
+	int device = 0;
+	int max_mp = 0;
+	int i;
+
+	// Figure out how many devices there are
+	cudaGetDeviceCount(&num_devices);
+	printf("%d possible devices\n", num_devices);
+
+	printf("Selecting the one with the highest number of multiprocessors\n");
+	for(i = 0; i < num_devices; i++) {
+		cudaDeviceProp prop;
+		cudaGetDeviceProperties(&prop, i);
+		if(prop.multiProcessorCount > max_mp) {
+			max_mp = prop.multiProcessorCount;
+			device = i;
+		}
+		printf("Device %d has : \n\t%d multiprocessors\n\t%d warp size\n",
+				i, prop.multiProcessorCount, prop.warpSize);
+	}
+
+	printf("Selected device %d\n", device);
+	cudaSetDevice(device);
+	printf("-----------------------\n");
+}
+
+/**
  * Entry point for execution. Checks command line arguments
  * then passes execution to subordinate function
  */
@@ -184,6 +218,8 @@ int main(int argc, char *argv[])
 		fclose(input_fp);
 		return -1;
 	}
+
+	find_and_select_device();
 
 	/* Keep track of total duration */
 	float duration = 0;
