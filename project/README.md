@@ -31,20 +31,17 @@ Lessons so far
 - cudaStreamSynchronize() was necessary inside loop. Hurt time if not
 
 ### TODO
-- Solving a lot of sudoku puzzles at once
-  - how does this change the blocks/threading. One puzzle per block? would that
-    work?
-  - make sure things are properly asnychronous
-- speed - is the copying back and forth really bad? Can it be async?
+- which GPU is best? Does Vocareum even have multiple? (module 7 Lect A)
+- how does solving > 1 puzzle change the blocks/threading. One puzzle per block?
+  would that work? How could you arrange that?
 - different algorithms
+  - host-based versions for comparison
   - another kernel that solves by dimension (check a row for last values to fill)
   - switch to solving by constraint
   - 'naked pairs' - if two cells both are between a pair, you can't tell which
   	has which, but you can tell that they contain both. So can eliminate from
 	other dependencies.
-  - host-based versions for comparison
 - TODO's in code
-- which GPU is best? Does Vocareum even have multiple? (module 7 Lect A)
 
 ### Optional Extras
 - larger puzzles going > single digits
