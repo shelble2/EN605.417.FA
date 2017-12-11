@@ -27,6 +27,12 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 	// to find the number of puzzles to pass as number of blocks
 	cuda_ret = cudaMalloc((void **)&d_puzzles, array_size_in_bytes);
 	if(cuda_ret != cudaSuccess) {
+		printf("ERROR in cudaMalloc for d_puzzle\n");
+		count = -1;
+		goto malloc_puzzle_error;
+	}
+	cuda_ret = cudaMalloc((void **)&d_solutions, array_size_in_bytes);
+	if(cuda_ret != cudaSuccess) {
 		printf("ERROR in cudaMalloc for d_solution\n");
 		count = -1;
 		goto malloc_solution_error;
@@ -38,7 +44,7 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
-		cuda_ret = cudaMemcpyAsync(d_puzzle, hp_puzzle, array_size_in_bytes,
+		cuda_ret = cudaMemcpyAsync(d_puzzles, hp_puzzles, array_size_in_bytes,
 									cudaMemcpyHostToDevice, stream);
 		if(cuda_ret != cudaSuccess) {
 			printf("ERROR memcpy host to device\n");
@@ -153,7 +159,7 @@ malloc_puzzle_error:
 /**
  * Solves two puzzles at once (one per block)
  */
- int solve_two_puzzles(unsigned int *h_puzzles, int cells, FILE *metrics_fp, int verbosity)
+ int solve_two_puzzles(unsigned int *h_puzzles, int cells, FILE *metrics_fd, int verbosity)
  {
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells *2));
@@ -329,7 +335,7 @@ void solve_from_fp_two(FILE *input_fp, FILE *metrics_fp, int verbosity,
 			goto take_count;
 		}
 
-		unsigned int *h_puzzle = load_two_puzzles(line1, line2, CELLS);
+		h_puzzle = load_two_puzzles(line1, line2, CELLS);
 		ret = solve_two_puzzles(h_puzzle, CELLS, metrics_fp, verbosity);
 
 take_count:
