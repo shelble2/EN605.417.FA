@@ -81,11 +81,14 @@ void sudoku_print_two(unsigned int* numbers)
  */
 int check_if_done(unsigned int *puzzle)
 {
+	printf("in check_if_done\n");
 	for(int i = 0; i < CELLS; i++) {
 		if(puzzle[i] == 0) {
+			printf("returning bad\n");
 			return 1;
 		}
 	}
+	printf("returning good \n")
 	return 0;
 }
 
