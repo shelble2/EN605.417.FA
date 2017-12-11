@@ -69,10 +69,8 @@ int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solut
 			goto memcpy_error;
 		}
 
-		// Not synchronizing here because will increase speed, and doing an
-		// extra loop while checking end status can't hurt, right?
-		// XXX: test
-		// XXX: sync outside loop? does that do anything?
+		cudaStreamSynchronize(stream);
+		// XXX: sync outside loop? does that do anything better? 
 
 		count = count + 1;
 	} while ((check_if_done(hp_puzzle) == 1) && (count <= LOOP_LIMIT));
