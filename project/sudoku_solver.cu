@@ -179,7 +179,7 @@ malloc_puzzle_error:
  		printf("Puzzle 1:\n");
  		sudoku_print(h_puzzles);
 		printf("Puzzle 2:\n");
-		sudoku_print(h_puzzles[CELLS]);
+		sudoku_print(&h_puzzles[CELLS]);
  	}
 
  	/* Execute the kernel and keep track of start and end time for duration */
@@ -201,7 +201,7 @@ malloc_puzzle_error:
  		printf("Solution 1:\n");
  		sudoku_print(h_pinned_puzzles);
 		printf("Solution 2: \n");
-		sudoku_print(h_pinned_puzzles[cells]);
+		sudoku_print(&h_pinned_puzzles[cells]);
  		printf("\tSolved in %d increments and %fms\n", count, duration);
  	}
 
