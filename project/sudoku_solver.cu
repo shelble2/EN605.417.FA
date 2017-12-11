@@ -157,7 +157,6 @@ malloc_puzzle_error:
  */
  int solve_two_puzzles(unsigned int *h_puzzles, int cells, FILE *metrics_fd, int verbosity)
  {
-	 printf("in solve two puzzles\n");
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells *2));
 	 cudaError cuda_ret;
