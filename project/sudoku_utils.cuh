@@ -88,7 +88,7 @@ int check_if_done(unsigned int *puzzle)
 			return 1;
 		}
 	}
-	printf("returning good \n")
+	printf("returning good \n");
 	return 0;
 }
 

@@ -38,14 +38,13 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 		goto malloc_solution_error;
 	}
 
-	cudaStream_t stream;
-	cudaStreamCreate(&stream);
-
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
+		printf("Copy to device next\n");
+
 		/* Copy the CPU memory to the GPU memory */
-		cuda_ret = cudaMemcpyAsync(d_puzzles, hp_puzzles, array_size_in_bytes,
-									cudaMemcpyHostToDevice, stream);
+		cuda_ret = cudaMemcpy(d_puzzles, hp_puzzles, array_size_in_bytes,
+									cudaMemcpyHostToDevice);
 		if(cuda_ret != cudaSuccess) {
 			printf("ERROR memcpy host to device\n");
 			count = -1;
@@ -55,15 +54,13 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 		solve_mult_by_possibility<<<2, cells>>>(d_puzzles, d_solutions);
 
 		/* Copy the changed GPU memory back to the CPU */
-		cuda_ret = cudaMemcpyAsync(hp_puzzles, d_solutions, array_size_in_bytes,
-						cudaMemcpyDeviceToHost, stream);
+		cuda_ret = cudaMemcpy(hp_puzzles, d_solutions, array_size_in_bytes,
+						cudaMemcpyDeviceToHost);
 		if(cuda_ret != cudaSuccess) {
 			printf("ERROR memcpy host to device\n");
 			count = -1;
 			goto memcpy_error;
 		}
-
-		cudaStreamSynchronize(stream);
 
 		printf("Iteration %d complete \n", count);
 		sudoku_print_two(hp_puzzles);
