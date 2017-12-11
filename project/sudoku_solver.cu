@@ -17,7 +17,7 @@
 int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **solutions)
 {
 	int count = 0;
-	int array_size_in_bytes = (sizeof(unsigned int) *cells *2);
+	int array_size_in_bytes = (sizeof(unsigned int)*(cells*2);
 	cudaError cuda_ret;
 	*solutions = NULL;
 
@@ -46,7 +46,7 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 		cuda_ret = cudaMemcpy(d_puzzles, hp_puzzles, array_size_in_bytes,
 									cudaMemcpyHostToDevice);
 		if(cuda_ret != cudaSuccess) {
-			printf("ERROR memcpy host to device\n");
+			printf("ERROR memcpy host to device (%d)\n", cuda_ret);
 			count = -1;
 			goto memcpy_error;
 		}
