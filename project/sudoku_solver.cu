@@ -50,7 +50,6 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 			goto memcpy_error;
 		}
 
-		printf("Iteration %d\n", count);
 		solve_mult_by_possibility<<<2, cells>>>(d_puzzles, d_solutions);
 
 		/* Copy the changed GPU memory back to the CPU */
