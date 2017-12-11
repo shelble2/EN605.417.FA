@@ -95,15 +95,17 @@ __global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *so
 	if(tmp[my_cell_id] != 0 ) {
 		tmp[my_cell_id]  = tmp[my_cell_id];
 	} else {
+		printf("cell %d. Looking at %d through %d (row)\n", my_cell_id, row*DIM, (row*DIM)+DIM);
 		// Rule out all in the same row by changing their value in possibilities
 		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
 			int current = tmp[i];
 			possibilities[current] = 0;
 		}
 
+		printf("cell %d. Looking at %d through + 9\n", my_cell_id, DIM+col+(diff_due_to_block/DIM))
 		//Go through all in the same column
-		for(int i = (diff_due_to_block / DIM); i < DIM ; i++) {
-			int current = tmp[i*DIM+col];
+		for(int i = 0; i < DIM ; i++) {
+			int current = tmp[i*DIM+col+diff_due_to_block/DIM];
 			possibilities[current] = 0;
 		}
 

@@ -50,6 +50,7 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 			goto memcpy_error;
 		}
 
+		printf("Iteration %d\n", count);
 		solve_mult_by_possibility<<<2, cells>>>(d_puzzles, d_solutions);
 
 		/* Copy the changed GPU memory back to the CPU */
@@ -157,6 +158,7 @@ malloc_puzzle_error:
  */
  int solve_two_puzzles(unsigned int *h_puzzles, int cells, FILE *metrics_fd, int verbosity)
  {
+	 printf("in solve two puzzles\n");
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells *2));
 	 cudaError cuda_ret;
