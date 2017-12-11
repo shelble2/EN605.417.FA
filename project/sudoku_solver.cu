@@ -44,10 +44,14 @@ int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solut
 		goto malloc_solution_error;
 	}
 
+	cudaStream_t stream;
+	cudaStreamCreate(&stream);
+
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
-		cuda_ret = cudaMemcpy(d_puzzle, hp_puzzle, array_size_in_bytes, cudaMemcpyHostToDevice);
+		cuda_ret = cudaMemcpyAsync(d_puzzle, hp_puzzle, array_size_in_bytes,
+									cudaMemcpyHostToDevice, stream);
 		if(cuda_ret != cudaSuccess) {
 			printf("ERROR memcpy host to device\n");
 			count = -1;
@@ -57,12 +61,18 @@ int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solut
 		solve_by_possibility<<<1, cells>>>(d_puzzle, d_solution);
 
 		/* Copy the changed GPU memory back to the CPU */
-		cudaMemcpy(hp_puzzle, d_solution, array_size_in_bytes, cudaMemcpyDeviceToHost);
+		cuda_ret = cudaMemcpyAsync(hp_puzzle, d_solution, array_size_in_bytes,
+						cudaMemcpyDeviceToHost, stream);
 		if(cuda_ret != cudaSuccess) {
 			printf("ERROR memcpy host to device\n");
 			count = -1;
 			goto memcpy_error;
 		}
+
+		// Not synchronizing here because will increase speed, and doing an
+		// extra loop while checking end status can't hurt, right?
+		// XXX: test
+		// XXX: sync outside loop? does that do anything?
 
 		count = count + 1;
 	} while ((check_if_done(hp_puzzle) == 1) && (count <= LOOP_LIMIT));

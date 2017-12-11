@@ -27,6 +27,7 @@ Lessons so far
 - makefiles are hard
 - code review thanks
 - online strategies (naked pair, solve by constraint)
+- async cells, sure; async puzzles?
 
 ### TODO
 - Solving a lot of sudoku puzzles at once
@@ -42,6 +43,7 @@ Lessons so far
 	other dependencies.
   - host-based versions for comparison
 - TODO's in code
+- which GPU is best? Does Vocareum even have multiple? (module 7 Lect A)
 
 ### Optional Extras
 - larger puzzles going > single digits
