@@ -31,7 +31,6 @@ Lessons so far
 - cudaStreamSynchronize() was necessary inside loop. Hurt time if not
 
 ### TODO
-- which GPU is best? Does Vocareum even have multiple? (module 7 Lect A)
 - how does solving > 1 puzzle change the blocks/threading. One puzzle per block?
   would that work? How could you arrange that?
 - different algorithms

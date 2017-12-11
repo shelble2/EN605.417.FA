@@ -156,7 +156,8 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
  */
 void find_and_select_device()
 {
-	printf("-----------------------\nFinding the best device for the job\n");
+	printf("----------------------------------------------\n");
+	printf("Finding the best device for the job\n");
 	int num_devices;
 	int device = 0;
 	int max_mp = 0;
@@ -180,7 +181,44 @@ void find_and_select_device()
 
 	printf("Selected device %d\n", device);
 	cudaSetDevice(device);
-	printf("-----------------------\n");
+	printf("----------------------------------------------\n");
+}
+
+/**
+ * Loads the lines from the open file descriptor one by one and solves them
+ * input_fp is the open file descriptor to read from
+ * Does not return a value, but sets solved to the number of puzzles
+ * successfully finished, unsolved to the number that could not be Solved within
+ * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
+ * error
+ */
+void solve_from_fp_one(FILE *input_fp, int *solved, int *unsolvable, int *errors)
+{
+	char *line = NULL;
+	size_t len = 0;
+
+	int tmp_solved = 0;
+	int tmp_errors = 0;
+	int tmp_unsolvable = 0;
+	int ret;
+
+	while(getline(&line, &len, input_fp) != -1) {
+		unsigned int *h_puzzle = load_puzzle(line, CELLS);
+		ret = solve_puzzle(h_puzzle, CELLS, metrics_fp, verbosity);
+
+		// Keep track of the statuses coming out
+		if(ret == -1) {
+			tmp_errors = tmp_errors + 1;
+		} else if(ret == LOOP_LIMIT) {
+			tmp_unsolvable = tmp_unsolvable + 1;
+		} else {
+			tmp_solved = tmp_solved + 1;
+		}
+	}
+
+	*solved = tmp_solved;
+	*unsolvable = tmp_unsolvable;
+	*errors = tmp_errors;
 }
 
 /**
@@ -225,25 +263,10 @@ int main(int argc, char *argv[])
 	float duration = 0;
 	cudaEvent_t start_time = get_time();
 
-	// Solve each puzzle in the input file
-	char *line = NULL;
-	size_t len = 0;
-	int solved = 0;
-	int errors = 0;
-	int unsolvable = 0;
-	while(getline(&line, &len, input_fp) != -1) {
-		unsigned int *h_puzzle = load_puzzle(line, CELLS);
-		ret = solve_puzzle(h_puzzle, CELLS, metrics_fp, verbosity);
-
-		// Keep track of the statuses coming out
-		if(ret == -1) {
-			errors = errors + 1;
-		} else if(ret == LOOP_LIMIT) {
-			unsolvable = unsolvable + 1;
-		} else {
-			solved = solved + 1;
-		}
-	}
+	int solved;
+	int unsolvable;
+	int errors;
+	solve_from_fp_one(input_fp, &solved, &unsolvable, &errors);
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
