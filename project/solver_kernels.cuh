@@ -81,7 +81,7 @@ __global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *so
 
 	const unsigned int diff_due_to_block = (blockIdx.x * blockDim.x);
 	// Calculate our row and column
-	const unsigned int my_local_cell_id = threadIdx.x + diff_due_to_block;
+	const unsigned int my_cell_id = threadIdx.x + diff_due_to_block;
 	const unsigned int col = my_cell_id % DIM;
 	const unsigned int row = (my_cell_id - col) / DIM;
 
