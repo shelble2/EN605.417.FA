@@ -135,15 +135,23 @@ unsigned int *load_puzzle(char *puzzle, int cells)
  * puzzle,solution,count,duration
  */
 void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
-	unsigned int *solution, int count, float duration)
+	unsigned int *solution, int count, float duration, int start)
 {
 	int i = 0;
 	for(i = 0; i < CELLS; i++){
-		fprintf(out_fd, "%c", (char)puzzle[i] + ASCII_TO_INT);
+		fprintf(out_fd, "%c", (char)puzzle[i+start] + ASCII_TO_INT);
 	}
 	fprintf(out_fd, ",");
 	for(i = 0; i< CELLS; i++){
-		fprintf(out_fd, "%c", (char)solution[i] + ASCII_TO_INT);
+		fprintf(out_fd, "%c", (char)solution[i+start] + ASCII_TO_INT);
 	}
 	fprintf(out_fd, ",%d,%0.3f\n", count, duration);
+}
+
+void output_two_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
+	unsigned int *solution, int count, float duration)
+{
+	//TODO: count and duration here are time for BOTH
+	output_metrics_to_file(out_fd, puzzle, solution, count, duration, 0);
+	output_metrics_to_file(out_fd, puzzle, solution, count, duration, CELLS);
 }

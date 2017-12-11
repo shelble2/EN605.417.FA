@@ -197,7 +197,7 @@ malloc_puzzle_error:
 
  	//XXX: Could this print to file be a bottleneck?
  	if(metrics_fd != NULL) {
- 		output_metrics_to_file(metrics_fd, h_puzzles, h_pinned_puzzles, count, duration);
+ 		output_two_metrics_to_file(metrics_fd, h_puzzles, h_pinned_puzzles, count, duration);
  	}
 
  	/* Free the pinned CPU memory */
@@ -258,7 +258,7 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
 
 	//XXX: Could this print to file be a bottleneck?
 	if(metrics_fd != NULL) {
-		output_metrics_to_file(metrics_fd, h_puzzle, h_pinned_puzzle, count, duration);
+		output_metrics_to_file(metrics_fd, h_puzzle, h_pinned_puzzle, count, duration, 0);
 	}
 
 	/* Free the pinned CPU memory */
