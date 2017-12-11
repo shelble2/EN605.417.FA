@@ -14,10 +14,10 @@
 #include "sudoku_utils.cuh"
 #include "solver_kernels.cuh"
 
-int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **solutions)
+int execute_kernel_mult_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
 {
 	int count = 0;
-	int array_size_in_bytes = (sizeof(unsigned int)*(cells*2));
+	int array_size_in_bytes = (sizeof(unsigned int)*(cells*blocks));
 	cudaError cuda_ret;
 	*solutions = NULL;
 
@@ -50,8 +50,7 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 			goto memcpy_error;
 		}
 
-		int blocks = 2;
-		solve_mult_by_possibility<<<blocks, cells>>>(d_puzzles, d_solutions, cells, blocks);
+		solve_mult_by_possibility<<<blocks, cells>>>(d_puzzles, d_solutions);
 
 		/* Copy the changed GPU memory back to the CPU */
 		cuda_ret = cudaMemcpy(hp_puzzles, d_solutions, array_size_in_bytes,
@@ -63,6 +62,8 @@ int execute_kernel_two_loop(unsigned int *hp_puzzles, int cells, unsigned int **
 		}
 
 		count = count + 1;
+		//TODO: if we could check each puzzle individually, we could swap one out
+		// for another instead of having to wait for least common denominator
 	} while ((check_if_done(hp_puzzles) == 1) && (count <= LOOP_LIMIT));
 
 	if(count == LOOP_LIMIT) {
@@ -180,7 +181,7 @@ malloc_puzzle_error:
  	float duration = 0;
  	cudaEvent_t start_time = get_time();
 
- 	int count = execute_kernel_two_loop(h_pinned_puzzles, cells, &solutions);
+ 	int count = execute_kernel_mult_loop(h_pinned_puzzles, cells, 2, &solutions);
  	if(count <= 0) {
  		printf("ERROR: returned %d from execute_kernel_loop\n", count);
  		cudaFreeHost(h_pinned_puzzles);

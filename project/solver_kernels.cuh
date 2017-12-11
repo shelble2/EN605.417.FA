@@ -75,35 +75,38 @@ __global__ void solve_by_possibility(unsigned int *puzzle, unsigned int *solved)
 	solved[my_cell_id] = tmp[my_cell_id];
 }
 
-__global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *solved, int blocks, int cells)
+__global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *solved)
 {
-	__shared__ unsigned int tmp[cells*blocks];
+	__shared__ unsigned int shared_puzzle[CELLS];
 
-	const unsigned int diff_due_to_block = (blockIdx.x * blockDim.x);
+	const unsigned int local_id = threadIdx.x;
+	const unsigned int id = my_local_cell_id + (blockIdx.x * blockDim.x);
+
+	// copy to shared array
+	shared_puzzle[local_id] = puzzle[id];
+	__syncthreads();
+
 	// Calculate our row and column
-	const unsigned int my_cell_id = threadIdx.x + diff_due_to_block;
-	const unsigned int col = my_cell_id % DIM;
-	const unsigned int row = (my_cell_id - col) / DIM;
+	const unsigned int col = local_id % DIM;
+	const unsigned int row = (local_id - col) / DIM;
 
 	// Keep a list of possible values. The values are actually the indices here,
 	// a 0 indicates that that index value is no longer a possibility.
 	unsigned int possibilities[DIM+1] = {0,1,1,1,1,1,1,1,1,1};
 
-	tmp[my_cell_id] = puzzle[my_cell_id];
-
 	// Only try to solve if cell is empty
-	if(tmp[my_cell_id] != 0 ) {
-		tmp[my_cell_id]  = tmp[my_cell_id];
+	if(shared_puzzle[local_id] != 0 ) {
+		shared_puzzle[local_id]  = shared_puzzle[local_id];
 	} else {
 		// Rule out all in the same row by changing their value in possibilities
 		for(int i = row * DIM; i < ((row*DIM) + DIM); i++) {
-			int current = tmp[i];
+			int current = shared_puzzle[i];
 			possibilities[current] = 0;
 		}
 
 		//Go through all in the same column
 		for(int i = 0; i < DIM ; i++) {
-			int current = tmp[(i*DIM)+col+diff_due_to_block];
+			int current = shared_puzzle[(i*DIM)+col];
 			possibilities[current] = 0;
 		}
 
@@ -113,7 +116,7 @@ __global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *so
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + B_DIM); i++) {
 			for(int j = s_col; j < (s_col + B_DIM); j++) {
-				int current = tmp[(i*DIM)+j];
+				int current = shared_puzzle[(i*DIM)+j];
 				possibilities[current] = 0;
 			}
 		}
@@ -132,10 +135,10 @@ __global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *so
 			}
 		}
 
-		tmp[my_cell_id] = candidate;
+		shared_puzzle[local_id] = candidate;
 	}
 
 	__syncthreads();
 
-	solved[my_cell_id] = tmp[my_cell_id];
+	solved[id] = shared_puzzle[local_id];
 }

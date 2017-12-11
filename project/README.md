@@ -32,6 +32,7 @@ Lessons so far
 - puzzle per block lessons and speedup
 
 ### TODO
+// an SM can have up to 8 blocks at the same time
 Shortlist: 1) get it to work with any number of blocks 2) gather metrics for that
 3) more algorithms 4) gather metrics for those 5) maybe more puzzles?
 - how does solving > 1 puzzle change the blocks/threading. One puzzle per block?
