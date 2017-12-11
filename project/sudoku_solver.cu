@@ -156,11 +156,11 @@ int solve_puzzle(unsigned int *h_puzzle, int cells, FILE *metrics_fd, int verbos
  */
 int main(int argc, char *argv[])
 {
-	int verbosity = 0;
+	int verbosity = 1;
 	int ret = 0;
 	if(argc != 2 && argc != 3) {
 		printf("Error: Incorrect number of command line arguments\n");
-		printf("Usage: %s [input_file]\n", argv[0]);
+		printf("Usage: %s [input_file] (v=0)\n", argv[0]);
 		exit(-1);
 	}
 	printf("\n");
@@ -173,8 +173,8 @@ int main(int argc, char *argv[])
 	}
 
 	// TODO: this would be prettier if switched to optparse
-	if((argc == 3) && (strcmp(argv[2], "-v") == 0)) {
-		verbosity = 1;
+	if((argc == 3) && (strcmp(argv[2], "v=0") == 0)) {
+		verbosity = 0;
 	}
 
 	//TODO: make this a command line option instead of Hardcoded
@@ -216,6 +216,7 @@ int main(int argc, char *argv[])
 
 	printf("\nFrom a dataset of %d puzzles,\n", solved + unsolvable + errors);
 	printf("Solved %d, partially solved %d, and encountered %d errors in %0.3fms\n\n", solved, unsolvable, errors, duration);
+	printf("Individual puzzle data output to %s\n", metrics_fn);
 
 	fclose(input_fp);
 	fclose(metrics_fp);
