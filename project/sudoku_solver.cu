@@ -14,7 +14,15 @@
 #include "sudoku_utils.cuh"
 #include "solver_kernels.cuh"
 
-int execute_kernel_mult_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
+/**
+ * Loops over the kernel until the puzzle is solved or LOOP_LIMIT is reached
+ * On success, returns the number of iterations performed, and **solution is
+ * set to the end result. Returns -1 on failure.
+ * hp_puzzle is the host-pinned puzzle of unsigned ints
+ * cells is the number of cells in the puzzle
+ * blocks is the number of blocks to use at a time (one puzzle per block)
+ */
+int execute_kernel_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
 {
 	int count = 0;
 	int array_size_in_bytes = (sizeof(unsigned int)*(cells*blocks));
@@ -23,8 +31,6 @@ int execute_kernel_mult_loop(unsigned int *hp_puzzles, int cells, int blocks, un
 
 	unsigned int *d_puzzles;
 	unsigned int *d_solutions;
-	//XXX: could have just passed the right total number of cells, and used that
-	// to find the number of puzzles to pass as number of blocks
 	cuda_ret = cudaMalloc((void **)&d_puzzles, array_size_in_bytes);
 	if(cuda_ret != cudaSuccess) {
 		printf("ERROR in cudaMalloc for d_puzzle\n");
@@ -38,9 +44,11 @@ int execute_kernel_mult_loop(unsigned int *hp_puzzles, int cells, int blocks, un
 		goto malloc_solution_error;
 	}
 
+	cudaStream_t stream;
+	cudaStreamCreate(&stream);
+	//TODO: make it async again
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
-
 		/* Copy the CPU memory to the GPU memory */
 		cuda_ret = cudaMemcpy(d_puzzles, hp_puzzles, array_size_in_bytes,
 									cudaMemcpyHostToDevice);
@@ -50,7 +58,7 @@ int execute_kernel_mult_loop(unsigned int *hp_puzzles, int cells, int blocks, un
 			goto memcpy_error;
 		}
 
-		solve_mult_by_possibility<<<blocks, cells>>>(d_puzzles, d_solutions);
+		solve_by_possibility<<<blocks, cells>>>(d_puzzles, d_solutions);
 
 		/* Copy the changed GPU memory back to the CPU */
 		cuda_ret = cudaMemcpy(hp_puzzles, d_solutions, array_size_in_bytes,
@@ -61,6 +69,7 @@ int execute_kernel_mult_loop(unsigned int *hp_puzzles, int cells, int blocks, un
 			goto memcpy_error;
 		}
 
+		cudaStreamSynchronize(stream);
 		count = count + 1;
 		//TODO: if we could check each puzzle individually, we could swap one out
 		// for another instead of having to wait for least common denominator
@@ -76,80 +85,6 @@ memcpy_error:
 	cudaFree(d_solutions);
 malloc_solution_error:
 	cudaFree(d_puzzles);
-malloc_puzzle_error:
-	return count;
-}
-
-/**
- * Loops over the kernel until the puzzle is solved or LOOP_LIMIT is reached
- * On success, returns the number of iterations performed, and **solution is
- * set to the end result. Returns -1 on failure.
- * hp_puzzle is the host-pinned puzzle of unsigned ints
- * cells is the number of cells in the puzzle
- */
-int execute_kernel_loop(unsigned int *hp_puzzle, int cells, unsigned int **solution)
-{
-	int count = 0;
-	int array_size_in_bytes = (sizeof(unsigned int) * (cells));
-	cudaError cuda_ret;
-	*solution = NULL;
-
-	/* Declare and allocate pointers for GPU based parameters */
-	unsigned int *d_puzzle;
-	unsigned int *d_solution;
-	cuda_ret = cudaMalloc((void **)&d_puzzle, array_size_in_bytes);
-	if(cuda_ret != cudaSuccess) {
-		printf("ERROR in cudaMalloc for d_puzzle\n");
-		count = -1;
-		goto malloc_puzzle_error;
-	}
-	cuda_ret = cudaMalloc((void **)&d_solution, array_size_in_bytes);
-	if(cuda_ret != cudaSuccess) {
-		printf("ERROR in cudaMalloc for d_solution\n");
-		count = -1;
-		goto malloc_solution_error;
-	}
-
-	cudaStream_t stream;
-	cudaStreamCreate(&stream);
-
-	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
-	do {
-		/* Copy the CPU memory to the GPU memory */
-		cuda_ret = cudaMemcpyAsync(d_puzzle, hp_puzzle, array_size_in_bytes,
-									cudaMemcpyHostToDevice, stream);
-		if(cuda_ret != cudaSuccess) {
-			printf("ERROR memcpy host to device\n");
-			count = -1;
-			goto memcpy_error;
-		}
-
-		solve_by_possibility<<<1, cells>>>(d_puzzle, d_solution);
-
-		/* Copy the changed GPU memory back to the CPU */
-		cuda_ret = cudaMemcpyAsync(hp_puzzle, d_solution, array_size_in_bytes,
-						cudaMemcpyDeviceToHost, stream);
-		if(cuda_ret != cudaSuccess) {
-			printf("ERROR memcpy host to device\n");
-			count = -1;
-			goto memcpy_error;
-		}
-
-		cudaStreamSynchronize(stream);
-
-		count = count + 1;
-	} while ((check_if_done(hp_puzzle) == 1) && (count <= LOOP_LIMIT));
-
-	if(count == LOOP_LIMIT) {
-		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
-	}
-
-	*solution = hp_puzzle;
-
-memcpy_error:
-	cudaFree(d_solution);
-malloc_solution_error:
-	cudaFree(d_puzzle);
 malloc_puzzle_error:
 	return count;
 }
@@ -181,7 +116,7 @@ malloc_puzzle_error:
  	float duration = 0;
  	cudaEvent_t start_time = get_time();
 
- 	int count = execute_kernel_mult_loop(h_pinned_puzzles, cells, 2, &solutions);
+ 	int count = execute_kernel_loop(h_pinned_puzzles, cells, 2, &solutions);
  	if(count <= 0) {
  		printf("ERROR: returned %d from execute_kernel_loop\n", count);
  		cudaFreeHost(h_pinned_puzzles);
