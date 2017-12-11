@@ -101,8 +101,9 @@ __global__ void solve_mult_by_possibility(unsigned int *puzzle, unsigned int *so
 			possibilities[current] = 0;
 		}
 
+		printf("diff due to block: %d\n", diff_due_to_block);
 		//Go through all in the same column
-		for(int i = 0; i < DIM ; i++) {
+		for(int i = diff_due_to_block; i < DIM ; i++) {
 			int current = tmp[i*DIM+col];
 			possibilities[current] = 0;
 		}
