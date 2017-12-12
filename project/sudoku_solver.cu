@@ -324,8 +324,8 @@ void find_and_select_device()
 			max_mp = prop.multiProcessorCount;
 			device = i;
 		}
-		printf("Device %d has : \n\t%d multiprocessors\n\t%d warp size\n",
-				i, prop.multiProcessorCount, prop.warpSize);
+		printf("Device %d (%s) has : \n\t%d multiprocessors\n\t%d warp size\n",
+				i, prop.name, prop.multiProcessorCount, prop.warpSize);
 	}
 
 	printf("Selected device %d\n", device);
