@@ -43,10 +43,8 @@ Lessons so far
 - getting the data back seems to waste a lot of time
 
 ### TODO
-Shortlist:  0) todo 1) gather metrics 2) start presentation and report
+Shortlist:  1) gather metrics 2) start presentation and report
 3) more algorithms 4) gather metrics for those 5) maybe more puzzles?
-
-- sync and async options
 
 - host based version of solution
 - kernel version of host_load_puzzles
