@@ -43,6 +43,11 @@ Lessons so far
 - getting the data back seems to waste a lot of time
 
 ### TODO
+- make sure 100k is Right
+- get info about the card in vocareum
+- try to figure out why the blocks can go so high
+- see about running in project's vocareum..
+
 Shortlist:  1) gather metrics 2) start presentation and report
 3) more algorithms 4) gather metrics for those 5) maybe more puzzles?
 
