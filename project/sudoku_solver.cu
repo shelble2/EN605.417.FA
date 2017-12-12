@@ -184,6 +184,15 @@ void find_and_select_device()
 	printf("----------------------------------------------\n");
 }
 
+/**
+ * Loads the lines from the open file descriptor one by one and solves them
+ * input_fp is the open file descriptor to read from
+ * metrics_fp is an open file descriptor to write metrics to
+ * Does not return a value, but sets solved to the number of puzzles
+ * successfully finished, unsolved to the number that could not be Solved within
+ * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
+ * error
+ */
 //TODO: would it be better to have each puzzle as array of int in array of ints?
 void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 						int verbosity, int *solved, int *unsolvable, int *errors)
@@ -211,51 +220,11 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 			lines[i] = strdup(line);
 		}
 
-		h_puzzles = load_two_puzzles(lines[0], lines[1], CELLS);
+		h_puzzles = load_puzzles(lines, i, CELLS);
 
 		ret = solve_puzzles(h_puzzles, CELLS, i, metrics_fp, verbosity);
 
 		//TODO: Need a better way to handle errors and counts, as this is per set, not block
-		if(ret == -1) {
-			tmp_errors = tmp_errors + 1;
-		} else if(ret == LOOP_LIMIT) {
-			tmp_unsolvable = tmp_unsolvable + 1;
-		} else {
-			tmp_solved = tmp_solved + 1;
-		}
-	}
-
-	*solved = tmp_solved;
-	*unsolvable = tmp_unsolvable;
-	*errors = tmp_errors;
-}
-
-/**
- * Loads the lines from the open file descriptor one by one and solves them
- * input_fp is the open file descriptor to read from
- * metrics_fp is an open file descriptor to write metrics to
- * Does not return a value, but sets solved to the number of puzzles
- * successfully finished, unsolved to the number that could not be Solved within
- * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
- * error
- */
- // TODO: needs a better name
-void solve_from_fp_one(FILE *input_fp, FILE *metrics_fp, int verbosity,
-						int *solved, int *unsolvable, int *errors)
-{
-	char *line = NULL;
-	size_t len = 0;
-
-	int tmp_solved = 0;
-	int tmp_errors = 0;
-	int tmp_unsolvable = 0;
-	int ret;
-
-	while(getline(&line, &len, input_fp) != -1) {
-		unsigned int *h_puzzle = load_puzzle(line, CELLS);
-		ret = solve_puzzles(h_puzzle, CELLS, 1, metrics_fp, verbosity);
-
-		// Keep track of the statuses coming out
 		if(ret == -1) {
 			tmp_errors = tmp_errors + 1;
 		} else if(ret == LOOP_LIMIT) {
@@ -314,9 +283,7 @@ int main(int argc, char *argv[])
 	int solved;
 	int unsolvable;
 	int errors;
-/*	solve_from_fp_one(input_fp, metrics_fp, verbosity,
-						&solved, &unsolvable, &errors);
-*/
+
 	solve_mult_from_fp(input_fp, metrics_fp, 2, verbosity,
 						&solved, &unsolvable, &errors);
 
