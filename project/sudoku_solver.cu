@@ -285,7 +285,7 @@ void solve_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks, int verbosity,
 		//TODO: Need a better way to handle errors and counts, as this is per set, not block
 		if(ret == -1) {
 			tmp_errors = tmp_errors + 1;
-		} else if(count == LOOP_LIMIT) {
+		} else if(count > LOOP_LIMIT) {
 			tmp_unsolvable = tmp_unsolvable + 1;
 		} else {
 			tmp_solved = tmp_solved + i;
