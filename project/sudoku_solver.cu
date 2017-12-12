@@ -24,13 +24,11 @@
  * blocks is the number of blocks to use at a time (one puzzle per block)
  * This function handles copying between host and device synchronously
  */
-int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks,
-								unsigned int **solutions)
+int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks)
 {
 	int count = 0;
 	int array_size_in_bytes = (sizeof(unsigned int)*(cells*blocks));
 	cudaError cuda_ret;
-	*solutions = NULL;
 
 	unsigned int *d_puzzles;
 	unsigned int *d_solutions;
@@ -77,13 +75,6 @@ int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks,
 	if(count == LOOP_LIMIT) {
 		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
 	}
-	printf("in execute_kernel_loop_sync\n");
-	sudoku_print_puzzles(hp_puzzles, blocks);
-
-	*solutions = hp_puzzles;
-
-	printf("in execute_kernel_loop_sync 2\n");
-	sudoku_print_puzzles(*solutions, blocks);
 
 memcpy_error:
 	cudaFree(d_solutions);
@@ -102,12 +93,11 @@ malloc_puzzle_error:
  * blocks is the number of blocks to use at a time (one puzzle per block)
  * This function handles copying of data between host and device asynchronously
  */
-int execute_kernel_loop_async(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
+int execute_kernel_loop_async(unsigned int *hp_puzzles, int cells, int blocks)
 {
 	int count = 0;
 	int array_size_in_bytes = (sizeof(unsigned int)*(cells*blocks));
 	cudaError cuda_ret;
-	*solutions = NULL;
 
 	unsigned int *d_puzzles;
 	unsigned int *d_solutions;
@@ -160,8 +150,6 @@ int execute_kernel_loop_async(unsigned int *hp_puzzles, int cells, int blocks, u
 		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
 	}
 
-	*solutions = hp_puzzles;
-
 memcpy_error:
 	cudaFree(d_solutions);
 malloc_solution_error:
@@ -185,10 +173,8 @@ malloc_puzzle_error:
  {
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells * blocks));
-	 *out = (unsigned int *) malloc(array_size_in_bytes);
-	 unsigned int *solutions;
 	 cudaError cuda_ret;
-	 *out = NULL;
+	 *out = (unsigned int *) malloc(array_size_in_bytes);
 	 *out_count = 0;
 	 *out_duration = 0;
 
@@ -205,7 +191,7 @@ malloc_puzzle_error:
  	float duration = 0;
  	cudaEvent_t start_time = get_time();
 
- 	int count = execute_kernel_loop_sync(h_pinned_puzzles, cells, blocks, &solutions);
+ 	int count = execute_kernel_loop_sync(h_pinned_puzzles, cells, blocks);
  	if(count <= 0) {
  		printf("ERROR: returned %d from execute_kernel_loop\n", count);
  		cudaFreeHost(h_pinned_puzzles);
@@ -217,13 +203,16 @@ malloc_puzzle_error:
  	cudaEventElapsedTime(&duration, start_time, end_time);
 
 	printf("in solve_puzzles\n");
-	sudoku_print_puzzles(solutions, blocks);
-	memcpy(*out, solutions, array_size_in_bytes);
+	sudoku_print_puzzles(h_pinned_puzzles, blocks);
+	memcpy(*out, h_pinned_puzzles, array_size_in_bytes);
+	printf("in solve_puzzles 2\n");	
+	sudoku_print_puzzles(*out, blocks);
 	*out_count = count;
 	*out_duration = duration;
 
  	/* Free the pinned CPU memory */
  	cudaFreeHost(h_pinned_puzzles);
+	printf("solve_puzzles returning\n");
  	return ret;
  }
 
