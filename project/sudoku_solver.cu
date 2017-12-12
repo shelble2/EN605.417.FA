@@ -271,8 +271,8 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 	 	}
 
 		//XXX: Could this print to file be a bottleneck?
-		if(metrics_fd != NULL) {
-			output_mult_metrics_to_file(metrics_fd, blocks, set, h_puzzles,
+		if(metrics_fp != NULL) {
+			output_mult_metrics_to_file(metrics_fp, blocks, set, h_puzzles,
 										h_solutions, count, duration);
 		}
 
