@@ -39,8 +39,8 @@ Shortlist:  0) todo 1) gather metrics 2) start presentation and report
 - TODO's in code
   - metrics per puzzle instead of set. Or at least keep track of right number for
     overall metrics
-  - optparse
   - sync and async options
+  - all of them are called puzzle 0 in verbose
 - host based version of solution
 - kernel version of host_load_puzzles
 - different algorithms

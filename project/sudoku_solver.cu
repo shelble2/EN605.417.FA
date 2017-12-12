@@ -174,11 +174,15 @@ malloc_puzzle_error:
  * solution to STDOUT. Otherwise, will just print batch metrics. Either way,
  * metrics for each specific puzzle can be found in output file
  */
- int solve_puzzles(unsigned int *h_puzzles, int cells, int blocks, FILE *metrics_fd, int verbosity)
+ int solve_puzzles(unsigned int *h_puzzles, int cells, int blocks,
+	 				unsigned int **out, int *out_count, float *out_duration)
  {
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells * blocks));
 	 cudaError cuda_ret;
+	 *out = NULL;
+	 *out_count = 0;
+	 *out_duration = 0;
 
 	 //pin it and copy to pinned memory
 	 unsigned int *h_pinned_puzzles;
@@ -189,10 +193,6 @@ malloc_puzzle_error:
  		return -1;
  	}
  	memcpy(h_pinned_puzzles, h_puzzles, array_size_in_bytes);
-
- 	if(verbosity == 1) {
- 		sudoku_print_puzzles(h_puzzles, blocks);
- 	}
 
  	/* Execute the kernel and keep track of start and end time for duration */
  	float duration = 0;
@@ -209,20 +209,87 @@ malloc_puzzle_error:
  	cudaEventSynchronize(end_time);
  	cudaEventElapsedTime(&duration, start_time, end_time);
 
- 	if(verbosity == 1) {
- 		sudoku_print_puzzles(h_pinned_puzzles, blocks);
- 		printf("\tSolved in %d increments and %fms\n", count, duration);
- 	}
-
- 	//XXX: Could this print to file be a bottleneck?
- 	if(metrics_fd != NULL) {
- 		output_mult_metrics_to_file(metrics_fd, blocks, h_puzzles, h_pinned_puzzles, count, duration);
- 	}
-
  	/* Free the pinned CPU memory */
  	cudaFreeHost(h_pinned_puzzles);
+
+	*out = solutions;
+	*out_count = count;
+	*out_duration = duration;
  	return ret;
  }
+
+/**
+ * Loads the lines from the open file descriptor one by one and solves them
+ * input_fp is the open file descriptor to read from
+ * metrics_fp is an open file descriptor to write metrics to
+ * Does not return a value, but sets solved to the number of puzzles
+ * successfully finished, unsolved to the number that could not be Solved within
+ * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
+ * error
+ */
+void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
+						int verbosity, int *solved, int *unsolvable, int *errors)
+{
+	char *lines[blocks];
+	unsigned int *h_puzzles;
+	unsigned int *h_solutions
+	char *line = NULL;
+	size_t len = 0;
+
+	int tmp_solved = 0;
+	int tmp_errors = 0;
+	int tmp_unsolvable = 0;
+	int ret;
+
+	int set = 0;
+	// while there's still at least one left
+	while(getline(&line, &len, input_fp) != -1) {
+		lines[0] = strdup(line);
+
+		// Fill in the rest of the space
+		int i;
+		for(i = 1; i < blocks; i++) {
+			if(getline(&line, &len, input_fp) == -1) {
+				break;
+			}
+			lines[i] = strdup(line);
+		}
+
+		// Pass the number of puzzles as the number of blocks
+		h_puzzles = host_load_puzzles(lines, i, CELLS);
+
+		if(verbosity == 1) {
+	 		sudoku_print_puzzles(h_puzzles, blocks);
+	 	}
+		int count;
+		float duration;
+		ret = solve_puzzles(h_puzzles, CELLS, i, &h_solutions, &count, &duration);
+
+		if(verbosity == 1) {
+	 		sudoku_print_puzzles(h_puzzles, blocks);
+	 		printf("\tSolved in %d increments and %fms\n", count, duration);
+	 	}
+
+		//XXX: Could this print to file be a bottleneck?
+		if(metrics_fd != NULL) {
+			output_mult_metrics_to_file(metrics_fd, blocks, set, h_puzzles,
+										h_solutions, count, duration);
+		}
+
+		//TODO: Need a better way to handle errors and counts, as this is per set, not block
+		if(ret == -1) {
+			tmp_errors = tmp_errors + 1;
+		} else if(ret == LOOP_LIMIT) {
+			tmp_unsolvable = tmp_unsolvable + 1;
+		} else {
+			tmp_solved = tmp_solved + 1;
+		}
+	}
+
+	*solved = tmp_solved;
+	*unsolvable = tmp_unsolvable;
+	*errors = tmp_errors;
+}
 
 /**
  * Find the best available device for our use case and set it
@@ -260,66 +327,11 @@ void find_and_select_device()
 }
 
 /**
- * Loads the lines from the open file descriptor one by one and solves them
- * input_fp is the open file descriptor to read from
- * metrics_fp is an open file descriptor to write metrics to
- * Does not return a value, but sets solved to the number of puzzles
- * successfully finished, unsolved to the number that could not be Solved within
- * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
- * error
- */
-void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
-						int verbosity, int *solved, int *unsolvable, int *errors)
-{
-	char *lines[blocks];
-	unsigned int *h_puzzles;
-	char *line = NULL;
-	size_t len = 0;
-
-	int tmp_solved = 0;
-	int tmp_errors = 0;
-	int tmp_unsolvable = 0;
-	int ret;
-
-	// while there's still at least one left
-	while(getline(&line, &len, input_fp) != -1) {
-		lines[0] = strdup(line);
-
-		// Fill in the rest of the space
-		int i;
-		for(i = 1; i < blocks; i++) {
-			if(getline(&line, &len, input_fp) == -1) {
-				break;
-			}
-			lines[i] = strdup(line);
-		}
-
-		// Pass the number of puzzles as the number of blocks
-		h_puzzles = host_load_puzzles(lines, i, CELLS);
-
-		ret = solve_puzzles(h_puzzles, CELLS, i, metrics_fp, verbosity);
-
-		//TODO: Need a better way to handle errors and counts, as this is per set, not block
-		if(ret == -1) {
-			tmp_errors = tmp_errors + 1;
-		} else if(ret == LOOP_LIMIT) {
-			tmp_unsolvable = tmp_unsolvable + 1;
-		} else {
-			tmp_solved = tmp_solved + 1;
-		}
-	}
-
-	*solved = tmp_solved;
-	*unsolvable = tmp_unsolvable;
-	*errors = tmp_errors;
-}
-
-/**
  * Prints the usage of this Program
  */
  void print_usage(char *name)
  {
-	 printf("\n\nUsage: %s -i [input file] (-b num_blocks) (-v verbosity) (-a)\n", name);
+	 printf("\nUsage: %s -i [input file] (-b num_blocks) (-v verbosity) (-a)\n", name);
 	 printf("\t-i input file is required\n");
 	 printf("\t-b is optional and specifies the number of blocks to use, or the number\n");
 	 printf("\t\tof puzzles to exec in parallel. Default = 1\n");

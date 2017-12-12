@@ -73,7 +73,7 @@ void sudoku_print_puzzles(unsigned int* numbers, int blocks)
 {
 	int i = 0;
 	for(i = 0; i < blocks; i++){
-		printf("Puzzle %d:\n", i);
+		printf("Puzzle in block %d:\n", i);
 		sudoku_print(numbers, i*CELLS);
 	}
 }
@@ -120,15 +120,19 @@ unsigned int *host_load_puzzles(char *puzzles[], int num, int cells)
  * out_fd is the file to write to
  * puzzle is the original puzzle
  * solution is the solved puzzle
+ * is a number that you can use to identify a set of entries
+ * block is a number you can use to identify this specific entry in the set
  * count is the number of iterations the puzzle took to complete
  * duration is the time the puzzle took to solve
  *
  * outputs to the csv file in the format
- * puzzle,solution,count,duration
+ * set,block,puzzle,solution,count,duration
  */
-void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
-	unsigned int *solution, int count, float duration, int start)
+void output_metrics_to_file(FILE *out_fd, unsigned int set, int block,
+							unsigned int *puzzle, unsigned int *solution,
+							int count, float duration, int start)
 {
+	fprintf(out_fd, "%d,%d,", set, block);
 	int i = 0;
 	for(i = 0; i < CELLS; i++){
 		fprintf(out_fd, "%c", (char)puzzle[i+start] + ASCII_TO_INT);
@@ -145,12 +149,15 @@ void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
  * blocks is the number of puzzles held in puzzles, puzzles are the originals
  * solutions are the end result, count is the number of iterations it took, and
  * duration is the amount of time in ms
+ * set is the number you want designated to this set of entries
  */
-void output_mult_metrics_to_file(FILE *out_fd, int blocks, unsigned int *puzzle,
-	unsigned int *solution, int count, float duration)
+void output_mult_metrics_to_file(FILE *out_fd, int blocks, unsigned int *set,
+								unsigned int *puzzle, unsigned int *solution,
+								int count, float duration)
 {
 	int i = 0;
 	for (i = 0; i < blocks; i++){
-		output_metrics_to_file(out_fd, puzzle, solution, count, duration, i*CELLS);
+		output_metrics_to_file(out_fd, set, i, puzzle, solution, count,
+								duration, i*CELLS);
 	}
 }
