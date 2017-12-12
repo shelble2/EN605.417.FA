@@ -190,33 +190,39 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 {
 	char *lines[blocks];
 	unsigned int *h_puzzles;
+	char *line = NULL;
+	size_t len = 0;
 
 	int tmp_solved = 0;
 	int tmp_errors = 0;
 	int tmp_unsolvable = 0;
 	int ret;
 
-	int i = 0;
-	for(i = 0; i < blocks; i++) {
-		char *line = NULL;
-		size_t len = 0;
-		if(getline(&line, &len, input_fp) == -1) {
-			break;
+	// while there's still at least one left
+	while(getline(&line, &len, input_fp) != -1) {
+		lines[0] = line;
+
+		// Fill in the rest of the space
+		int i;
+		for(i = 1; i < blocks; i++) {
+			if(getline(&line, &len, input_fp) == -1) {
+				break;
+			}
+			lines[i] = line;
 		}
-		lines[i] = line;
-	}
 
-	h_puzzles = load_two_puzzles(lines[0], lines[1], CELLS);
+		h_puzzles = load_two_puzzles(lines[0], lines[1], CELLS);
 
-	ret = solve_puzzles(h_puzzles, CELLS, blocks, metrics_fp, verbosity);
+		ret = solve_puzzles(h_puzzles, CELLS, i, metrics_fp, verbosity);
 
-	//TODO: Need a better way to handle errors and counts, as this is per set, not block
-	if(ret == -1) {
-		tmp_errors = tmp_errors + 1;
-	} else if(ret == LOOP_LIMIT) {
-		tmp_unsolvable = tmp_unsolvable + 1;
-	} else {
-		tmp_solved = tmp_solved + 1;
+		//TODO: Need a better way to handle errors and counts, as this is per set, not block
+		if(ret == -1) {
+			tmp_errors = tmp_errors + 1;
+		} else if(ret == LOOP_LIMIT) {
+			tmp_unsolvable = tmp_unsolvable + 1;
+		} else {
+			tmp_solved = tmp_solved + 1;
+		}
 	}
 
 	*solved = tmp_solved;
