@@ -197,7 +197,7 @@ malloc_puzzle_error:
  	float duration = 0;
  	cudaEvent_t start_time = get_time();
 
- 	int count = execute_kernel_loop(h_pinned_puzzles, cells, blocks, &solutions);
+ 	int count = execute_kernel_loop_sync(h_pinned_puzzles, cells, blocks, &solutions);
  	if(count <= 0) {
  		printf("ERROR: returned %d from execute_kernel_loop\n", count);
  		cudaFreeHost(h_pinned_puzzles);

@@ -47,6 +47,7 @@ Shortlist:  1) gather metrics 2) start presentation and report
   - metrics per puzzle instead of set. Or at least keep track of right number for
     overall metrics
   - optparse
+  - sync and async options
   - kernel function for loading puzzles?
 
 ### Optional Extras
