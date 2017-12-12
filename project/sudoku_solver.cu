@@ -82,6 +82,9 @@ int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks,
 
 	*solutions = hp_puzzles;
 
+	printf("in execute_kernel_loop_sync 2\n");
+	sudoku_print_puzzles(*solutions, blocks);
+
 memcpy_error:
 	cudaFree(d_solutions);
 malloc_solution_error:
@@ -182,6 +185,7 @@ malloc_puzzle_error:
  {
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells * blocks));
+	 unsigned int *solutions = (unsigned int *) malloc(cells * num * sizeof(unsigned int));
 	 cudaError cuda_ret;
 	 *out = NULL;
 	 *out_count = 0;
@@ -189,7 +193,6 @@ malloc_puzzle_error:
 
 	 //pin it and copy to pinned memory
 	 unsigned int *h_pinned_puzzles;
-	 unsigned int *solutions;
 	 cuda_ret = cudaMallocHost((void **) &h_pinned_puzzles, array_size_in_bytes);
 	 if(cuda_ret != cudaSuccess) {
  		printf("Error mallocing pinned host memory\n");
