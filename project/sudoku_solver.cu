@@ -73,7 +73,7 @@ int execute_kernel_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigne
 		count = count + 1;
 		//TODO: if we could check each puzzle individually, we could swap one out
 		// for another instead of having to wait for least common denominator
-	} while ((check_if_done(hp_puzzles) == 1) && (count <= LOOP_LIMIT));
+	} while ((check_if_done(hp_puzzles, blocks) == 1) && (count <= LOOP_LIMIT));
 
 	if(count == LOOP_LIMIT) {
 		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);

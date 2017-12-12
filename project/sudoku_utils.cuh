@@ -81,10 +81,10 @@ void sudoku_print_puzzles(unsigned int* numbers, int blocks)
  * puzzle- sudoku puzzle array
  * Returns 0 if done, 1 if not
  */
-int check_if_done(unsigned int *puzzle)
+int check_if_done(unsigned int *puzzle, int blocks)
 {
 	///TODO: needs to know how many
-	for(int i = 0; i < CELLS *2; i++) {
+	for(int i = 0; i < CELLS * blocks; i++) {
 		if(puzzle[i] == 0) {
 			return 1;
 		}
