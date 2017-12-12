@@ -334,8 +334,8 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	int blocks = atoi(argv[3]);
-	printf("Number of blocks: %d\n", blocks);
+	int blocks = atoi(argv[2]);
+	printf("Using %d blocks to solve %d at a time\n", blocks, blocks);
 
 
 	// TODO: this would be prettier if switched to optparse
