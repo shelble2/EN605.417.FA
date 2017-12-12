@@ -24,7 +24,8 @@
  * blocks is the number of blocks to use at a time (one puzzle per block)
  * This function handles copying between host and device synchronously
  */
-int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
+int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks,
+								unsigned int **solutions)
 {
 	int count = 0;
 	int array_size_in_bytes = (sizeof(unsigned int)*(cells*blocks));
@@ -76,6 +77,8 @@ int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks, un
 	if(count == LOOP_LIMIT) {
 		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
 	}
+	printf("in execute_kernel_loop_sync\n");
+	sudoku_print_puzzles(hp_puzzles, blocks);
 
 	*solutions = hp_puzzles;
 
