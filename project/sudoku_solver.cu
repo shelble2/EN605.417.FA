@@ -202,17 +202,12 @@ malloc_puzzle_error:
  	cudaEventSynchronize(end_time);
  	cudaEventElapsedTime(&duration, start_time, end_time);
 
-	printf("in solve_puzzles\n");
-	sudoku_print_puzzles(h_pinned_puzzles, blocks);
 	memcpy(*out, h_pinned_puzzles, array_size_in_bytes);
-	printf("in solve_puzzles 2\n");	
-	sudoku_print_puzzles(*out, blocks);
 	*out_count = count;
 	*out_duration = duration;
 
  	/* Free the pinned CPU memory */
  	cudaFreeHost(h_pinned_puzzles);
-	printf("solve_puzzles returning\n");
  	return ret;
  }
 
@@ -280,8 +275,9 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 		} else if(ret == LOOP_LIMIT) {
 			tmp_unsolvable = tmp_unsolvable + 1;
 		} else {
-			tmp_solved = tmp_solved + 1;
+			tmp_solved = tmp_solved + i;
 		}
+		set++;
 	}
 
 	*solved = tmp_solved;
@@ -411,8 +407,8 @@ int main(int argc, char *argv[])
 	cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
-	printf("\nFrom a dataset of %d puzzles,\n", solved + unsolvable + errors);
-	printf("Solved %d, partially solved %d, and encountered %d errors in %0.3fms\n\n", solved, unsolvable, errors, duration);
+	printf("Final result:\n\tSolved %d puzzles in %0.3fms using %d blocks.\n", solved, duration, blocks);
+	printf("\t%d batches reached LOOP_LIMIT\n\t%d batches returned errors\n", unsolvable, errors);
 	printf("Individual puzzle data output to %s\n", metrics_fn);
 
 	fclose(input_fp);
