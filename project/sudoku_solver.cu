@@ -259,7 +259,7 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 		ret = solve_puzzles(h_puzzles, CELLS, i, &h_solutions, &count, &duration);
 
 		if(verbosity == 1) {
-	 		sudoku_print_puzzles(h_puzzles, blocks);
+	 		sudoku_print_puzzles(h_solutions, blocks);
 	 		printf("\tSolved in %d increments and %fms\n", count, duration);
 	 	}
 

@@ -15,8 +15,16 @@ Current Status Summary
 Currently, this program solves sudoku puzzles contained in a passed input file,
 (The file included is the first hundred puzzles from [1]) by calling the solve_by_possibility kernel function until a host function determines that the puzzle has been solved. It only uses the solve_by_possibility kernel. In my
 TODO, I identify other approaches that could be alternated to achieve a faster
-solution. Output is also placed in a metrics.csv file, in the format: puzzle,
-solution, iterations, duration(ms). Sudoku-style output is sent to STDOUT.
+solution. Sudoku-style output is sent to STDOUT. Call the program without any
+command line arguments in order to see other runtime options, such as verbosity
+and number of blocks.
+
+Metrics are output to a file called metrics.csv in the format set, block, puzzle,
+solution, count, duration. Puzzles are solved in sets of num_blocks, so set is
+the set a puzzle belongs to and block is the block it took in that set. Notice
+that since a set is being solved simultaneously, count and duration are the time
+and duration for the set as a whole, therefore, it ends up being the highest count,
+longest duration one's metrics.
 
 Lessons so far
 --------------
