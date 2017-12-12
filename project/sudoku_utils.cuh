@@ -151,7 +151,7 @@ void output_metrics_to_file(FILE *out_fd, unsigned int set, int block,
  * duration is the amount of time in ms
  * set is the number you want designated to this set of entries
  */
-void output_mult_metrics_to_file(FILE *out_fd, int blocks, unsigned int *set,
+void output_mult_metrics_to_file(FILE *out_fd, int blocks, unsigned int set,
 								unsigned int *puzzle, unsigned int *solution,
 								int count, float duration)
 {

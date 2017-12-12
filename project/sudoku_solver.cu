@@ -232,7 +232,7 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 {
 	char *lines[blocks];
 	unsigned int *h_puzzles;
-	unsigned int *h_solutions
+	unsigned int *h_solutions;
 	char *line = NULL;
 	size_t len = 0;
 
