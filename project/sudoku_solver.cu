@@ -265,20 +265,20 @@ void solve_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks, int verbosity,
 		h_puzzles = host_load_puzzles(lines, i, CELLS);
 
 		if(verbosity == 1) {
-	 		sudoku_print_puzzles(h_puzzles, blocks);
+	 		sudoku_print_puzzles(h_puzzles, i);
 	 	}
 		int count;
 		float duration;
 		ret = solve_puzzles(h_puzzles, CELLS, i, async, &h_solutions, &count, &duration);
 
 		if(verbosity == 1) {
-	 		sudoku_print_puzzles(h_solutions, blocks);
+	 		sudoku_print_puzzles(h_solutions, i);
 	 		printf("\tSolved in %d increments and %fms\n", count, duration);
 	 	}
 
 		//XXX: Could this print to file be a bottleneck?
 		if(metrics_fp != NULL) {
-			output_mult_metrics_to_file(metrics_fp, blocks, set, h_puzzles,
+			output_mult_metrics_to_file(metrics_fp, i, set, h_puzzles,
 										h_solutions, count, duration);
 		}
 
