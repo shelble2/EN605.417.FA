@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "sudoku_utils.cuh"
 #include "solver_kernels.cuh"
@@ -314,34 +315,66 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 }
 
 /**
+ * Prints the usage of this Program
+ */
+ void print_usage(char *name)
+ {
+	 printf("Usage: %s -i [input file] (-b num_blocks) (-v verbosity) (-a)", name);
+	 printf("\t-i input file is required\n");
+	 printf("\t-b is optional and specifies the number of blocks to use, or the number\n");
+	 printf("\tof puzzles to exec in parallel. Default = 1\n");
+	 printf("\t-v specifies verbosity, where -v 0 will suppress most output. Default = 1\n");
+	 printf("\t-a is a flag that will result in calling asynchronous functions instead of the synchronous default\n");
+ }
+
+/**
  * Entry point for execution. Checks command line arguments
  * then passes execution to subordinate function
  */
 int main(int argc, char *argv[])
 {
-	int verbosity = 1;
-	if(argc != 3 && argc != 4) {
-		printf("Error: Incorrect number of command line arguments\n");
-		printf("Usage: %s [input_file] [num_blocks] (v=0)\n", argv[0]);
-		exit(-1);
-	}
-	printf("\n");
+	int verbosity = DEFAULT_VERBOSITY;
+	int blocks    = DEFAULT_NUM_BLOCKS;
+	int async     = 0;
+	char *input_fn = NULL;
+	FILE *input_fp = NULL;
 
-	char *input_fn = argv[1];
-	FILE *input_fp = fopen(input_fn, "r");
+	int c;
+
+    while((c = getopt(argc, argv, "v:b:ai:")) != -1) {
+      switch(c) {
+        case 'v':
+			verbosity = atoi(optarg);
+          	break;
+        case 'b':
+			blocks = atoi(optarg);
+          	break;
+        case 'a':
+          	async = 1;
+          	break;
+		case 'i':
+			input_fn = optarg;
+			break;
+        default:
+          printf("Error: unrecognized option: %c\n", c);
+		  print_usage(argv[0]);
+          exit(-1);
+        }
+    }
+
+	if(input_fn == NULL) {
+		printf("Error: no input file provided\n");
+		print_usage(argv[0]);
+		return -1;
+	}
+
+	input_fp = fopen(input_fn, "r");
 	if(input_fp == NULL) {
 		printf("Failed to open input file %s\n", input_fn);
 		return -1;
 	}
 
-	int blocks = atoi(argv[2]);
-	printf("Using %d blocks to solve %d at a time\n", blocks, blocks);
-
-
-	// TODO: this would be prettier if switched to optparse
-	if((argc == 4) && (strcmp(argv[3], "v=0") == 0)) {
-		verbosity = 0;
-	}
+	printf("Using %d blocks to solve %d at a time.\n", blocks, blocks);
 
 	char *metrics_fn = "metrics.csv";
 	FILE *metrics_fp = fopen(metrics_fn, "w");

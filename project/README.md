@@ -31,11 +31,18 @@ Lessons so far
 - cudaStreamSynchronize() was necessary inside loop. Hurt time if not
 - puzzle per block lessons and speedup
 - shared memory when multiple blocks
+  - an SM can have up to 8 blocks at the same time
 
 ### TODO
-// an SM can have up to 8 blocks at the same time
-Shortlist:  1) gather metrics 2) start presentation and report
+Shortlist:  0) todo 1) gather metrics 2) start presentation and report
 3) more algorithms 4) gather metrics for those 5) maybe more puzzles?
+- TODO's in code
+  - metrics per puzzle instead of set. Or at least keep track of right number for
+    overall metrics
+  - optparse
+  - sync and async options
+- host based version of solution
+- kernel version of host_load_puzzles
 - different algorithms
 - host-based versions for comparison
 - another kernel that solves by dimension (check a row for last values to fill)
@@ -43,12 +50,7 @@ Shortlist:  1) gather metrics 2) start presentation and report
 - 'naked pairs' - if two cells both are between a pair, you can't tell which
 	has which, but you can tell that they contain both. So can eliminate from
 	other dependencies.
-- TODO's in code
-  - metrics per puzzle instead of set. Or at least keep track of right number for
-    overall metrics
-  - optparse
-  - sync and async options
-  - kernel function for loading puzzles?
+
 
 ### Optional Extras
 - larger puzzles going > single digits

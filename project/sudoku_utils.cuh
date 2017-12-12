@@ -17,6 +17,9 @@
 #define LOOP_LIMIT 40  // Just in case we hit one that needs a guess to finish
 #define ASCII_TO_INT 48
 
+#define DEFAULT_VERBOSITY 1
+#define DEFAULT_NUM_BLOCKS 1
+
 /**
  * Returns the current time
  */
