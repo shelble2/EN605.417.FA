@@ -102,10 +102,16 @@ int check_if_done(unsigned int *puzzle)
  //TODO: This could actually be a kernel most likely...
 unsigned int *load_puzzles(char *puzzles[], int num, int cells)
 {
+	printf("loading puzzles\n");
 	int i;
+	int j;
+	
 	unsigned int *out = (unsigned int *) malloc(cells * num * sizeof(unsigned int));
-	for(i = 0; i < cells; i++) {
-		out[i] = puzzles[i] - ASCII_TO_INT;
+	for(i = 0; i < num; i++) {
+	      printf("i = %d\n", i);
+	      for(j = 0; j < cells; j++){
+	      	    out[(i*cells)+j] = puzzles[i][j] - ASCII_TO_INT;
+		    }
 	}
 	return out;
 }
