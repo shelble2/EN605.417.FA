@@ -319,10 +319,10 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
  */
  void print_usage(char *name)
  {
-	 printf("Usage: %s -i [input file] (-b num_blocks) (-v verbosity) (-a)", name);
+	 printf("\n\nUsage: %s -i [input file] (-b num_blocks) (-v verbosity) (-a)\n", name);
 	 printf("\t-i input file is required\n");
 	 printf("\t-b is optional and specifies the number of blocks to use, or the number\n");
-	 printf("\tof puzzles to exec in parallel. Default = 1\n");
+	 printf("\t\tof puzzles to exec in parallel. Default = 1\n");
 	 printf("\t-v specifies verbosity, where -v 0 will suppress most output. Default = 1\n");
 	 printf("\t-a is a flag that will result in calling asynchronous functions instead of the synchronous default\n");
  }
