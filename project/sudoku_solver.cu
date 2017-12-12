@@ -21,8 +21,81 @@
  * hp_puzzle is the host-pinned puzzle of unsigned ints
  * cells is the number of cells in the puzzle
  * blocks is the number of blocks to use at a time (one puzzle per block)
+ * This function handles copying between host and device synchronously
  */
-int execute_kernel_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
+int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
+{
+	int count = 0;
+	int array_size_in_bytes = (sizeof(unsigned int)*(cells*blocks));
+	cudaError cuda_ret;
+	*solutions = NULL;
+
+	unsigned int *d_puzzles;
+	unsigned int *d_solutions;
+	cuda_ret = cudaMalloc((void **)&d_puzzles, array_size_in_bytes);
+	if(cuda_ret != cudaSuccess) {
+		printf("ERROR in cudaMalloc for d_puzzle\n");
+		count = -1;
+		goto malloc_puzzle_error;
+	}
+	cuda_ret = cudaMalloc((void **)&d_solutions, array_size_in_bytes);
+	if(cuda_ret != cudaSuccess) {
+		printf("ERROR in cudaMalloc for d_solution\n");
+		count = -1;
+		goto malloc_solution_error;
+	}
+
+	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
+	do {
+		/* Copy the CPU memory to the GPU memory */
+		cuda_ret = cudaMemcpy(d_puzzles, hp_puzzles, array_size_in_bytes,
+									cudaMemcpyHostToDevice);
+		if(cuda_ret != cudaSuccess) {
+			printf("ERROR memcpy host to device (%d)\n", cuda_ret);
+			count = -1;
+			goto memcpy_error;
+		}
+
+		solve_by_possibility<<<blocks, cells>>>(d_puzzles, d_solutions);
+
+		/* Copy the changed GPU memory back to the CPU */
+		cuda_ret = cudaMemcpy(hp_puzzles, d_solutions, array_size_in_bytes,
+						cudaMemcpyDeviceToHost);
+		if(cuda_ret != cudaSuccess) {
+			printf("ERROR memcpy device to host (%d)\n", cuda_ret);
+			count = -1;
+			goto memcpy_error;
+		}
+
+		count = count + 1;
+		//TODO: if we could check each puzzle individually, we could swap one out
+		// for another instead of having to wait for least common denominator
+	} while ((check_if_done(hp_puzzles, blocks) == 1) && (count <= LOOP_LIMIT));
+
+	if(count == LOOP_LIMIT) {
+		printf("[ WARNING ] Could not find a solution within max allowable (%d) iterations.\n", LOOP_LIMIT);
+	}
+
+	*solutions = hp_puzzles;
+
+memcpy_error:
+	cudaFree(d_solutions);
+malloc_solution_error:
+	cudaFree(d_puzzles);
+malloc_puzzle_error:
+	return count;
+}
+
+/**
+ * Loops over the kernel until the puzzle is solved or LOOP_LIMIT is reached
+ * On success, returns the number of iterations performed, and **solution is
+ * set to the end result. Returns -1 on failure.
+ * hp_puzzle is the host-pinned puzzle of unsigned ints
+ * cells is the number of cells in the puzzle
+ * blocks is the number of blocks to use at a time (one puzzle per block)
+ * This function handles copying of data between host and device asynchronously
+ */
+int execute_kernel_loop_async(unsigned int *hp_puzzles, int cells, int blocks, unsigned int **solutions)
 {
 	int count = 0;
 	int array_size_in_bytes = (sizeof(unsigned int)*(cells*blocks));
@@ -46,12 +119,12 @@ int execute_kernel_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigne
 
 	cudaStream_t stream;
 	cudaStreamCreate(&stream);
-	//TODO: make it async again
+
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
-		cuda_ret = cudaMemcpy(d_puzzles, hp_puzzles, array_size_in_bytes,
-									cudaMemcpyHostToDevice);
+		cuda_ret = cudaMemcpyAsync(d_puzzles, hp_puzzles, array_size_in_bytes,
+									cudaMemcpyHostToDevice, stream);
 		if(cuda_ret != cudaSuccess) {
 			printf("ERROR memcpy host to device (%d)\n", cuda_ret);
 			count = -1;
@@ -61,8 +134,8 @@ int execute_kernel_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigne
 		solve_by_possibility<<<blocks, cells>>>(d_puzzles, d_solutions);
 
 		/* Copy the changed GPU memory back to the CPU */
-		cuda_ret = cudaMemcpy(hp_puzzles, d_solutions, array_size_in_bytes,
-						cudaMemcpyDeviceToHost);
+		cuda_ret = cudaMemcpyAsync(hp_puzzles, d_solutions, array_size_in_bytes,
+						cudaMemcpyDeviceToHost, stream);
 		if(cuda_ret != cudaSuccess) {
 			printf("ERROR memcpy device to host (%d)\n", cuda_ret);
 			count = -1;
@@ -71,6 +144,7 @@ int execute_kernel_loop(unsigned int *hp_puzzles, int cells, int blocks, unsigne
 
 		cudaStreamSynchronize(stream);
 		count = count + 1;
+
 		//TODO: if we could check each puzzle individually, we could swap one out
 		// for another instead of having to wait for least common denominator
 	} while ((check_if_done(hp_puzzles, blocks) == 1) && (count <= LOOP_LIMIT));
@@ -193,7 +267,6 @@ void find_and_select_device()
  * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
  * error
  */
-//TODO: would it be better to have each puzzle as array of int in array of ints?
 void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 						int verbosity, int *solved, int *unsolvable, int *errors)
 {
@@ -220,7 +293,8 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 			lines[i] = strdup(line);
 		}
 
-		h_puzzles = load_puzzles(lines, i, CELLS);
+		// Pass the number of puzzles as the number of blocks
+		h_puzzles = host_load_puzzles(lines, i, CELLS);
 
 		ret = solve_puzzles(h_puzzles, CELLS, i, metrics_fp, verbosity);
 
@@ -269,7 +343,6 @@ int main(int argc, char *argv[])
 		verbosity = 0;
 	}
 
-	//TODO: make this a command line option instead of Hardcoded
 	char *metrics_fn = "metrics.csv";
 	FILE *metrics_fp = fopen(metrics_fn, "w");
 	if(metrics_fp == NULL) {

@@ -13,6 +13,8 @@
  */
 __global__ void solve_by_possibility(unsigned int *puzzle, unsigned int *solved)
 {
+	// Notice that we're only going to copy the portion of puzzle that is part
+	// of this block's puzzle to this block's shared memory
 	__shared__ unsigned int shared_puzzle[CELLS];
 
 	const unsigned int local_id = threadIdx.x;
@@ -47,7 +49,6 @@ __global__ void solve_by_possibility(unsigned int *puzzle, unsigned int *solved)
 		}
 
 		//Go through all in the same block
-		// TODO: these could just be integer division instead?
 		int s_row = row - (row % B_DIM);
 		int s_col = col - (col % B_DIM);
 		for(int i = s_row; i < (s_row + B_DIM); i++) {

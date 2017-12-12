@@ -83,7 +83,6 @@ void sudoku_print_puzzles(unsigned int* numbers, int blocks)
  */
 int check_if_done(unsigned int *puzzle, int blocks)
 {
-	///TODO: needs to know how many
 	for(int i = 0; i < CELLS * blocks; i++) {
 		if(puzzle[i] == 0) {
 			return 1;
@@ -99,8 +98,7 @@ int check_if_done(unsigned int *puzzle, int blocks)
  * puzzle
  * Returns the loaded unsigned int puzzles array
  */
- //TODO: This could actually be a kernel instead...
-unsigned int *load_puzzles(char *puzzles[], int num, int cells)
+unsigned int *host_load_puzzles(char *puzzles[], int num, int cells)
 {
 	int i;
 	int j;
@@ -145,7 +143,6 @@ void output_metrics_to_file(FILE *out_fd, unsigned int *puzzle,
  * solutions are the end result, count is the number of iterations it took, and
  * duration is the amount of time in ms
  */
-//TODO: count and duration here are time for ALL in block
 void output_mult_metrics_to_file(FILE *out_fd, int blocks, unsigned int *puzzle,
 	unsigned int *solution, int count, float duration)
 {
