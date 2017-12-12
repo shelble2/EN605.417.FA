@@ -45,7 +45,6 @@ int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks)
 		goto malloc_solution_error;
 	}
 
-	printf("Copying memory between host and device synchronously\n");
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
@@ -118,7 +117,6 @@ int execute_kernel_loop_async(unsigned int *hp_puzzles, int cells, int blocks)
 	cudaStream_t stream;
 	cudaStreamCreate(&stream);
 
-	printf("Copying memory between host and device asynchronously\n");
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
@@ -396,6 +394,11 @@ int main(int argc, char *argv[])
 	}
 
 	printf("Using %d blocks to solve %d at a time.\n", blocks, blocks);
+	if(async == 1)	{
+		printf("Using asynchronous copying methods between host and device\n");
+	} else {
+		printf("Using synchronous copying methods between host and device\n");
+	}
 
 	char *metrics_fn = "metrics.csv";
 	FILE *metrics_fp = fopen(metrics_fn, "w");
