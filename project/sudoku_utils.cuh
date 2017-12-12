@@ -69,7 +69,7 @@ void sudoku_print(unsigned int* numbers, int start)
 void sudoku_print_puzzles(unsigned int* numbers, int blocks)
 {
 	int i = 0;
-	for(i = 0; i < blocks, i++){
+	for(i = 0; i < blocks; i++){
 		printf("Puzzle %d:\n", i);
 		sudoku_print(numbers, i*CELLS);
 	}
