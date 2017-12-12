@@ -206,7 +206,7 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 		lines[i] = line;
 	}
 
-	h_puzzles = load_two_puzzles(lines, CELLS);
+	h_puzzles = load_two_puzzles(lines[0], lines[1], CELLS);
 
 	ret = solve_puzzles(h_puzzles, CELLS, blocks, metrics_fp, verbosity);
 
