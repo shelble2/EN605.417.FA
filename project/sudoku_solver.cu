@@ -200,7 +200,7 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 
 	// while there's still at least one left
 	while(getline(&line, &len, input_fp) != -1) {
-		lines[0] = line;
+		lines[0] = strdup(line);
 
 		// Fill in the rest of the space
 		int i;
@@ -208,7 +208,7 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 			if(getline(&line, &len, input_fp) == -1) {
 				break;
 			}
-			lines[i] = line;
+			lines[i] = strdup(line);
 		}
 
 		h_puzzles = load_two_puzzles(lines[0], lines[1], CELLS);
