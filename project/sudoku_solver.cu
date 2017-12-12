@@ -184,42 +184,39 @@ void find_and_select_device()
 	printf("----------------------------------------------\n");
 }
 
-void solve_from_fp_two(FILE *input_fp, FILE *metrics_fp, int verbosity,
-						int *solved, int *unsolvable, int *errors)
+//TODO: would it be better to have each puzzle as array of int in array of ints?
+void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
+						int verbosity, int *solved, int *unsolvable, int *errors)
 {
-	char *line1 = NULL;
-	char *line2 = NULL;
-	size_t len = 0;
+	char *lines[blocks];
+	unsigned int *h_puzzles;
 
 	int tmp_solved = 0;
 	int tmp_errors = 0;
 	int tmp_unsolvable = 0;
 	int ret;
 
-	while(getline(&line1, &len, input_fp) != -1) {
-		unsigned int *h_puzzle;
-
-		ret = getline(&line2, &len, input_fp);
-
-		// Cop out if another line's not there
-		if(ret == -1) {
-			h_puzzle = load_puzzle(line1, CELLS);
-			ret = solve_puzzles(h_puzzle, CELLS, 1, metrics_fp, verbosity);
-			goto take_count;
+	int i = 0;
+	for(i = 0; i < blocks; i++) {
+		char *line = NULL;
+		size_t len = 0;
+		if(getline(&line, &len, input_fp) == -1) {
+			break;
 		}
+		lines[i] = line;
+	}
 
-		h_puzzle = load_two_puzzles(line1, line2, CELLS);
-		ret = solve_puzzles(h_puzzle, CELLS, 2, metrics_fp, verbosity);
+	h_puzzles = load_two_puzzles(lines, CELLS);
 
-take_count:
-		// Keep track of the statuses coming out
-		if(ret == -1) {
-			tmp_errors = tmp_errors + 1;
-		} else if(ret == LOOP_LIMIT) {
-			tmp_unsolvable = tmp_unsolvable + 1;
-		} else {
-			tmp_solved = tmp_solved + 1;
-		}
+	ret = solve_puzzles(h_puzzles, CELLS, blocks, metrics_fp, verbosity);
+
+	//TODO: Need a better way to handle errors and counts, as this is per set, not block
+	if(ret == -1) {
+		tmp_errors = tmp_errors + 1;
+	} else if(ret == LOOP_LIMIT) {
+		tmp_unsolvable = tmp_unsolvable + 1;
+	} else {
+		tmp_solved = tmp_solved + 1;
 	}
 
 	*solved = tmp_solved;
@@ -250,7 +247,7 @@ void solve_from_fp_one(FILE *input_fp, FILE *metrics_fp, int verbosity,
 
 	while(getline(&line, &len, input_fp) != -1) {
 		unsigned int *h_puzzle = load_puzzle(line, CELLS);
-		ret = solve_puzzle(h_puzzle, CELLS, 1, metrics_fp, verbosity);
+		ret = solve_puzzles(h_puzzle, CELLS, 1, metrics_fp, verbosity);
 
 		// Keep track of the statuses coming out
 		if(ret == -1) {
@@ -314,7 +311,7 @@ int main(int argc, char *argv[])
 /*	solve_from_fp_one(input_fp, metrics_fp, verbosity,
 						&solved, &unsolvable, &errors);
 */
-	solve_from_fp_two(input_fp, metrics_fp, verbosity,
+	solve_mult_from_fp(input_fp, metrics_fp, 2, verbosity,
 						&solved, &unsolvable, &errors);
 
 	cudaEvent_t end_time = get_time();
