@@ -185,7 +185,7 @@ malloc_puzzle_error:
  {
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells * blocks));
-	 unsigned int *solutions = (unsigned int *) malloc(cells * num * sizeof(unsigned int));
+	 unsigned int *solutions = (unsigned int *) malloc(cells * blocks * sizeof(unsigned int));
 	 cudaError cuda_ret;
 	 *out = NULL;
 	 *out_count = 0;
