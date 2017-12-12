@@ -32,6 +32,7 @@ Lessons so far
 - puzzle per block lessons and speedup
 - shared memory when multiple blocks
   - an SM can have up to 8 blocks at the same time
+- getting the data back seems to waste a lot of time
 
 ### TODO
 Shortlist:  0) todo 1) gather metrics 2) start presentation and report

@@ -185,7 +185,8 @@ malloc_puzzle_error:
  {
 	 int ret = 0;
 	 int array_size_in_bytes = (sizeof(unsigned int) * (cells * blocks));
-	 unsigned int *solutions = (unsigned int *) malloc(cells * blocks * sizeof(unsigned int));
+	 *out = (unsigned int *) malloc(array_size_in_bytes);
+	 unsigned int *solutions;
 	 cudaError cuda_ret;
 	 *out = NULL;
 	 *out_count = 0;
@@ -215,14 +216,14 @@ malloc_puzzle_error:
  	cudaEventSynchronize(end_time);
  	cudaEventElapsedTime(&duration, start_time, end_time);
 
- 	/* Free the pinned CPU memory */
- 	cudaFreeHost(h_pinned_puzzles);
 	printf("in solve_puzzles\n");
 	sudoku_print_puzzles(solutions, blocks);
-
-	*out = solutions;
+	memcpy(*out, solutions, array_size_in_bytes);
 	*out_count = count;
 	*out_duration = duration;
+
+ 	/* Free the pinned CPU memory */
+ 	cudaFreeHost(h_pinned_puzzles);
  	return ret;
  }
 
