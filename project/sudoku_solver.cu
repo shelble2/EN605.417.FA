@@ -211,6 +211,8 @@ malloc_puzzle_error:
 
  	/* Free the pinned CPU memory */
  	cudaFreeHost(h_pinned_puzzles);
+	printf("in solve_puzzles\n");
+	sudoku_print_puzzles(solutions, blocks);
 
 	*out = solutions;
 	*out_count = count;
