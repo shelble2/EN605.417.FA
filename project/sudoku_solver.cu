@@ -261,6 +261,8 @@ int main(int argc, char *argv[])
 	}
 
 	int blocks = atoi(argv[3]);
+	printf("Number of blocks: %d\n", blocks);
+
 
 	// TODO: this would be prettier if switched to optparse
 	if((argc == 4) && (strcmp(argv[3], "v=0") == 0)) {
