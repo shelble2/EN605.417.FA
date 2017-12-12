@@ -93,25 +93,23 @@ int check_if_done(unsigned int *puzzle)
 }
 
 /**
- * Function to load two puzzles into a single array of ints (one before the
+ * Function to load @num puzzles into a single array of ints (one before the
  * other). Puzzles is an array of char * (where each entry is a puzzle).
  * num is the number of puzzles in puzzles. Cells is the number of cells in each
  * puzzle
  * Returns the loaded unsigned int puzzles array
  */
- //TODO: This could actually be a kernel most likely...
+ //TODO: This could actually be a kernel instead...
 unsigned int *load_puzzles(char *puzzles[], int num, int cells)
 {
-	printf("loading puzzles\n");
 	int i;
 	int j;
-	
+
 	unsigned int *out = (unsigned int *) malloc(cells * num * sizeof(unsigned int));
 	for(i = 0; i < num; i++) {
-	      printf("i = %d\n", i);
-	      for(j = 0; j < cells; j++){
-	      	    out[(i*cells)+j] = puzzles[i][j] - ASCII_TO_INT;
-		    }
+		for(j = 0; j < cells; j++){
+			out[(i*cells)+j] = puzzles[i][j] - ASCII_TO_INT;
+		}
 	}
 	return out;
 }

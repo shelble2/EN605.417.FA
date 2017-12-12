@@ -246,9 +246,9 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 int main(int argc, char *argv[])
 {
 	int verbosity = 1;
-	if(argc != 2 && argc != 3) {
+	if(argc != 3 && argc != 4) {
 		printf("Error: Incorrect number of command line arguments\n");
-		printf("Usage: %s [input_file] (v=0)\n", argv[0]);
+		printf("Usage: %s [input_file] [num_blocks] (v=0)\n", argv[0]);
 		exit(-1);
 	}
 	printf("\n");
@@ -260,8 +260,10 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	int blocks = atoi(argv[3]);
+
 	// TODO: this would be prettier if switched to optparse
-	if((argc == 3) && (strcmp(argv[2], "v=0") == 0)) {
+	if((argc == 4) && (strcmp(argv[3], "v=0") == 0)) {
 		verbosity = 0;
 	}
 
@@ -284,7 +286,7 @@ int main(int argc, char *argv[])
 	int unsolvable;
 	int errors;
 
-	solve_mult_from_fp(input_fp, metrics_fp, 2, verbosity,
+	solve_mult_from_fp(input_fp, metrics_fp, blocks, verbosity,
 						&solved, &unsolvable, &errors);
 
 	cudaEvent_t end_time = get_time();
