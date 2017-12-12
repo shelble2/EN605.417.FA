@@ -45,6 +45,7 @@ int execute_kernel_loop_sync(unsigned int *hp_puzzles, int cells, int blocks)
 		goto malloc_solution_error;
 	}
 
+	printf("Copying memory between host and device synchronously\n");
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
@@ -117,6 +118,7 @@ int execute_kernel_loop_async(unsigned int *hp_puzzles, int cells, int blocks)
 	cudaStream_t stream;
 	cudaStreamCreate(&stream);
 
+	printf("Copying memory between host and device asynchronously\n");
 	// While the puzzle is not finished, iterate until LOOP_LIMIT is reached
 	do {
 		/* Copy the CPU memory to the GPU memory */
@@ -163,12 +165,13 @@ malloc_puzzle_error:
  * h_puzzles is the host array of ints that form the puzzles,
  * cells is the number of cells in each puzzle
  * blocks is the number of puzzles in the array
- * metrics_fd is an open file descriptor to the output file
- * verbosity is a flag for extra prints. If == 1, will print every puzzle and
- * solution to STDOUT. Otherwise, will just print batch metrics. Either way,
- * metrics for each specific puzzle can be found in output file
+ * if async == 1, will call execute_kernel_loop_async, else will call
+ * execute_kernel_loop_sync
+ * out is set to the solutions, out_count is set to the number of iterations
+ * the set took, and out_duration is set to the amount of time in ms that the
+ * set took
  */
- int solve_puzzles(unsigned int *h_puzzles, int cells, int blocks,
+ int solve_puzzles(unsigned int *h_puzzles, int cells, int blocks, int async,
 	 				unsigned int **out, int *out_count, float *out_duration)
  {
 	 int ret = 0;
@@ -191,8 +194,14 @@ malloc_puzzle_error:
  	float duration = 0;
  	cudaEvent_t start_time = get_time();
 
- 	int count = execute_kernel_loop_sync(h_pinned_puzzles, cells, blocks);
- 	if(count <= 0) {
+	int count = 0;
+	// Async or Sync based on passed async value
+	if(async == 1) {
+		count = execute_kernel_loop_async(h_pinned_puzzles, cells, blocks);
+	} else {
+		count = execute_kernel_loop_sync(h_pinned_puzzles, cells, blocks);
+	}
+	if(count <= 0) {
  		printf("ERROR: returned %d from execute_kernel_loop\n", count);
  		cudaFreeHost(h_pinned_puzzles);
  		return -1;
@@ -215,13 +224,19 @@ malloc_puzzle_error:
  * Loads the lines from the open file descriptor one by one and solves them
  * input_fp is the open file descriptor to read from
  * metrics_fp is an open file descriptor to write metrics to
- * Does not return a value, but sets solved to the number of puzzles
- * successfully finished, unsolved to the number that could not be Solved within
- * the LOOP_LIMIT, and sets error to the number of puzzles that returned with
- * error
+ * blocks is the number of blocks to use,
+ * verbosity == 0 will suppress output, while higher numbers will print more
+ * async == 1 will copy memory asynchronously
+ *
+ * On return, solved is set to the number of puzzles that were definitely
+ * solved without error.
+ * unsolved is set to the number of *sets* that returned after reaching LOOP_LIMIT,
+ * meaning at least one of their puzzles is likely unsolved.
+ * errors is similarly set to the number of *sets* that returned error, meaning
+ * that at least one of the puzzles in that set resulted in an error.
  */
-void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
-						int verbosity, int *solved, int *unsolvable, int *errors)
+void solve_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks, int verbosity,
+					int async, int *solved, int *unsolvable, int *errors)
 {
 	char *lines[blocks];
 	unsigned int *h_puzzles;
@@ -256,7 +271,7 @@ void solve_mult_from_fp(FILE *input_fp, FILE *metrics_fp, int blocks,
 	 	}
 		int count;
 		float duration;
-		ret = solve_puzzles(h_puzzles, CELLS, i, &h_solutions, &count, &duration);
+		ret = solve_puzzles(h_puzzles, CELLS, i, async, &h_solutions, &count, &duration);
 
 		if(verbosity == 1) {
 	 		sudoku_print_puzzles(h_solutions, blocks);
@@ -400,14 +415,14 @@ int main(int argc, char *argv[])
 	int unsolvable;
 	int errors;
 
-	solve_mult_from_fp(input_fp, metrics_fp, blocks, verbosity,
+	solve_from_fp(input_fp, metrics_fp, blocks, verbosity, async,
 						&solved, &unsolvable, &errors);
 
 	cudaEvent_t end_time = get_time();
 	cudaEventSynchronize(end_time);
 	cudaEventElapsedTime(&duration, start_time, end_time);
 
-	printf("Final result:\n\tSolved %d puzzles in %0.3fms using %d blocks.\n", solved, duration, blocks);
+	printf("Final result:\n\tSolved %d puzzles in %0.3fms using %d blocks at a time.\n", solved, duration, blocks);
 	printf("\t%d batches reached LOOP_LIMIT\n\t%d batches returned errors\n", unsolvable, errors);
 	printf("Individual puzzle data output to %s\n", metrics_fn);
 

@@ -45,11 +45,9 @@ Lessons so far
 ### TODO
 Shortlist:  0) todo 1) gather metrics 2) start presentation and report
 3) more algorithms 4) gather metrics for those 5) maybe more puzzles?
-- TODO's in code
-  - metrics per puzzle instead of set. Or at least keep track of right number for
-    overall metrics
-  - sync and async options
-  - all of them are called puzzle 0 in verbose
+
+- sync and async options
+
 - host based version of solution
 - kernel version of host_load_puzzles
 - different algorithms
