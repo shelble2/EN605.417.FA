@@ -1,23 +1,40 @@
-Class Project
-Sarah Helble
-
 Sudoku Solver
--------------
-Once finished, this program will be able to solve any sudoku puzzle read in
-from a file with efficiency.
-Extras that I also want to include:
-1. Check that an answer is correct
-2. Generate sudoku puzzles of varying complexity
-3. Possibly larger puzzles (double-digit sudokus?)
+=============
+
+Author: Sarah Helble
+This program is able to solve a large number of sudoku puzzles in a very short
+amount of time.
+
+Quick Start
+-----------
+
+Run
+
+`$ make`
+
+That will result in the creation of `sudoku_solver` executable.
+View the usage of the program with
+
+`$ ./sudoku_solver`
+
+This directory contains example puzzles in `puzzles.txt` and `100K_puzzles.txt`.
+I recommend suppressing output by passing `-v 0` to the program. For example
+
+`$ ./sudoku_solver -i puzzles.txt -v 0`
+
+If you want to change the number of blocks used, use the `-b [num]` flag, as so
+
+`$ ./sudoku_solver -i puzzles.txt -v 0 -b 100`
 
 Current Status Summary
 ----------------------
 Currently, this program solves sudoku puzzles contained in a passed input file,
-(The file included is the first hundred puzzles from [1]) by calling the solve_by_possibility kernel function until a host function determines that the puzzle has been solved. It only uses the solve_by_possibility kernel. In my
-TODO, I identify other approaches that could be alternated to achieve a faster
-solution. Sudoku-style output is sent to STDOUT. Call the program without any
-command line arguments in order to see other runtime options, such as verbosity
-and number of blocks.
+(this directory contains txt files with the first hundred and the first 100K
+puzzles from [1]) by calling the solve_by_possibility kernel function until a host function determines that the puzzle has been solved. There is only the one kernel.
+In Future Work, I identify other approaches that could be alternated to achieve a
+faster solution. Sudoku-style output is sent to STDOUT. Call the program without
+any command line arguments in order to see other runtime options, such as
+verbosity and number of blocks.
 
 Metrics are output to a file called metrics.csv in the format set, block, puzzle,
 solution, count, duration. Puzzles are solved in sets of num_blocks, so set is
@@ -26,32 +43,8 @@ that since a set is being solved simultaneously, count and duration are the time
 and duration for the set as a whole, therefore, it ends up being the highest count,
 longest duration one's metrics.
 
-Lessons so far
---------------
-- sharing across blocks
-- debug prints
-- first hundred are solvable
-- output to csv easier than expected
-- makefiles are hard
-- code review thanks
-- online strategies (naked pair, solve by constraint)
-- async cells, sure; async puzzles?
-- cudaStreamSynchronize() was necessary inside loop. Hurt time if not
-- puzzle per block lessons and speedup
-- shared memory when multiple blocks
-  - an SM can have up to 8 blocks at the same time
-- getting the data back seems to waste a lot of time
-
-### TODO
-- make sure 100k is Right
-- get info about the card in vocareum
-- try to figure out why the blocks can go so high
-- see about running in project's vocareum..
-
-Shortlist:  1) gather metrics 2) start presentation and report
-3) more algorithms 4) gather metrics for those 5) maybe more puzzles?
-
-- host based version of solution
+### Future Work
+- host based version of solution to compare
 - kernel version of host_load_puzzles
 - different algorithms
 - host-based versions for comparison
@@ -60,7 +53,6 @@ Shortlist:  1) gather metrics 2) start presentation and report
 - 'naked pairs' - if two cells both are between a pair, you can't tell which
 	has which, but you can tell that they contain both. So can eliminate from
 	other dependencies.
-
 
 ### Optional Extras
 - larger puzzles going > single digits
